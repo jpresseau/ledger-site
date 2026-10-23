@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-XB3Q7d2pJWja4e3ufs9umao0hstpA4sNNHPtUErrNJE=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-CfpVbcDVcZawrEdU1iR8C0rGpddkr/+GDJPt8jF/nsI=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2992,17 +2992,18 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.56";
-/* The Ledger's own address (v28.56). The owner's copy has lived at jpresseau.github.io/ledger/, beside five other apps that
-   share its storage (SECURITY.md F4). Once it has an address of its own, LEDGER_HOME names it, and a copy opened anywhere
-   else says where the book should go and how to take it there. '' means it has none yet. A browser keeps an app's data
-   per address, so nothing moves by itself: the book goes in a backup, restored at the new address. */
-const LEDGER_HOME='';
+const APP_V="v28.57";
+/* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
+   apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
+   the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
+   serving the page, a test) says nothing. A browser keeps an app's data per address, so nothing moves by itself: the book
+   goes in a backup, restored at the new address. */
+const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
 function ledgerMovedHtml(){
   if(!LEDGER_HOME) return '';
   let here=''; try{ here=location.origin; }catch(e){ here=''; }
   let home=''; try{ home=new URL(LEDGER_HOME).origin; }catch(e){ return ''; }
-  if(!here||here===home) return '';
+  if(!here||here===home||here!==LEDGER_FROM) return '';
   return '<div class="sheet nofold movedbar" role="status" style="border-left:4px solid var(--amber);margin-bottom:12px"><b>The Ledger has its own address now: <a href="'+esc(LEDGER_HOME)+'">'+esc(LEDGER_HOME.replace(/^https:\/\//,'').replace(/\/$/,''))+'</a></b>'
     +'<div class="mut" style="font-size:12.5px;margin-top:4px">Its own address keeps the book away from the other apps on this site. To move it: <b>Data → Backup → Download backup (JSON)</b> here, then open the new address and use <b>Restore from backup</b> there. Your Gmail link, Betsy and everything in the book go with it; on a phone, add the new address to your home screen.</div></div>';
 }
@@ -3013,7 +3014,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="3fde9f0";
+const APP_BUILD="bf19416";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
