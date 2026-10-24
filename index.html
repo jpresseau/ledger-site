@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-gKp+VcDQrxiH6wLJzB/qOANznT0+sPJ+gN1Wob9CBCM=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-tx1KayzKH6Kc5pfl/cTq0SefL5pYYttifRLt/afvps0=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2992,7 +2992,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.58";
+const APP_V="v28.59";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3014,7 +3014,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="b5c1e21";
+const APP_BUILD="da08b12";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -37530,7 +37530,7 @@ function cloudPanel(){
       +(me&&me.email_verified===false?'<div class="secrow off" style="margin-top:10px"><span class="dot"></span><div><b>Confirm your email</b>'
         +'<div class="mut">It is how you get back in if you forget the password.</div>'
         +'<div class="formrow"><button class="btn ghost" data-act="cloudverifysend">Send the link</button></div></div></div>':'');
-    body+=sessPanel(st)+actPanel(st)+pkPanel(st)+recPanel(c)+bookPanel(c,st)+(typeof plaidPanel==='function'?plaidPanel():'');
+    body+=(typeof billPanel==='function'?billPanel():'')+sessPanel(st)+actPanel(st)+pkPanel(st)+recPanel(c)+bookPanel(c,st)+(typeof plaidPanel==='function'?plaidPanel():'');
   } else {
     let prev={}; try{ prev=JSON.parse(localStorage.getItem(CLOUD_K)||'null')||{}; }catch(e){}
     body='<div class="mut" style="font-size:12px;margin-bottom:8px">An account keeps the book’s encrypted copy where your other devices can reach it. '
@@ -48235,7 +48235,7 @@ function _imgLossOk(what){
     const url=LEDGER_CLOUD_URL||v('cloudUrl').trim(), email=v('cloudEmail').trim(), pw=v('cloudPw');
     if(!cloudUrlOk(url)) return toast('The service address, please — it starts https://','warn');
     if(!email||!pw) return toast('Email and password, please','warn');
-    S.cloud={busy:true}; render();
+    S.cloud={busy:true}; S.bill=null; render();
     (async function(){
       try{ const me=await (act==='cloudup'?cloudSignUp:cloudSignIn)(url,email,pw); S.cloud={me:me};
         toast(act==='cloudup'?'Account made. Sync now puts the book’s encrypted copy there':'Signed in to Ledger Cloud','ok'); }
@@ -48247,7 +48247,9 @@ function _imgLossOk(what){
     })();
   }
   else if(act==='cloudme'){ cloudMe().then(function(me){ S.cloud={me:me}; render(); return recHas().then(render); }).catch(function(e){ S.cloud={err:e.message||String(e)}; render(); }); }
-  else if(act==='cloudout'){ cloudSignOut().then(function(){ S.cloud={}; render(); toast('Signed out of Ledger Cloud — the book on this device is untouched','ok'); }); }
+  /* Membership (sync/billing.js, v28.59): Stripe's pages for subscribing and for the card, receipts and cancelling. */
+  else if(act==='billsub'||act==='billmanage'){ if(!(S.bill&&S.bill.busy)) billGo(act==='billmanage'?'portal':'checkout'); }
+  else if(act==='cloudout'){ cloudSignOut().then(function(){ S.cloud={}; S.bill=null; render(); toast('Signed out of Ledger Cloud — the book on this device is untouched','ok'); }); }
   else if(act==='clouddel'){
     modal('Delete the Ledger Cloud account?',
       '<div class="mut" style="font-size:12.5px;margin-bottom:8px">Every encrypted copy the account holds is deleted with it, for good. '
@@ -52083,6 +52085,73 @@ async function cloudDeleteAccount(password){
   await cloudCall(c.url,'DELETE','/v1/me',{password},c.token);
   cloudSet(null); fbSwitched();
 }
+/* ---- MEMBERSHIP (v28.59; the service's half is ledger/server/cloud/billing.py) ----
+   A Ledger Cloud account has a free trial, then $5 a month through Stripe. The plan is asked of the service when the
+   Ledger Cloud panel shows (S.bill, kept apart from S.cloud, which a sign-in replaces whole), and the panel says where
+   the account stands: a trial and its days left, a member and when it renews (or ends), or a trial that has ended.
+   Subscribe and Manage subscription open Stripe's own pages, and Stripe sends the person back here with ?billing=…;
+   the card never touches the Ledger or the service. A lapsed account keeps its book: the service refuses its writes
+   (402, its own words), and this device's copy is untouched. With no Stripe set up on the service, nothing shows. */
+function billLoad(force){
+  const c=cloudCfg(); if(!c||!c.token) return null;
+  if(S.bill&&S.bill.asking&&!force) return null;
+  S.bill=Object.assign({},S.bill,{asking:true});
+  return cloudCall(c.url,'GET','/v1/billing',undefined,c.token)
+    .then(function(b){ S.bill={b:b,at:Date.now()}; render(); return b; },function(e){ S.bill={err:e.message||String(e),at:Date.now()}; render(); return null; });
+}
+function _billDay(sec){ return fDlong(_cfISO(new Date(Number(sec)*1000))); }
+function billPanel(){
+  const c=cloudCfg(); if(!c||!c.token) return '';
+  const st=S.bill||{};
+  if(!st.at&&!st.asking){ setTimeout(function(){ billLoad(); },0); return ''; }
+  const b=st.b; if(!b||!b.on) return '';
+  const row=function(cls,head,words,btns){ return '<div class="secrow '+cls+' billrow" style="margin-top:12px"><span class="dot"></span><div><b>'+head+'</b>'
+    +'<div class="mut">'+words+'</div>'+(btns?'<div class="formrow">'+btns+'</div>':'')+'</div></div>'; };
+  const off=st.busy?' disabled':'';
+  const sub='<button class="btn" data-act="billsub"'+off+'>Subscribe — '+esc(b.price||'$5 a month')+'</button>';
+  const manage='<button class="btn ghost" data-act="billmanage"'+off+'>Manage subscription</button>';
+  if(b.plan==='free') return row('ok','Membership: free','This account is never charged.','');
+  if(b.plan==='member'){
+    const when=b.period_end?_billDay(b.period_end):'';
+    const words=b.status==='past_due'?'The last payment did not go through. Stripe will try the card again; update it in Manage subscription to keep syncing.'
+      :b.cancel_at_end?'Cancelled — it stays on until '+esc(when)+', then syncing stops (your book stays yours).'
+      :b.status==='trialing'?'Subscribed. The first '+esc(b.price||'$5 a month')+' is charged on '+esc(when)+'.'
+      :esc(b.price||'$5 a month')+(when?', renewing on '+esc(when):'')+'. Thank you.';
+    return row(b.status==='past_due'?'off':'ok','Member',words,manage);
+  }
+  if(b.plan==='trial'){
+    const left=Math.max(0,Math.ceil((Number(b.trial_end)*1000-Date.now())/864e5));
+    return row('ok','Free trial — '+left+' day'+(left===1?'':'s')+' left','Sync, bank connections and receipt reading are included. Then '+esc(b.price||'$5 a month')
+      +'; subscribe now and the first charge still waits until '+esc(_billDay(b.trial_end))+'.',sub);
+  }
+  return row('off','Your free trial has ended','Subscribe to keep syncing, connecting banks and reading receipts. Your book is safe either way: '
+    +'it stays on this device, and the copy on Ledger Cloud can still be opened and downloaded.',sub+(b.subscription?manage:''));
+}
+/* Subscribe / Manage: the service makes a Stripe page and the Ledger goes there (billNav, so a test can watch where). */
+function billNav(u){ location.assign(u); }
+function billGo(kind){
+  const c=cloudCfg(); if(!c||!c.token) return Promise.resolve(null);
+  S.bill=Object.assign({},S.bill,{busy:true}); render();
+  let back=''; try{ back=location.origin+location.pathname; }catch(e){ back=''; }
+  return cloudCall(c.url,'POST',kind==='portal'?'/v1/billing/portal':'/v1/billing/checkout',{return:back},c.token)
+    .then(function(r){ if(r&&/^https:\/\//.test(r.url)) billNav(r.url); else throw new Error('Ledger Cloud did not give a payment page.'); return r; })
+    .catch(function(e){ S.bill=Object.assign({},S.bill,{busy:false}); render(); toast(e.message||String(e),'warn'); return null; });
+}
+/* Back from Stripe: say so, ask the plan again, and take ?billing= off the address. */
+if(typeof window!=='undefined'){
+  try{
+    const m=/[?&]billing=(done|cancel)\b/.exec(location.search||'');
+    if(m){
+      history.replaceState(null,'',location.pathname+location.hash);
+      setTimeout(function(){
+        if(typeof toast==='function') toast(m[1]==='done'?'Thank you — your membership is being set up. It shows here in a moment.':'No change — you were not charged.',m[1]==='done'?'ok':'');
+        if(typeof billLoad==='function') billLoad(true);
+        if(m[1]==='done') setTimeout(function(){ billLoad(true); },8000);   /* Stripe's word reaches the service a few seconds later */
+      },1500);
+    }
+  }catch(e){}
+}
+
 /* ---- THE RECOVERY KEY: the way back to a forgotten passphrase ----
    The passphrase encrypts the book on the device, and nobody else holds it, so
    a customer who forgets it has lost the book: the service keeps only
