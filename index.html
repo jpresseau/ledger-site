@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-RIx1wZaXa8tH43PjsVm1j0hJGSomOuhRDdiENoUVzZY=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Q9h5697/bMDM7mNCRJEfIMoHXbAaa6wHAdsGGXuV75U=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2992,7 +2992,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.60";
+const APP_V="v28.61";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3014,7 +3014,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="68c4ae6";
+const APP_BUILD="ca6c37a";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -36632,7 +36632,11 @@ function joinCard(){
     +'<div class="fld"><label for="joinEmail">Email</label><input id="joinEmail" type="email" autocomplete="username"></div>'
     +'<div class="fld"><label for="joinPw">Password</label>'+(open?'<input id="joinPw" type="password" autocomplete="new-password">':'<input id="joinPw" type="password" autocomplete="current-password">')+'</div></form>'
     +'<div class="formrow">'+(open?'<button class="btn" data-act="joinup"'+busy+'>Create account</button>':'')
-    +'<button class="btn'+(open?' ghost':'')+'" data-act="joinin"'+busy+'>'+(open?'I already have an account — sign in':'Sign in')+'</button></div></div>';
+    +'<button class="btn'+(open?' ghost':'')+'" data-act="joinin"'+busy+'>'+(open?'I already have an account — sign in':'Sign in')+'</button></div>'
+    /* The service's own Terms and Privacy Policy (v28.61; cloud/web.py serves them beside the page). */
+    +'<div class="mut joinlegal" style="font-size:11.5px;line-height:1.5;margin-top:10px">'+(open?'By creating an account you agree to the ':'')
+    +'<a href="'+esc(joinUrl()+'/terms')+'" target="_blank" rel="noopener">'+(open?'Terms of Service':'Terms')+'</a> and '
+    +'<a href="'+esc(joinUrl()+'/privacy')+'" target="_blank" rel="noopener">Privacy Policy</a>'+(open?'.':'')+'</div></div>';
 }
 /* Create account / Sign in from that card. The fields are read before anything renders, which replaces the form. */
 function joinGo(kind){
