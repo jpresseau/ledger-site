@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-tx1KayzKH6Kc5pfl/cTq0SefL5pYYttifRLt/afvps0=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-RIx1wZaXa8tH43PjsVm1j0hJGSomOuhRDdiENoUVzZY=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2992,7 +2992,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.59";
+const APP_V="v28.60";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3014,7 +3014,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="da08b12";
+const APP_BUILD="68c4ae6";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -36533,6 +36533,8 @@ Views.locked=function(){
       :fresh
       ?'Nothing is in this browser yet. A ledger lives on the device it is kept on \u2014 start one, bring one in, or unlock one that is already in the cloud.'
       :'This copy is locked. Nothing about your finances is stored in this page — it is fetched and decrypted with your passphrase.','LOCKED')
+   /* At a Ledger Cloud address, the account comes first (views/join.js, v28.60). */
+   +(fresh&&typeof joinCard==='function'?joinCard():'')
    +(fresh
      /* FIRST, AND A REAL BUTTON. Written for the person who has never seen this
         app: it says what pressing it does, and what the app is, in the two
@@ -36599,6 +36601,56 @@ Views.locked=function(){
    +(here||fresh?'':'<button class="btn ghost" data-act="unlockskip">Start an empty book</button>')+'</div>'
    +'</div>';
 };
+
+/* ---- JOIN: THE FIRST SCREEN'S ACCOUNT CARD (v28.60) ----
+   Opened at a Ledger Cloud address (the page served by the service itself, LEDGER_CLOUD_URL), a browser with nothing
+   in it is most likely a newcomer who came to sign up, or a member on a new device. The first screen used to offer
+   them "Start an empty book" and a passphrase box, with the account three steps away in Data. This card leads instead:
+   Create account (and, when the service charges, the trial and the price, from its public /v1/health) or Sign in.
+   Made, the account starts a book here at once (views/welcome.js); signed in, the passphrase card below brings the
+   member's book down. The owner's own copy, served by GitHub Pages, has no LEDGER_CLOUD_URL and never shows it. */
+/* The service this page came from, or '' (a function, so a test can stand one in). */
+function joinUrl(){ return typeof LEDGER_CLOUD_URL!=='undefined'?LEDGER_CLOUD_URL:''; }
+function joinWanted(){ return !!(joinUrl()&&!(typeof cloudOn==='function'&&cloudOn())); }
+function joinLoad(){
+  if(S.join&&(S.join.at||S.join.asking)) return null;
+  S.join=Object.assign({},S.join,{asking:true});
+  return cloudCall(joinUrl(),'GET','/v1/health').then(function(h){ S.join={at:Date.now(),signup:!!(h&&h.signup),plan:(h&&h.plan)||null}; render(); },
+    function(){ S.join={at:Date.now(),signup:true,plan:null}; render(); });
+}
+function joinCard(){
+  if(!joinWanted()) return '';
+  const j=S.join||{}; if(!j.at) setTimeout(joinLoad,0);
+  const open=j.signup!==false, p=j.plan, busy=j.busy?' disabled':'';
+  const offer=p&&p.trial_days?'<b>'+esc(String(p.trial_days))+' days free</b>, then '+esc(p.price||'$5 a month')+'. No card needed to start; cancel any time.':'';
+  return '<div class="sheet joincard"><h3>'+(open?'Create your account':'Sign in')+'</h3>'
+    +'<div class="mut" style="font-size:12.5px;line-height:1.6;margin-bottom:11px">'
+    +(open?'Your book is kept on this device and, encrypted with a passphrase only you know, on this service — so your other devices can reach it and nobody here can read it. '+offer
+      :'New accounts are not open right now. Already a member? Sign in, then unlock your book below.')+'</div>'
+    +(j.err?'<div class="neg" style="margin-bottom:8px">'+esc(j.err)+'</div>':'')
+    +'<form class="pwform" data-go="'+(open?'joinup':'joinin')+'">'
+    +'<div class="fld"><label for="joinEmail">Email</label><input id="joinEmail" type="email" autocomplete="username"></div>'
+    +'<div class="fld"><label for="joinPw">Password</label>'+(open?'<input id="joinPw" type="password" autocomplete="new-password">':'<input id="joinPw" type="password" autocomplete="current-password">')+'</div></form>'
+    +'<div class="formrow">'+(open?'<button class="btn" data-act="joinup"'+busy+'>Create account</button>':'')
+    +'<button class="btn'+(open?' ghost':'')+'" data-act="joinin"'+busy+'>'+(open?'I already have an account — sign in':'Sign in')+'</button></div></div>';
+}
+/* Create account / Sign in from that card. The fields are read before anything renders, which replaces the form. */
+function joinGo(kind){
+  const v=function(id){ const e=document.getElementById(id); return e?e.value:''; };
+  const email=v('joinEmail').trim(), pw=v('joinPw');
+  if(!email||!pw){ toast('Email and password, please','warn'); return Promise.resolve(null); }
+  S.join=Object.assign({},S.join,{busy:true,err:null}); render();
+  return (kind==='up'?cloudSignUp:cloudSignIn)(joinUrl(),email,pw).then(function(me){
+    S.join=Object.assign({},S.join,{busy:false}); S.bill=null;
+    if(kind==='up'){
+      /* A new member has no book anywhere: start one here, the way Start an empty book does. */
+      _lockBypass=true;
+      if(typeof welWanted==='function'&&welWanted()){ S.wel=welDraft(); S.view='welcome'; }
+      toast('Account made. Your book starts here; set a passphrase in Data → Sync to keep its encrypted copy on the service.','ok');
+    } else toast('Signed in. Type your book’s passphrase below to bring it to this device.','ok');
+    render(); return me;
+  },function(e){ S.join=Object.assign({},S.join,{busy:false,err:e.message||String(e)}); render(); return null; });
+}
 
 /* ---- WELCOME: setting up a book for somebody who has never seen this app ----
    "Start an empty book" used to land on a Dashboard that said there were no
@@ -48247,6 +48299,8 @@ function _imgLossOk(what){
     })();
   }
   else if(act==='cloudme'){ cloudMe().then(function(me){ S.cloud={me:me}; render(); return recHas().then(render); }).catch(function(e){ S.cloud={err:e.message||String(e)}; render(); }); }
+  /* The first screen's account card (views/join.js, v28.60). */
+  else if(act==='joinup'||act==='joinin'){ if(!(S.join&&S.join.busy)) joinGo(act==='joinup'?'up':'in'); }
   /* Membership (sync/billing.js, v28.59): Stripe's pages for subscribing and for the card, receipts and cancelling. */
   else if(act==='billsub'||act==='billmanage'){ if(!(S.bill&&S.bill.busy)) billGo(act==='billmanage'?'portal':'checkout'); }
   else if(act==='cloudout'){ cloudSignOut().then(function(){ S.cloud={}; S.bill=null; render(); toast('Signed out of Ledger Cloud — the book on this device is untouched','ok'); }); }
