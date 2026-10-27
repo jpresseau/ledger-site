@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-eIYlT2/Wq5keHHACZ0rvpacfr3Y+0BQH1/edTs9YI7k=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-qW5MB49Ss3X7pRi34zYk8nfv+lQvf1ecOFkRmrLFbqk=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -378,6 +378,17 @@ main{flex:1;min-width:0;width:100%;padding:14px 1.2rem 72px}
    box scales the whole series in rather than cropping it. */
 .plate svg{max-width:100%;height:auto}
 .sheet h3 .pin.on{opacity:1;filter:none}
+
+/* ---- the first screen's other doors (views/locked.js, v28.65) ---- */
+details.moreways{margin:2px 0 14px}
+details.moreways>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:10px 4px;
+  font-size:13px;font-weight:600;color:var(--accent-deep);border-radius:8px}
+details.moreways>summary::-webkit-details-marker{display:none}
+details.moreways>summary::before{content:"";width:0;height:0;border:5px solid transparent;border-left:7px solid currentColor;border-right:0;
+  flex:none;transition:transform .15s}
+details.moreways[open]>summary::before{transform:rotate(90deg)}
+details.moreways>summary:hover{background:var(--shelf)}
+details.moreways>.sheet:first-of-type{margin-top:6px}
 
 /* ---- stat plates: RC Garage stat strip ---- */
 .plates{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:11px}
@@ -3052,7 +3063,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.64";
+const APP_V="v28.65";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3074,7 +3085,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="7c0250a";
+const APP_BUILD="c58e54e";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -12813,13 +12824,11 @@ Views.cashflow=function(){
       +(pts.length>1?'<div class="svgbox">'+lineChart(pts,{w:chartW(false,860),h:170,fit:span!=='all',draw:true,endDot:true})+'</div>'
         :'<div class="mut" style="font-size:12px;padding:6px 0">One balance in this window — nothing to draw a line between.</div>')
       +'</div>'
-    : '<div class="sheet plain"><div class="mut" style="font-size:12.5px;line-height:1.6">'
-      +'<b>No balance to show yet.</b> These entries record what moved and what it was for, not what '
-      +'is in the account — so a balance cannot be worked out from them without inventing one. '
-      +'Import a bank download below and the bank\u2019s own balance comes with it. '
-      +'<b>If you have already imported one</b>, open the same file again \u2014 those rows are '
-      +'recognised as already here and nothing is added twice, but the balances on them are '
-      +'filled in.</div></div>';
+    /* One sentence (v28.65): the paragraph it replaces explained why a balance cannot be invented from
+       movements, and the reader with no balance wants the button, which is the card under this. */
+    : '<div class="sheet plain cfnobal"><div class="mut" style="font-size:12.5px;line-height:1.6">'
+      +'<b>No bank balance yet.</b> Import a bank download below and the bank\u2019s own balance comes with it '
+      +'(the same file again fills in balances without adding anything twice).</div></div>';
 
   /* ---- the movements, newest first ---- */
   const PAGE=40;
@@ -31013,7 +31022,11 @@ Views.worth=function(){
   html+=worthPlates(worthFigures(T,srcs,first),moves,since,T)+form;
   html+='<div class="chips wchips" role="tablist">'+WORTH_SPANS.map(function(s){
     return '<button class="chip'+(s[0]===span[0]?' on':'')+'" role="tab" aria-selected="'+(s[0]===span[0])+'" data-act="worthspan" data-s="'+s[0]+'">'+esc(s[1])+'</button>'; }).join('')+'</div>';
-  if(pts.length>1) html+='<div class="sheet nofold wchartsheet"><div class="svgbox">'+worthChart(pts,{w:_trW(),h:vpW()<=700?200:240})+'</div>'
+  /* A line of zeros is not a chart (v28.65): cards that owe nothing and no account yet draw nothing, and say so. */
+  const flat=pts.length>1&&pts.every(function(p){ return !p.y&&!p.assets&&!p.debts; });
+  if(flat) html+='<div class="sheet nofold wflat"><div class="mut" style="font-size:12.5px;line-height:1.6">Nothing to draw yet \u2014 '
+    +'every account here stands at zero. Add a savings or retirement account, the house, or a loan below, or import a statement on Cards, and the line starts.</div></div>';
+  else if(pts.length>1) html+='<div class="sheet nofold wchartsheet"><div class="svgbox">'+worthChart(pts,{w:_trW(),h:vpW()<=700?200:240})+'</div>'
     +'<div class="trleg"><span><i class="sw wownsw"></i>Owned</span><span><i class="sw wowesw"></i>Owed</span><span><i class="sw line"></i>Net worth</span></div></div>';
   /* Where it is heading (views/worth-ahead-look.js, v28.15): a year, five and ten out, with the assumptions named. */
   if(typeof worthAheadSheet==='function') html+=worthAheadSheet(T);
@@ -36735,13 +36748,18 @@ Views.locked=function(){
      fresh screen does not pick. It offers all three doors at equal weight and
      lets the person say which they are. */
   const fresh=!here&&!syncPass();
+  const more=fresh&&typeof joinWanted==='function'&&joinWanted();
   return head('The Ledger',here
       ?'This device is locked. The book is here, encrypted \u2014 the passphrase opens it.'
       :fresh
       ?'Nothing is in this browser yet. A ledger lives on the device it is kept on \u2014 start one, bring one in, or unlock one that is already in the cloud.'
       :'This copy is locked. Nothing about your finances is stored in this page — it is fetched and decrypted with your passphrase.','')
-   /* At a Ledger Cloud address, the account comes first (views/join.js, v28.60). */
+   /* At a Ledger Cloud address, the account comes first (views/join.js, v28.60) — and since v28.65 it stands
+      alone: a newcomer met by four cards of passphrase copy read none of them. The other three doors (a book on
+      this device only, a passphrase, a backup file) fold under one line, a <details>, which needs no script and
+      is read by a screen reader as what it is. The owner's own copy, with no account card, keeps its doors open. */
    +(fresh&&typeof joinCard==='function'?joinCard():'')
+   +(more?'<details class="moreways"><summary>Other ways to start — a book on this device only, a passphrase, or a backup file</summary>':'')
    +(fresh
      /* FIRST, AND A REAL BUTTON. Written for the person who has never seen this
         app: it says what pressing it does, and what the app is, in the two
@@ -36806,7 +36824,8 @@ Views.locked=function(){
       lead card above instead, where somebody who has never seen this app can
       find it without reading two cards of passphrase copy first. */
    +(here||fresh?'':'<button class="btn ghost" data-act="unlockskip">Start an empty book</button>')+'</div>'
-   +'</div>';
+   +'</div>'
+   +(more?'</details>':'');
 };
 
 /* ---- JOIN: THE FIRST SCREEN'S ACCOUNT CARD (v28.60) ----
