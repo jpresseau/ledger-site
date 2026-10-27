@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-TDY9nBxfc8/Fkawv7URhRB2f+WgrZy3V3WrrrDOVrqA=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-eIYlT2/Wq5keHHACZ0rvpacfr3Y+0BQH1/edTs9YI7k=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -733,6 +733,35 @@ kbd{font:11px var(--mono);border:1px solid var(--hair);border-bottom-width:2px;b
    and no padding, so it measured 36x18 — a control you press to set the figure
    the whole row is judged against. */
 .budbtn{font-variant-numeric:tabular-nums;font-size:12px;padding:4px 6px;min-height:24px}
+
+/* ---- the month as a list of days (views/daylist.js, v28.64) ---- */
+.dayl{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+/* A card is a wrapping row: the heading and the ⋯ (tilemenu.js wires one after every render, as the last child) share
+   the first line, and the charges come after at full width — so the ⋯ never sits on the day's total. The heading's
+   basis is 60% of the card, not 0: at 0 the first charge (100%) fitted on the heading's line beside a ⋯ of no
+   width, and the heading was left 0px wide. */
+.dayl .dl{display:flex;flex-wrap:wrap;align-items:center;background:var(--card);border:1px solid var(--hair);border-radius:var(--r);padding:8px 12px 6px;box-shadow:var(--sh1)}
+.dayl .dl>.tmbtn{position:static;flex:none;margin-left:2px;order:0}
+.dayl .dlr{flex:0 0 100%;order:1}
+.dayl .dl.wknd{background:var(--shelf)}
+.dayl .dl.today{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+/* The day is the target: the whole heading, a thumb's height. */
+.dayl .dlh{display:flex;align-items:baseline;gap:8px;flex:1 1 60%;min-width:0;min-height:36px;padding:2px 0;background:none;border:0;
+  color:var(--ink);font:inherit;text-align:left;cursor:pointer;border-radius:6px}
+.dayl .dlh:hover{color:var(--accent-deep)}
+.dayl .dln{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;min-width:22px}
+.dayl .dlw{font-size:11px;font-weight:700;color:var(--sub2);text-transform:uppercase;letter-spacing:.06em}
+.dayl .dlh .cald-r{align-self:center}
+.dayl .dlt{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;font-size:14px}
+.dayl .dlr{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--hair2);font-size:13px;min-width:0}
+.dayl .dlr .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dayl .dlr .dlc{font-weight:600;flex:none}
+.dayl .dlr .dlm{color:var(--sub);font-size:12px;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dayl .dlr .dlk{display:inline-flex;color:var(--pos);flex:none}
+.dayl .dlr .dla{margin-left:auto;font-variant-numeric:tabular-nums;flex:none}
+.dayl .dlr.recd .dla{color:var(--sub)}
+.dladd{align-items:center;gap:10px;margin-bottom:14px}
+@media(max-width:700px){ .dayl .dlh{min-height:44px} }
 
 /* ---- toast ---- */
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(14px) scale(.97);
@@ -2519,11 +2548,11 @@ details.masec>summary.mash{cursor:pointer}
    a figure, beside the avatar on a Bills/Subscriptions/Cards tile, after the rate on a Cash back
    category, among an offer's buttons. Quiet until the tile is hovered or the button has focus;
    always shown where there is no hover (a touch screen), where it is also a long press away. */
-:is(.plate,.hmo,.taxhero){position:relative}
+:is(.plate,.hmo,.taxhero,.dl){position:relative}
 .tmbtn{position:absolute;right:6px;bottom:6px;width:28px;height:28px;padding:0;display:grid;place-items:center;
   border:1px solid transparent;border-radius:50%;background:transparent;color:var(--sub);cursor:pointer;
   font:700 17px/1 var(--sans);letter-spacing:0;opacity:.55;transition:opacity .15s,background .15s,border-color .15s}
-:is(.plate,.hmo,.taxhero,tr.rwask,tr.rwoffer):is(:hover,:focus-within,.tmon) .tmbtn,.tmbtn[aria-expanded="true"]{opacity:1}
+:is(.plate,.hmo,.taxhero,tr.rwask,tr.rwoffer,.dl):is(:hover,:focus-within,.tmon) .tmbtn,.tmbtn[aria-expanded="true"]{opacity:1}
 .tmbtn:hover,.tmbtn:focus-visible,.tmbtn[aria-expanded="true"]{background:color-mix(in srgb,var(--ink) 8%,var(--card));border-color:var(--hair);color:var(--ink)}
 @media(hover:none){.tmbtn{opacity:.85}}
 /* On a figure: a little smaller and tucked into the corner, with room kept for it (tilemenu.js, _tmRoom; v27.77). */
@@ -2537,7 +2566,7 @@ details.masec>summary.mash{cursor:pointer}
 .rwpage table.rwasks tr{grid-template-columns:1fr auto auto;grid-template-areas:"what rate menu" "card card card"}
 .rwpage table.rwasks td.tmcell{grid-area:menu;width:auto}
 .hmo .tmbtn{top:2px;bottom:auto;right:2px;width:24px;height:24px;font-size:15px}
-:is(.plate,.hmo,.taxhero,tr.rwask,tr.rwoffer).tmon{box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent)}
+:is(.plate,.hmo,.taxhero,tr.rwask,tr.rwoffer,.dl).tmon{box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent)}
 .tmenu{position:fixed;z-index:400;min-width:230px;max-width:min(330px,calc(100vw - 16px));padding:6px;border-radius:12px;
   background:var(--card);border:1px solid var(--hair);box-shadow:0 18px 44px -14px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.08)}
 .tmhead{font-size:11.5px;font-weight:700;color:var(--ink);padding:6px 10px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -3023,7 +3052,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.63";
+const APP_V="v28.64";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3045,7 +3074,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="cc9c6fc";
+const APP_BUILD="7c0250a";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -9514,7 +9543,8 @@ const S={
   /* Which shape the month is being read in — the sheet, or the calendar.
      Remembered on the device: it is how this browser likes to read a month,
      not a fact about the money, so it does not belong in the book or the sync. */
-  mview:(function(){ try{ return localStorage.getItem('pfLedger_mview')==='cal'?'cal':'sheet'; }catch(e){ return 'sheet'; } })(),
+  /* How the month is drawn: the device's choice, else a phone starts on the list of days (views/daylist.js, v28.64). */
+  mview:(function(){ let saved=null; try{ saved=localStorage.getItem('pfLedger_mview'); }catch(e){} return mviewDefault(saved,window.innerWidth); })(),
   /* A never-unlocked browser has no months at all, and this runs before the
      first render — so it cannot assume there is a last one to fall back to. */
   month:(()=>{const t=new Date();const k=mkey(t.getFullYear(),t.getMonth()+1);
@@ -9731,7 +9761,7 @@ function _render(){
     if(cs&&!_capShown){ _capShown=true; try{ cs.scrollIntoView({block:'center',behavior:'smooth'}); }catch(e){ cs.scrollIntoView(); } }
     else if(!cs) _capShown=false;
   }
-  document.querySelector('main').classList.toggle('gridview',!shut&&S.view==='months'&&S.mview!=='cal');
+  document.querySelector('main').classList.toggle('gridview',!shut&&S.view==='months'&&S.mview==='sheet');
   const pg=document.querySelector('main .pagewrap');
   pg.classList.remove('pagewrap'); void pg.offsetWidth; pg.classList.add('pagewrap');
   /* The Today chip's count and the app icon's (today.js, v28.08). */
@@ -10128,7 +10158,7 @@ window.addEventListener('resize',function(){ clearTimeout(_scrollersT); _scrolle
    (_tmAct) — so a menu adds a way in and never a second implementation. The menu
    is role=menu with menuitems: arrows, Home and End move, Escape and Tab close,
    and focus goes back to where it came from. */
-const TILE_SEL='#page .plate, #page .hmo, #page tr.rwask, #page tr.rwoffer, #page .taxhero';
+const TILE_SEL='#page .plate, #page .hmo, #page tr.rwask, #page tr.rwoffer, #page .taxhero, #page .dl';
 const TM={items:[],from:null,tile:null,press:null,swallow:0};
 /* Through the page's own click handler: a button that is not on the page, clicked once. */
 function _tmAct(act,data){
@@ -10196,6 +10226,14 @@ const TILE_MENUS=[
     return [
       plays?{label:'Open '+plays.textContent.trim(),ico:'🎯',run:function(){ plays.click(); }}:null,
       {label:'Copy',ico:'📋',run:function(){ _tmCopy([cap,big,sub].filter(Boolean).join(' \u2014 ')); }}
+    ]; }},
+  /* A day in the month's list (views/daylist.js, v28.64): the drawer the heading opens, and the day as words. */
+  {sel:'.dl', title:function(el){ const mo=monthByKey(S.month); return el.dataset.d+' '+(mo?MA[mo.m-1]:'')+(mo?' '+mo.y:''); }, items:function(el){
+    const d=el.dataset.d, rows=[].slice.call(el.querySelectorAll('.dlr')), mo=monthByKey(S.month), when=d+' '+(mo?MA[mo.m-1]:'');
+    return [
+      {label:'Open '+when+' \u2014 every charge on it',ico:'\ud83d\udcc5',run:function(){ _tmAct('dayopen',{d:d}); }},
+      {label:'Copy',ico:'\ud83d\udccb',run:function(){ _tmCopy(when+': '+_tmText(el,'.dlt')+' across '+rows.length+' charge'+(rows.length===1?'':'s')
+        +(rows.length?' \u2014 '+rows.map(function(r){ return _tmText(r,'.dlc')+(_tmText(r,'.dlm')?' ('+_tmText(r,'.dlm')+')':'')+' '+_tmText(r,'.dla'); }).join(', '):'')); }}
     ]; }},
   {sel:'.plate', title:function(el){ return _tmText(el,'.k')||_tmText(el,'.v'); }, items:function(el){
     const k=_tmText(el,'.k'), v=_tmText(el,'.v'), s=_tmText(el,'.s');
@@ -11459,8 +11497,10 @@ Views.months=function(){
    +'<button class="chip" data-act="mnav" data-dir="1">Next ›</button>'
    +(monthByKey(nextK)?'':'<button class="chip" data-act="mnew" data-k="'+nextK+'">+ Start '+MA[Number(nextK.split('-')[1])-1]+' '+nextK.split('-')[0]+'</button>')
    +'<button class="chip" data-act="mtoday">Today</button>'
-   +'<span class="segbtn"><button class="'+(S.mview==='cal'?'on':'')+'" data-act="mview" data-v="cal">Calendar</button>'
-     +'<button class="'+(S.mview!=='cal'?'on':'')+'" data-act="mview" data-v="sheet">Sheet</button></span>'
+   /* Three pictures of one month (v28.64): the days as a list — a phone's default — the calendar, the sheet. */
+   +'<span class="segbtn"><button class="'+(S.mview==='list'?'on':'')+'" data-act="mview" data-v="list">Days</button>'
+     +'<button class="'+(S.mview==='cal'?'on':'')+'" data-act="mview" data-v="cal">Calendar</button>'
+     +'<button class="'+(S.mview==='sheet'?'on':'')+'" data-act="mview" data-v="sheet">Sheet</button></span>'
    /* "Categories" reads as a place to look at them. It is also the only way to
       make one, which is not something the word offers. */
    +'<button class="chip" data-act="catmg">Categories +</button>'
@@ -11470,7 +11510,7 @@ Views.months=function(){
    +'<div class="stamp">SHEET '+(idx+1)+' OF '+DB.months.length+'</div></div>'
    +catOfferBar(mo)
    +monthPastePanel(mo)
-   +(S.mview==='cal'?calendarHtml(mo):
+   +(S.mview==='list'?dayListHtml(mo):S.mview==='cal'?calendarHtml(mo):
     '<div class="sheet gridsheet"><div class="tblwrap gridpane" data-mk="'+k+'"><table class="mgrid"><thead>'+thead+'</thead><tbody>'+body+'</tbody><tfoot>'+foot+'</tfoot></table></div>'
    +'<div class="kbdhint"><span><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> move</span><span><kbd>⏎</kbd> saves, <kbd>esc</kbd> cancels</span><span><kbd>⌘B</kbd> reconciles — picks which charge if there are several</span><span>click a <b>day</b> for every charge on it</span><span>type a digit to overwrite</span><span><b>+8.25</b> adds another charge to the day</span><span><b>=12.50+8.25</b> records both, and totals them</span><span><b>48.20+20%</b> adds a tip \u2014 one charge, the way the card will show it</span><span><kbd>esc</kbd> cancel</span><span><kbd>⌘K</kbd> search everything</span></div></div>')
    /* Under the grid, which is what this page is for and is sized to fill the window (gridFit; e2e "a whole month in one
@@ -36605,14 +36645,7 @@ function calendarHtml(mo){
     +'<span class="calleg-b"><i style="width:'+Math.round(100*Math.abs(x.v)/big)+'%;background:'
       +gcolor(grp(x.c))+'"></i></span></button>').join('');
 
-  const busiest=info.busiest;
-  const strip='<div class="calsum">'
-    +'<span><b>'+money(info.total)+'</b> <span class="mut">across '+info.count
-      +' charge'+(info.count===1?'':'s')+'</span></span>'
-    +(busiest?'<span class="mut">busiest: '+busiest.d+' '+MA[mo.m-1]+' · '+money(busiest.total)+'</span>':'')
-    +'<span class="mut">'+info.recN+' of '+info.count+' reconciled</span>'
-    +'</div>';
-
+  const strip=calSumHtml(mo,info);   /* shared with the list of days (views/daylist.js) */
   return strip
     +'<div class="sheet nofold calsheet">'
     +'<div class="caldow">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
@@ -36621,6 +36654,62 @@ function calendarHtml(mo){
     +'</div>'
     +(byCat.length?'<div class="sheet nofold"><h3>Where it went</h3><div class="calleg-wrap">'+legend+'</div>'
       +'<div class="mut" style="font-size:11.5px;margin-top:8px">Click a category to see every charge in it.</div></div>':'');
+}
+
+/* ================= THE MONTH AS A LIST OF DAYS (v28.64) =================
+   The sheet is a pivot table and the calendar a grid of seven, and at a phone's width the first shows four of a
+   dozen columns with no sign of the rest, while the second clips every figure in its 44px cells. A month on a phone
+   is a list: the days that had a charge, newest first, each with its total and the charges on it — category,
+   merchant where a filed receipt names one, amount, and whether a statement has accounted for it. Nothing here is
+   new data and nothing here is a second place to edit: a day opens the same drawer the sheet and the calendar open.
+   It is the third view beside Calendar and Sheet (S.mview, kept on the device), and the one a phone starts on. */
+
+/* What a device that has not chosen opens the month as: a phone the list, anything wider the sheet. A choice kept
+   on the device (pfLedger_mview) wins. Pure, so the table of cases is a unit test. */
+function mviewDefault(saved,width){
+  if(saved==='cal'||saved==='list'||saved==='sheet') return saved;
+  return Number(width)<=700?'list':'sheet';
+}
+/* The month's figures above either picture of it: the total and the count, the busiest day, how much is reconciled. */
+function calSumHtml(mo,info){
+  const busiest=info.busiest;
+  return '<div class="calsum">'
+    +'<span><b>'+money(info.total)+'</b> <span class="mut">across '+info.count
+      +' charge'+(info.count===1?'':'s')+'</span></span>'
+    +(busiest?'<span class="mut">busiest: '+busiest.d+' '+MA[mo.m-1]+' · '+money(busiest.total)+'</span>':'')
+    +'<span class="mut">'+info.recN+' of '+info.count+' reconciled</span>'
+    +'</div>';
+}
+function dayListCard(mo,d,info,todayD){
+  const dow=new Date(mo.y,mo.m-1,d).getDay(), wknd=(dow===0||dow===6);
+  const rows=dayCharges(mo,d).map(c=>Object.assign({},c,{who:dayMerchant(mo,d,c.ci,c.amt)}));
+  /* How settled the day is, the calendar's own marks: filled when every charge is accounted for, part-filled when some. */
+  const mark=info.rec===0?'':info.rec>=info.n
+    ?'<span class="cald-r all" title="all '+info.n+' reconciled"></span>'
+    :'<span class="cald-r some" title="'+info.rec+' of '+info.n+' reconciled"></span>';
+  return '<div class="dl'+(wknd?' wknd':'')+(d===todayD?' today':'')+'" data-d="'+d+'">'
+    +'<button class="dlh" data-act="dayopen" data-d="'+d+'" title="Open '+d+' '+MA[mo.m-1]+' — every charge on this day">'
+    +'<span class="dln">'+d+'</span><span class="dlw">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dow]+'</span>'+mark
+    +'<span class="dlt">'+money(info.total)+'</span></button>'
+    +rows.map(c=>'<div class="dlr'+(c.rec?' recd':'')+'"><i class="dot" style="background:'+gcolor(grp(mo.cats[c.ci]))+'"></i>'
+      +'<span class="dlc">'+esc(mo.cats[c.ci]||'—')+'</span>'
+      +(c.who?'<span class="dlm">'+esc(c.who)+'</span>':'')
+      +(c.rec?'<span class="dlk" title="A statement has accounted for this" aria-label="reconciled">'+ico('check',12)+'</span>':'')
+      +'<span class="dla">'+money(c.amt)+'</span></div>').join('')
+    +'</div>';
+}
+function dayListHtml(mo){
+  const info=calMonth(mo), dim=daysIn(mo.y,mo.m), now=new Date();
+  const todayD=(now.getFullYear()===mo.y&&now.getMonth()+1===mo.m)?now.getDate():0;
+  const days=[]; for(let d=dim;d>=1;d--) if(info.days[d]) days.push(d);
+  /* Where a new charge goes: today in the month being lived, else the month's first day — the drawer takes it from there. */
+  const addD=todayD||1;
+  const add='<div class="formrow dladd"><button class="btn sm" data-act="dayopen" data-d="'+addD+'">+ Add a charge</button>'
+    +'<span class="mut" style="font-size:11.5px">A day opens every charge on it; the Sheet and the Calendar are the same month, laid out otherwise.</span></div>';
+  return calSumHtml(mo,info)
+    +'<div class="dayl">'+(days.length?days.map(d=>dayListCard(mo,d,info.days[d],todayD)).join('')
+      :'<div class="sheet plain"><div class="empty">Nothing on the sheet for '+esc(monthLabel(mo))+' yet.</div></div>')+'</div>'
+    +add;
 }
 
 /* ---- Locked ---- */
@@ -46180,7 +46269,7 @@ document.addEventListener('click',ev=>{
        rather than growing a second editor. */
     S.view='months'; S.month=b.dataset.y+'-'+String(b.dataset.m).padStart(2,'0'); render();
     dayDrawer(Number(b.dataset.d)); }
-  else if(act==='mview'){ S.mview=b.dataset.v==='cal'?'cal':'sheet';
+  else if(act==='mview'){ S.mview=b.dataset.v==='cal'||b.dataset.v==='list'?b.dataset.v:'sheet';
     try{ localStorage.setItem('pfLedger_mview',S.mview); }catch(e){}
     render(); }
   else if(act==='calcat'){
@@ -56016,7 +56105,7 @@ function renderOnce(name,fn){
     toast('Added '+_aug.added.join(', ')+' to '+_aug.sheets+' sheet'+(_aug.sheets===1?'':'s')
       +' from August 2026 \u2014 remove any you do not want in Categories','ok');
   },900);
-  window.__PF={S,get DB(){return DB;},set DB(v){DB=v;},setBook,chargeId,chargeIdsFill,quickAdd,isTextEntry,cellTerms,setCellTerms,setCell,gridRestore,_hasPlain,blankMonthTmpl,emptyView,bioAfterReseal,APP_V,APP_BUILD,paintChrome,parseBillAlert,billRouteFor,parseBillAlert,seriesTaken,seriesDelete,seriesFreqAll,_pdfScan,_pdfStreamEnd,pdfDiag,parseRbsInvoices,_rbsCells,rbsToRows,rbsIsInvoice,rbsIsStatement,rbsIsRbs,vendorIsGeneral,suggestDest,rbsLineOff,rbsInvoiceOff,parseRbsStatement,rbsReconcile,rbsStmtPanel,rbsTakeFiles,rbsWireDrop,rbsAlreadyIn,r4DupeRows,r4VendorKey,rbsPanel,pdfRuns,billDupe,billPastePanel,_billToken,_billDate,save,saveFlush,saveSettled,imgPut,imgGet,imgDel,imgHave,imgBytes,imgCount,imgLoadAll,imgMigrate,imgGC,imgMissing,imgMissingCount,imgAdoptFrom,imgAdoptApply,_imgKeyOf,imgPushedRead,imgMarkPushed,imgAtRisk,imgAtRiskCount,imgWouldDrop,imgReady,imgWait,imgSettled,imgUnreadable,rcpImg,rcpHasImg,rcpImgBad,_imgSrcOK,imgSealAll,imgOpenAll,imgSealedCount,imgSealStat,imgSealCatchUp,imgRekey,imgClearAll,imgShutCount,imgBrokeCount,_imgIsEnv,bookWithImages,saveWhy,SAVE_WHY,saveWhere,storageAudit,storagePanel,appInstalled,fbChosen,fbStopOwn,roomForImage,lsBytes,lsHeadroom,lsCeiling,lsRefusedAt,lsNoteRefusal,LS_CEILING,saveWarnPaint,backupMark,backupLast,backupAgeDays,backupWords,backupKindOf,cfChaseParse,bankParse,TILE_SEL,TILE_MENUS,tileMenuFor,tileMenuItems,tileMenusWire,tileMenuOpen,tileMenuClose,tileMenuRates,rwCardsAll,rwOffersAll,rwClosedIds,rwIsClosed,CF_BANK_TYPES,cfBankList,cfMainBank,cfBanks,cfBankGet,cfBankId,cfBook,cfCur,cfBankAdd,cfBankSet,cfBankDel,cfBankState,cfBankBalance,cfBankPoints,cfBankSummaryParse,cfBankInterest,CF_XFER_DAYS,cfXferKey,cfXferWords,cfTransfers,cfXferSay,cfXferNoReset,cfImportXfers,cfProjectAll,reconCards,PLAID_ACCT_K,plaidAcct,MAIL_FILE_V,mailFileReady,mailFileBook,mailFileDest,mailFileQueue,mailFileLabels,mailFilePass,mailFileSheet,mailFileList,MAIL_ASSIST_V,mailAssistReady,mailAssistState,mailAssistFiling,mailAssistOp,mailAssistCost,mailAssistSheet,mailRecapCard,mailFileOnRead,mailFileGuess,mailFileCatLabel,mailFileFind,mailFileSub,plaidAcctSet,plaidCfg,plaidCfgOnly,plaidSignIn,plaidSignOut,plaidBook,plaidTake,plaidMapSet,plaidFile,plaidInboxSettle,plaidWaiting,plaidReview,plaidRow,plaidGuess,plaidCatWord,plaidKeyNew,plaidOpen,plaidKid,plaidStatus,plaidEnsureKey,plaidConnect,plaidPull,plaidAuto,plaidRemove,plaidPanel,plaidLinkLoad,plaidOAuthOnBoot,PLAID_LINK_SRC,PLAID_SEAL_INFO,PLAID_TYPE,hhCfg,hhOn,hhBooksList,hhOpen,hhDocId,hhKeyNew,hhWrapPut,hhKeyFor,syncKeyPass,hhShare,hhInvite,hhLinkTake,hhJoin,hhMembers,hhInvites,hhRevoke,hhActivity,hhRemove,hhRekey,hhLeave,hhStop,hhGone,hhForget,bookPanel,hhInviteModal,hhJoinModal,hhLinkOnBoot,HH_WORDS,bookMerge,syncBaseSet,syncBaseGet,syncBaseForget,syncMergeWith,syncMergeDone,syncMergeAuto,syncMergeWords,syncManId,fsInit,syncBookId,syncBookOldId,syncBookV3,pfDerive3,pfSaltNew,pfSaltOk,BOOK_ID,syncEncOpt,bookSaltGet,bookSaltSet,syncBookMoved,PF_KDF_ITER3,_pkOpen,_unb64,rotatePlan,rotateState,rotateConfirmText,rotateDoneModal,pkDropSeals,_repassSecrets,syncRepass,syncNWrap,syncNUnwrap,syncSeenGet,syncSeenSet,syncIsOlder,syncNextN,cfReconWindows,cfReconDays,cfStmtBacked,mkey,monthByKey,r2v,ONCE_NAMES,ONCE_HITS,renderOnce,vpW,PDF_PARSERS,parseAnyInvoice,anyHeadRoles,anyLineOff,rbsAlreadyIn,zipStore,crc32,foldSheetLazy,zipBookText,ledgerFileText,exportAllFiles,exportAllZip,exportMint,EXPORT_EXTRA,_expGrid,aggParse,aggSniff,cfAggNear,aggToRecon,CF_AGG_DAYS,anyToInv,rbsReadRuns,rbsInvWord,aggDate,aggDateOrder,aggSuggest,cfImpStart,AGG_FORMATS,csvEsc,taxNyRules,taxStateNote,taxStatePaid,taxYearKey,taxYearEnd,taxYearEndOn,yearEndInsights,yearEndModal,YEAREND_FROM_MONTH,taxFileStateBlock,taxPlanState,cfBankGo,cfBankName,cfExpectNs,catHead,catRenamed,catRenameRcp,_cfXferLoose,catAddTo,catLineUp,catLineUpPlan,catRenameFwd,catLater,rcpOtherCats,rcpCatOk,rcpCatEnsure,rcpCatOptions,RCP_CASHBACK,RCP_CASHBACK_DAYS,rcpLooksCashback,rcpCashbackWords,rcpCashbackDest,rcpCashbackCard,rcpCashbackRedemptions,rcpCashbackFields,RW_PT_VAL,RW_PT_PILE,RW_PT_EXP_DAYS,rwPtVal,rwPoints,rwPointsAll,rwPointsLine,rwPointsNudges,rwPointsClosing,mailRedeemSubj,mailRedeemRead,mailRedeemCard,mailRedeemUse,mailRedeemDrop,mailRedeemActs,MAIL_REFUND_NEAR,mailRefundFind,mailRefundHave,mailRefundRecord,mailRefundUndo,mailRefundAuto,mailRefundChecks,mailRefundInsights,mailRefundActs,mailHandled,mailHandledText,mailHandledSheet,MAIL_SELF_DAYS,MAIL_SELF,mailIsPromo,mailSelfRun,mailSelfPass,mailSelfPreview,mailPreviewSheet,mailLessonFor,mailLessonApply,mailLessonHtml,mailSelfUndo,mailSelfChecks,mailSelfInsights,mailSelfActs,mailSelfSheet,CF_SELF_NEAR,MAIL_RCP_SEEN,mailCashBank,mailCashSureAccount,mailSelfCash,mailRcpCat,mailSelfReceipt,mailSelfUndoWhy,mailSelfMoneyUndo,MAIL_WEEK_DAYS,MAIL_WEEK_DUPE,MAIL_WEEK_KINDS,mailWeek,mailWeekSheet,cardPays,cardPayLines,cardPayWords,cardPayPoints,cardPayMissing,cardPayPanel,CARDPAY_BEFORE,CARDPAY_AFTER,cardsOpen,cfPayeeKeyV1,cfAllOn,cfAllPoints,cfAllSpan,cfAllTotal,cfAllMoves,cfXferSeries,cfComingAllPanel,cfImportCat,cfCatIndex,cfXferPanel,TAX_STATES,TAX_NO_WAGE_TAX,taxStateKey,taxStateName,taxStateTaxesWages,taxStateFor,taxIsNY,taxStateWord,taxProfileCard,_stubStateCode,BANKS,bankFrom,bankNamed,bankBody,bankTail,bankWho,bankDate,mailAttSniff,syncLegacyId,syncLegacyGone,cardClosedOn,cardIsClosed,cardClosedSet,cardCloseOpen,cardCloseSave,cardReopen,titleCase,seriesStats,seriesCycle,seriesArea,seriesTile,seriesCountUp,bankOfxParse,bankCsvParse,bankIsOfx,_cfFinish,cfAlertParse,cfAlertPanel,cfPayeeKey,cfMapGet,cfMapSet,cfGuessAccount,cfSugTokens,cfSuggestAccount,cfNewRows,cfBackfill,cfRowEntry,cfBankDays,cfBankDaysMerge,cfBankDaysNew,cfImportPlan,cfAccountAdd,cfAddDays,cfAddMonths,cfDaysBetween,cfSeriesKey,cfSeriesName,cfCadence,cfNextDate,cfNthDate,cfDatesAfter,cfAmountShape,cfCardFor,cfCardLinkGet,cfCardLinkSet,cfCardDue,cfCardDueOn,cfCardDueToggle,cfExpectGet,cfExpectSet,cfSeries,cfSeriesAll,cfSubSeries,taxPaySeries,taxPaydaysLeft,taxPerCheque,taxStubParse,taxStubDerive,taxStubGet,taxStubSave,taxDeferPace,taxWithheldPace,taxStubPanel,stubFileBtn,taxSubTabs,taxTabKey,taxYearNav,taxStamp,taxHomeData,taxHomeHtml,taxSteps,taxStepsHtml,taxDocNeeds,taxKeyDates,taxYoYWords,cfRemaining,cfForecast,cfOneStatement,cfProject,cfMovedSet,cfMovedToggle,cfIsMoved,cfSplit,cfBalancePoints,cfLatestBalance,cfStatedThrough,cfBalanceChartPts,CF_SPANS,cfSpanOk,cfSpanFrom,cfSpanPoints,cfSpanStats,CF_SECTION_ICO,cfHi,cfFresh,CF_TYPE_ICO,cfTypeIco,cfDir,cfFlowBar,SUB_KINDS,SUB_COMMON,subKind,subAvatar,subHi,subFresh,subRenew,subShareBar,BILL_KINDS,billKind,billFresh,cardMono,cardMini,cardStatus,cardFresh,RECON_SECTIONS,reconSheet,reconFresh,reconRing,NAVDEF,EMOJI,ico,ICON_STYLE,UI_WORDS,UI_ICO_DEFAULT,uiIcoFor,uiPageIco,uiPageIcoName,uiDecorate,uiEntered,macTint,macTrack,macBack,macFwd,macToolbar,macSideSet,macBadges,macPages,macGoKey,macMenuItems,macMenuShow,macMenuClose,TRIAL_WARN,TRIAL_GRACE,trialGet,trialSet,trialClear,trialState,trialsDue,trialWords,trialInsights,trialPill,trialKeep,trialCancel,trialNotify,STORE_ICO,storeLines,storePeriods,storeName,storeIco,storeTable,storeMonthly,storeCharges,storeInsights,storeDelta,WORTH_TYPES,WORTH_SPANS,worthType,worthBook,worthEnsure,worthAdd,worthSet,worthRemove,worthSources,worthAt,worthMonthly,worthInsights,worthLinkOk,rcpCardLinkGet,rcpCardLinkSet,cardTallyOpen,rcpCardOf,cardTallies,cardTally,cardTallyLostHtml,cardTallyNow,cfCardDue,cardStmtImported,cardStmtEmail,mailCardStmtSubj,mailCardStmtRead,mailCardStmtCard,mailCardStmtUse,mailCardStmtActs,cardDueGet,stmtSummary,stmtSummaryApply,cardStmtDay,cardBillWord,cardBillNote,CARDBILL_DAYS,worthLinkSet,worthDue,WORTH_MONTHLY,RET_POLICY,retPolicy,retFor,warFor,returnsDue,warrantiesEnding,retWhen,returnsInsights,returnsSheet,returnsFields,returnsRead,returnsApply,ODD_DAYS,oddId,oddCharges,oddWords,oddInsights,oddOk,oddSheet,TAXPACK_HOME,taxPackAgi,taxPackYears,taxPack,taxPackCsv,GUARD_IDLE_CHOICES,GUARD_FREE,guardIdleMinutes,guardIdleSet,guardTouch,guardDue,guardLockNow,guardWaitFor,guardUnlockWait,guardUnlockFailed,guardUnlockPassed,guardWaitWords,guardRow,MAIL_DEPS,MAIL_GAS,MAIL_GAS_V,MAIL_GAS_MANIFEST,MAIL_FROM_DEFAULT,MAIL_KINDS,MAIL_ACT,mailKeyNew,mailKeyOk,mailSigned,mailOpen,mailScriptSource,mailAddr,mailDomain,mailName,mailFromIs,mailAmounts,MAIL_TOTAL_RES,mailTotal,mailRead,mailBook,mailEnsure,mailLinked,mailUrlOk,mailStale,mailAsk,mailMerge,mailPrune,mailPull,mailWaiting,mailItem,mailMark,mailDay,mailAsText,mailQueueReceipts,mailIsPuller,mailLocal,mailLocalSet,mailSenderOk,mailRewind,mailRefusedNew,MAIL_MAX,MAIL_TEXT_SHORT,mailSays,mailAuto,mailRwMatch,mailWhen,mailCursor,mailCovers,mailNoteRefused,mailRetired,mailRetire,mailLocalReset,mailLinkKeep,mailLinkPut,mailRefundAmt,MAIL_NOTE_DAYS,MAIL_REFUND_BACK,MAIL_LOOKBACK_DAYS,MAIL_MARKS,MAIL_PAGE,MAIL_HOLD,mailShape,mailRuleKey,mailRule,mailLearn,mailAmtAs,mailMarkAs,mailResort,mailXferDir,MAIL_XFER_RE,mailCashParse,mailCashOpen,mailSubGuess,mailSubOpen,mailSubPanel,mailLegacyKey,mailTwins,mailIgnore,mailUnignore,MAIL_ATT_AUTO,mailAttIsPdf,mailAttIsImg,mailAttsClean,mailAttTexts,mailAttCan,mailAttFetch,mailAttApply,mailAttRead,mailAttAuto,mailAttIsRbs,mailAttFile,mailAttWent,mailAttOpen,mailAttRow,CLOUD_K,LEDGER_CLOUD_URL,cloudCfg,cloudOn,cloudSet,cloudUrlOk,cloudCall,cloudFs,cloudSignUp,cloudSignIn,cloudSignOut,cloudMe,cloudDeleteAccount,cloudPanel,REC_ID,recKeyNew,recNorm,recFmt,recSeal,recOpen,recHas,recMake,recRecover,recRewrap,cloudUrlKnown,readEngine,cloudForgot,cloudReset,cloudVerify,cloudVerifySend,cloudPwChange,cloudLinkTake,cloudLinkOnBoot,cloudSessions,cloudSessionEnd,cloudSessionsEndOthers,cloudActivity,ACT_WORDS,actWords,actWhen,actPanel,pkSupported,pkAdd,pkSignIn,pkList,pkRemove,pkRewrap,_pkDocId,WEL_CATS,WEL_STEPS,welDraft,welList,welPlan,welApply,welWanted,MAIL_ATT_LOOK,mailAttTargets,cfReconPoints,cfReconDays,cfStmtBacked,cfReconWindows,cfReconSummary,cfReconBlame,cfImportPanel,cfComingPanel,cfOverdue,CF_STANDIN_DAYS,cfPaidNote,cfChipWord,cfChipKey,subPayGet,subPaySet,subPayer,subPayNote,subPayModal,SUBPAY_DAYS,cfSettled,cfSettledSummary,CF_SETTLED_BACK,cfSettledPanel,CF_ASSUMED,cfIsAssumed,cfLateSkipSet,cfAssumedSpent,get saveBlock(){return saveBlock;},get saveState(){return saveState;},render,Views,healFromSeed,money,catSums,
+  window.__PF={S,get DB(){return DB;},set DB(v){DB=v;},setBook,chargeId,chargeIdsFill,quickAdd,isTextEntry,cellTerms,setCellTerms,setCell,gridRestore,_hasPlain,blankMonthTmpl,emptyView,bioAfterReseal,APP_V,APP_BUILD,paintChrome,parseBillAlert,billRouteFor,parseBillAlert,seriesTaken,seriesDelete,seriesFreqAll,_pdfScan,_pdfStreamEnd,pdfDiag,parseRbsInvoices,_rbsCells,rbsToRows,rbsIsInvoice,rbsIsStatement,rbsIsRbs,vendorIsGeneral,suggestDest,rbsLineOff,rbsInvoiceOff,parseRbsStatement,rbsReconcile,rbsStmtPanel,rbsTakeFiles,rbsWireDrop,rbsAlreadyIn,r4DupeRows,r4VendorKey,rbsPanel,pdfRuns,billDupe,billPastePanel,_billToken,_billDate,save,saveFlush,saveSettled,imgPut,imgGet,imgDel,imgHave,imgBytes,imgCount,imgLoadAll,imgMigrate,imgGC,imgMissing,imgMissingCount,imgAdoptFrom,imgAdoptApply,_imgKeyOf,imgPushedRead,imgMarkPushed,imgAtRisk,imgAtRiskCount,imgWouldDrop,imgReady,imgWait,imgSettled,imgUnreadable,rcpImg,rcpHasImg,rcpImgBad,_imgSrcOK,imgSealAll,imgOpenAll,imgSealedCount,imgSealStat,imgSealCatchUp,imgRekey,imgClearAll,imgShutCount,imgBrokeCount,_imgIsEnv,bookWithImages,saveWhy,SAVE_WHY,saveWhere,storageAudit,storagePanel,appInstalled,fbChosen,fbStopOwn,roomForImage,lsBytes,lsHeadroom,lsCeiling,lsRefusedAt,lsNoteRefusal,LS_CEILING,saveWarnPaint,backupMark,backupLast,backupAgeDays,backupWords,backupKindOf,cfChaseParse,bankParse,TILE_SEL,TILE_MENUS,tileMenuFor,tileMenuItems,tileMenusWire,tileMenuOpen,tileMenuClose,tileMenuRates,rwCardsAll,rwOffersAll,rwClosedIds,rwIsClosed,CF_BANK_TYPES,cfBankList,cfMainBank,cfBanks,cfBankGet,cfBankId,cfBook,cfCur,cfBankAdd,cfBankSet,cfBankDel,cfBankState,cfBankBalance,cfBankPoints,cfBankSummaryParse,cfBankInterest,CF_XFER_DAYS,cfXferKey,cfXferWords,cfTransfers,cfXferSay,cfXferNoReset,cfImportXfers,cfProjectAll,reconCards,PLAID_ACCT_K,plaidAcct,MAIL_FILE_V,mailFileReady,mailFileBook,mailFileDest,mailFileQueue,mailFileLabels,mailFilePass,mailFileSheet,mailFileList,MAIL_ASSIST_V,mailAssistReady,mailAssistState,mailAssistFiling,mailAssistOp,mailAssistCost,mailAssistSheet,mailRecapCard,mailFileOnRead,mailFileGuess,mailFileCatLabel,mailFileFind,mailFileSub,plaidAcctSet,plaidCfg,plaidCfgOnly,plaidSignIn,plaidSignOut,plaidBook,plaidTake,plaidMapSet,plaidFile,plaidInboxSettle,plaidWaiting,plaidReview,plaidRow,plaidGuess,plaidCatWord,plaidKeyNew,plaidOpen,plaidKid,plaidStatus,plaidEnsureKey,plaidConnect,plaidPull,plaidAuto,plaidRemove,plaidPanel,plaidLinkLoad,plaidOAuthOnBoot,PLAID_LINK_SRC,PLAID_SEAL_INFO,PLAID_TYPE,hhCfg,hhOn,hhBooksList,hhOpen,hhDocId,hhKeyNew,hhWrapPut,hhKeyFor,syncKeyPass,hhShare,hhInvite,hhLinkTake,hhJoin,hhMembers,hhInvites,hhRevoke,hhActivity,hhRemove,hhRekey,hhLeave,hhStop,hhGone,hhForget,bookPanel,hhInviteModal,hhJoinModal,hhLinkOnBoot,HH_WORDS,bookMerge,syncBaseSet,syncBaseGet,syncBaseForget,syncMergeWith,syncMergeDone,syncMergeAuto,syncMergeWords,syncManId,fsInit,syncBookId,syncBookOldId,syncBookV3,pfDerive3,pfSaltNew,pfSaltOk,BOOK_ID,syncEncOpt,bookSaltGet,bookSaltSet,syncBookMoved,PF_KDF_ITER3,_pkOpen,_unb64,rotatePlan,rotateState,rotateConfirmText,rotateDoneModal,pkDropSeals,_repassSecrets,syncRepass,syncNWrap,syncNUnwrap,syncSeenGet,syncSeenSet,syncIsOlder,syncNextN,cfReconWindows,cfReconDays,cfStmtBacked,mkey,monthByKey,r2v,ONCE_NAMES,ONCE_HITS,renderOnce,vpW,PDF_PARSERS,parseAnyInvoice,anyHeadRoles,anyLineOff,rbsAlreadyIn,zipStore,crc32,foldSheetLazy,zipBookText,ledgerFileText,exportAllFiles,exportAllZip,exportMint,EXPORT_EXTRA,_expGrid,aggParse,aggSniff,cfAggNear,aggToRecon,CF_AGG_DAYS,anyToInv,rbsReadRuns,rbsInvWord,aggDate,aggDateOrder,aggSuggest,cfImpStart,AGG_FORMATS,csvEsc,taxNyRules,taxStateNote,taxStatePaid,taxYearKey,taxYearEnd,taxYearEndOn,yearEndInsights,yearEndModal,YEAREND_FROM_MONTH,taxFileStateBlock,taxPlanState,cfBankGo,cfBankName,cfExpectNs,catHead,catRenamed,catRenameRcp,_cfXferLoose,catAddTo,catLineUp,catLineUpPlan,catRenameFwd,catLater,rcpOtherCats,rcpCatOk,rcpCatEnsure,rcpCatOptions,RCP_CASHBACK,RCP_CASHBACK_DAYS,rcpLooksCashback,rcpCashbackWords,rcpCashbackDest,rcpCashbackCard,rcpCashbackRedemptions,rcpCashbackFields,RW_PT_VAL,RW_PT_PILE,RW_PT_EXP_DAYS,rwPtVal,rwPoints,rwPointsAll,rwPointsLine,rwPointsNudges,rwPointsClosing,mailRedeemSubj,mailRedeemRead,mailRedeemCard,mailRedeemUse,mailRedeemDrop,mailRedeemActs,MAIL_REFUND_NEAR,mailRefundFind,mailRefundHave,mailRefundRecord,mailRefundUndo,mailRefundAuto,mailRefundChecks,mailRefundInsights,mailRefundActs,mailHandled,mailHandledText,mailHandledSheet,MAIL_SELF_DAYS,MAIL_SELF,mailIsPromo,mailSelfRun,mailSelfPass,mailSelfPreview,mailPreviewSheet,mailLessonFor,mailLessonApply,mailLessonHtml,mailSelfUndo,mailSelfChecks,mailSelfInsights,mailSelfActs,mailSelfSheet,CF_SELF_NEAR,MAIL_RCP_SEEN,mailCashBank,mailCashSureAccount,mailSelfCash,mailRcpCat,mailSelfReceipt,mailSelfUndoWhy,mailSelfMoneyUndo,MAIL_WEEK_DAYS,MAIL_WEEK_DUPE,MAIL_WEEK_KINDS,mailWeek,mailWeekSheet,cardPays,cardPayLines,cardPayWords,cardPayPoints,cardPayMissing,cardPayPanel,CARDPAY_BEFORE,CARDPAY_AFTER,cardsOpen,cfPayeeKeyV1,cfAllOn,cfAllPoints,cfAllSpan,cfAllTotal,cfAllMoves,cfXferSeries,cfComingAllPanel,cfImportCat,cfCatIndex,cfXferPanel,TAX_STATES,TAX_NO_WAGE_TAX,taxStateKey,taxStateName,taxStateTaxesWages,taxStateFor,taxIsNY,taxStateWord,taxProfileCard,_stubStateCode,BANKS,bankFrom,bankNamed,bankBody,bankTail,bankWho,bankDate,mailAttSniff,syncLegacyId,syncLegacyGone,cardClosedOn,cardIsClosed,cardClosedSet,cardCloseOpen,cardCloseSave,cardReopen,titleCase,seriesStats,seriesCycle,seriesArea,seriesTile,seriesCountUp,bankOfxParse,bankCsvParse,bankIsOfx,_cfFinish,cfAlertParse,cfAlertPanel,cfPayeeKey,cfMapGet,cfMapSet,cfGuessAccount,cfSugTokens,cfSuggestAccount,cfNewRows,cfBackfill,cfRowEntry,cfBankDays,cfBankDaysMerge,cfBankDaysNew,cfImportPlan,cfAccountAdd,cfAddDays,cfAddMonths,cfDaysBetween,cfSeriesKey,cfSeriesName,cfCadence,cfNextDate,cfNthDate,cfDatesAfter,cfAmountShape,cfCardFor,cfCardLinkGet,cfCardLinkSet,cfCardDue,cfCardDueOn,cfCardDueToggle,cfExpectGet,cfExpectSet,cfSeries,cfSeriesAll,cfSubSeries,taxPaySeries,taxPaydaysLeft,taxPerCheque,taxStubParse,taxStubDerive,taxStubGet,taxStubSave,taxDeferPace,taxWithheldPace,taxStubPanel,stubFileBtn,taxSubTabs,taxTabKey,taxYearNav,taxStamp,taxHomeData,taxHomeHtml,taxSteps,taxStepsHtml,taxDocNeeds,taxKeyDates,taxYoYWords,cfRemaining,cfForecast,cfOneStatement,cfProject,cfMovedSet,cfMovedToggle,cfIsMoved,cfSplit,cfBalancePoints,cfLatestBalance,cfStatedThrough,cfBalanceChartPts,CF_SPANS,cfSpanOk,cfSpanFrom,cfSpanPoints,cfSpanStats,CF_SECTION_ICO,cfHi,cfFresh,CF_TYPE_ICO,cfTypeIco,cfDir,cfFlowBar,SUB_KINDS,SUB_COMMON,subKind,subAvatar,subHi,subFresh,subRenew,subShareBar,BILL_KINDS,billKind,billFresh,cardMono,cardMini,cardStatus,cardFresh,RECON_SECTIONS,reconSheet,reconFresh,reconRing,NAVDEF,EMOJI,ico,ICON_STYLE,UI_WORDS,UI_ICO_DEFAULT,uiIcoFor,uiPageIco,uiPageIcoName,uiDecorate,uiEntered,macTint,macTrack,macBack,macFwd,macToolbar,macSideSet,macBadges,macPages,macGoKey,macMenuItems,macMenuShow,macMenuClose,TRIAL_WARN,TRIAL_GRACE,trialGet,trialSet,trialClear,trialState,trialsDue,trialWords,trialInsights,trialPill,trialKeep,trialCancel,trialNotify,STORE_ICO,storeLines,storePeriods,storeName,storeIco,storeTable,storeMonthly,storeCharges,storeInsights,storeDelta,WORTH_TYPES,WORTH_SPANS,worthType,worthBook,worthEnsure,worthAdd,worthSet,worthRemove,worthSources,worthAt,worthMonthly,worthInsights,worthLinkOk,rcpCardLinkGet,rcpCardLinkSet,cardTallyOpen,rcpCardOf,cardTallies,cardTally,cardTallyLostHtml,cardTallyNow,cfCardDue,cardStmtImported,cardStmtEmail,mailCardStmtSubj,mailCardStmtRead,mailCardStmtCard,mailCardStmtUse,mailCardStmtActs,cardDueGet,stmtSummary,stmtSummaryApply,cardStmtDay,cardBillWord,cardBillNote,CARDBILL_DAYS,worthLinkSet,worthDue,WORTH_MONTHLY,RET_POLICY,retPolicy,retFor,warFor,returnsDue,warrantiesEnding,retWhen,returnsInsights,returnsSheet,returnsFields,returnsRead,returnsApply,ODD_DAYS,oddId,oddCharges,oddWords,oddInsights,oddOk,oddSheet,TAXPACK_HOME,taxPackAgi,taxPackYears,taxPack,taxPackCsv,GUARD_IDLE_CHOICES,GUARD_FREE,guardIdleMinutes,guardIdleSet,guardTouch,guardDue,guardLockNow,guardWaitFor,guardUnlockWait,guardUnlockFailed,guardUnlockPassed,guardWaitWords,guardRow,MAIL_DEPS,MAIL_GAS,MAIL_GAS_V,MAIL_GAS_MANIFEST,MAIL_FROM_DEFAULT,MAIL_KINDS,MAIL_ACT,mailKeyNew,mailKeyOk,mailSigned,mailOpen,mailScriptSource,mailAddr,mailDomain,mailName,mailFromIs,mailAmounts,MAIL_TOTAL_RES,mailTotal,mailRead,mailBook,mailEnsure,mailLinked,mailUrlOk,mailStale,mailAsk,mailMerge,mailPrune,mailPull,mailWaiting,mailItem,mailMark,mailDay,mailAsText,mailQueueReceipts,mailIsPuller,mailLocal,mailLocalSet,mailSenderOk,mailRewind,mailRefusedNew,MAIL_MAX,MAIL_TEXT_SHORT,mailSays,mailAuto,mailRwMatch,mailWhen,mailCursor,mailCovers,mailNoteRefused,mailRetired,mailRetire,mailLocalReset,mailLinkKeep,mailLinkPut,mailRefundAmt,MAIL_NOTE_DAYS,MAIL_REFUND_BACK,MAIL_LOOKBACK_DAYS,MAIL_MARKS,MAIL_PAGE,MAIL_HOLD,mailShape,mailRuleKey,mailRule,mailLearn,mailAmtAs,mailMarkAs,mailResort,mailXferDir,MAIL_XFER_RE,mailCashParse,mailCashOpen,mailSubGuess,mailSubOpen,mailSubPanel,mailLegacyKey,mailTwins,mailIgnore,mailUnignore,MAIL_ATT_AUTO,mailAttIsPdf,mailAttIsImg,mailAttsClean,mailAttTexts,mailAttCan,mailAttFetch,mailAttApply,mailAttRead,mailAttAuto,mailAttIsRbs,mailAttFile,mailAttWent,mailAttOpen,mailAttRow,CLOUD_K,LEDGER_CLOUD_URL,cloudCfg,cloudOn,cloudSet,cloudUrlOk,cloudCall,cloudFs,cloudSignUp,cloudSignIn,cloudSignOut,cloudMe,cloudDeleteAccount,cloudPanel,REC_ID,recKeyNew,recNorm,recFmt,recSeal,recOpen,recHas,recMake,recRecover,recRewrap,cloudUrlKnown,readEngine,cloudForgot,cloudReset,cloudVerify,cloudVerifySend,cloudPwChange,cloudLinkTake,cloudLinkOnBoot,cloudSessions,cloudSessionEnd,cloudSessionsEndOthers,cloudActivity,ACT_WORDS,actWords,actWhen,actPanel,pkSupported,pkAdd,pkSignIn,pkList,pkRemove,pkRewrap,_pkDocId,WEL_CATS,WEL_STEPS,welDraft,welList,welPlan,welApply,welWanted,MAIL_ATT_LOOK,mailAttTargets,cfReconPoints,cfReconDays,cfStmtBacked,cfReconWindows,cfReconSummary,cfReconBlame,cfImportPanel,cfComingPanel,cfOverdue,CF_STANDIN_DAYS,cfPaidNote,cfChipWord,cfChipKey,subPayGet,subPaySet,subPayer,subPayNote,subPayModal,SUBPAY_DAYS,cfSettled,cfSettledSummary,CF_SETTLED_BACK,cfSettledPanel,CF_ASSUMED,cfIsAssumed,cfLateSkipSet,cfAssumedSpent,get saveBlock(){return saveBlock;},get saveState(){return saveState;},render,Views,healFromSeed,mviewDefault,dayListHtml,calSumHtml,money,catSums,
     undo,undo,redo,snap,snapCancel,toast,palOpen,palClose,palSearch,palIsOpen,PAL,UNDO,REDO,
     computeInsights,bookIntegrity,taxOpenMoney,taxOpenMoneyHtml,integrityHtml,_grpMonthly,chartW,chartBand,billMonths,billPerMonth,cfCadenceFromFreq,seriesMonthsPer,seriesFreqLabel,seriesPerMonth,seriesRate,seriesFreqGet,SERIES_FREQ_OPTS,SERIES_AUTO,seriesIsAuto,seriesAutoGet,seriesAutoWindow,seriesAutoDue,seriesAutoNext,seriesAutoRun,seriesRecord,seriesAutoSet,seriesAutoTick,seriesAutoAfterSync,workOverdue,workDepositKey,workReimbMatches,workPaidBy,workFollowInsights,WORK_LATE_DAYS,subsHistory,subsHistorySheet,SUBS_HIST_MONTHS,subsMerchantKey,subsDisplayName,subsFound,subsFoundAdd,subsFoundNot,subsFoundSheet,subsLineSeries,subsFromLine,subsLineUnlink,subsLineLink,subsLinePicker,seriesPriceChange,seriesPriceWatched,seriesPriceRecent,seriesCosts,RW_ALWAYS_FROM,RW_ALWAYS_TO,rwIsAlways,rwWhen,rwOfferAlways,rwCards,rwOffers,rwCard,rwOffer,rwCardAdd,rwCardSet,rwCardDel,rwOfferAdd,rwOfferDel,rwMax,rwSpent,rwStatus,rwDaysLeft,RW_TOPICS,rwTopicsOf,rwCovers,rwBest,rwEarnedYear,RW_PRESETS,rwPresetsOpen,rwCardFind,rwMerge,rwPresetApply,rwPrompt,rwRead,rwStmtCards,rwStmtGuess,rwStmtFor,rwCardForStmt,rwLineTopics,rwExcludes,rwLineCovered,rwLines,rwOfferSpend,rwRateFor,rwMissed,rwNudges,RW_NUDGE_MAX,rwIsRedemption,rwRedemptions,rwRedeemedYear,reconRewardsSettle,FOODSPLIT_WORDS,foodSplitGuess,foodSplitPlan,foodSplitApply,foodSplitOpen,closeYm,closeLabel,closeRange,closeShift,closeDefault,closeGet,closeSet,closeItems,closeSummary,closeInsights,RW_FLAT,rwStatementFees,rwCardYear,rwWorthAll,rwWorthInsights,rwWorthSheet,RW_ICO,rwIcoFor,rwFresh,rwCardColor,rwTier,rwPill,rwBar,seriesStaleAfter,seriesIsCold,computeAudit,csv,CSVSETS,focusCell,startCellEdit,catManager,CAT_SUGGEST,aliasGet,aliasSet,aliasReset,aliasWords,ALIAS_DEFAULT,grpManager,grp,gcolor,curMonth,dashPace,dashBudgetSplit,dashCatOrder,dashDaily,dashCash,budgetTotal,budgetPrevCol,budgetCached,budgetSync,catAugustColumns,catAugustAfterBook,dayDrawer,dayDrawerSave,calMonth,calendarHtml,txAll,txFiltered,txCsv,txReceiptIndex,dayCharges,dayMerchant,dayAddRow,dayRowsNow,dayAmt,dayCountHtml,dayRecount,catDropColumns,CAT_AUG_FLAG,CAT_DROP_FLAG,modal,closeModal,modalStale,get BOOKGEN(){return BOOKGEN;},
     RCP,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
