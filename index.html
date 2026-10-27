@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Ol8r/AnDT9uvhQfdRjUbRfMP1T0H/Q12gpb4TSAxMDg=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-TDY9nBxfc8/Fkawv7URhRB2f+WgrZy3V3WrrrDOVrqA=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -190,6 +190,7 @@ button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:none;box-s
 .logo-icon{width:29px;height:29px;flex:none;border-radius:8px;background:var(--accent);color:#fff;
   display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(92,138,116,.32)}
 .logo-icon .emo{font-size:15px}
+.logo-icon svg{width:17px;height:17px}
 /* emoji icon glyph — RC Garage labels its chrome with emoji, not line art */
 .emo{font-family:var(--emoji);font-style:normal;font-weight:400;line-height:1;
   display:inline-block;vertical-align:-.08em;letter-spacing:normal}
@@ -204,7 +205,7 @@ button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:none;box-s
   transition:background .13s,border-color .13s,color .13s,transform .1s}
 .qbtn:hover{background:var(--shelf);border-color:var(--accent);color:var(--accent-deep)}
 .qbtn:active{transform:translateY(1px)}
-.qbtn .emo{flex:none}
+.qbtn .emo,.qbtn svg{flex:none}
 /* The quick bar's camera is a LABEL over a file input, so the tap goes straight
    to the shutter with no script in the way — nothing to be blocked, nothing to
    go wrong between the press and the camera. paintChrome() rewrites each chip's
@@ -246,6 +247,7 @@ label.qbtn{cursor:pointer}
 #nav button:hover{background:var(--shelf);color:var(--ink)}
 #nav button.on{background:var(--btnbg);color:#fff;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.14)}
 #nav button .ic .emo{font-size:11.5px}
+#nav button .ic svg{width:13px;height:13px}
 @media(prefers-reduced-motion:no-preference){
   .qbmore.open .qbmenu,.qbmore.open .qbrare{animation:menuin .16s cubic-bezier(.16,1,.3,1)}
   @keyframes menuin{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
@@ -2001,15 +2003,20 @@ body.dark .subpage .subpill.trial{color:#c4a3f0}
    a pop from 97% measured the Dashboard's lead plate 353px wide of 364. */
 .pghrow{display:flex;align-items:center;gap:10px}
 .pgbadge{flex:none;display:inline-grid;place-items:center;width:34px;height:34px;border-radius:10px;
-  font-size:18px;line-height:1;font-family:var(--emoji,system-ui);
+  font-size:18px;line-height:1;font-family:var(--emoji,system-ui);color:var(--accent-deep);
   background:color-mix(in srgb,var(--accent) 12%,var(--card));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent)}
-.uihi{display:inline-block;margin-right:7px;font-size:14px;line-height:1;font-family:var(--emoji,system-ui);vertical-align:-1px;font-weight:400}
+.pgbadge svg{width:20px;height:20px}
+.pgbadge.sm svg{width:15px;height:15px}
+/* The pictures are drawn (v28.63, icons.js): a heading's in the quiet ink, a figure's quieter still. */
+.uihi{display:inline-flex;align-items:center;margin-right:7px;font-size:14px;line-height:1;font-family:var(--emoji,system-ui);vertical-align:-2px;font-weight:400;color:var(--sub)}
+.uihi svg{width:15px;height:15px}
 .sheet h3 .ft .uihi{margin-right:0}
 .sheet h3 .htl{min-width:0}
 .plate.uiplate .v,.plate.uiplate .k{padding-right:22px}
-.plate .uipi{position:absolute;top:7px;right:9px;font-size:16px;line-height:1;opacity:.88;font-family:var(--emoji,system-ui)}
+.plate .uipi{position:absolute;top:7px;right:9px;font-size:16px;line-height:1;opacity:.88;font-family:var(--emoji,system-ui);display:flex;color:var(--sub2)}
+.plate .uipi svg{width:17px;height:17px}
 .pgbadge.sm{width:26px;height:26px;font-size:14px;border-radius:8px}
-@media(max-width:560px){ .pgbadge{width:20px;height:20px;font-size:12px;border-radius:6px} .pghrow{gap:8px} }
+@media(max-width:560px){ .pgbadge{width:20px;height:20px;font-size:12px;border-radius:6px} .pgbadge svg{width:12px;height:12px} .pghrow{gap:8px} }
 
 /* Pointer feedback, everywhere. */
 .btn{transition:background .13s,border-color .13s,box-shadow .15s,transform .12s}
@@ -2109,6 +2116,9 @@ body.dark{--sbbg:color-mix(in srgb,var(--page) 80%,#000);--tbbg:color-mix(in srg
     background:linear-gradient(160deg,color-mix(in srgb,var(--nc,var(--accent)) 72%,#fff),var(--nc,var(--accent)));
     box-shadow:0 1px 1.5px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.28)}
   #nav button[data-act=go] .ic .emo{font-size:calc(var(--nr) * .45);filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}
+  /* The drawn picture (v28.63): white on the tile's own tint, the way a Settings row is. */
+  #nav button[data-act=go] .ic{color:#fff}
+  #nav button[data-act=go] .ic svg{width:calc(var(--nr) * .62);height:calc(var(--nr) * .62);filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}
   #nav button[data-act=go]:hover{background:color-mix(in srgb,var(--ink) 7%,transparent)}
   /* --accent-deep, not 88% of --accent: white on that measured 3.98:1 light and 3.6 dark (axe, v27.11). */
   #nav button[data-act=go].on{background:var(--accent-deep);color:#fff;font-weight:600}
@@ -2126,7 +2136,7 @@ body.dark{--sbbg:color-mix(in srgb,var(--page) 80%,#000);--tbbg:color-mix(in srg
   #tbSide[aria-pressed=true]{color:var(--accent-deep)}
   .tbtitle{display:flex;align-items:center;gap:8px;margin-left:8px;font-size:14px;font-weight:700;letter-spacing:-.01em;
     color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .tbtile{flex:none;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:12.5px;
+  .tbtile{flex:none;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:12.5px;color:#fff;
     font-family:var(--emoji,system-ui);background:linear-gradient(160deg,color-mix(in srgb,var(--nc) 72%,#fff),var(--nc));
     box-shadow:0 1px 1.5px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.28)}
   .quickbtns{flex-wrap:nowrap}
@@ -2143,8 +2153,12 @@ body.dark{--sbbg:color-mix(in srgb,var(--page) 80%,#000);--tbbg:color-mix(in srg
   #toast{left:auto;right:18px;top:calc(var(--tbh) + 12px);bottom:auto;transform:translateX(28px);max-width:380px;text-align:left;
     padding:12px 16px 12px 44px;border-radius:14px;background:color-mix(in srgb,var(--card) 88%,transparent);color:var(--ink);
     border:1px solid var(--hair);-webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px)}
-  #toast::before{content:"🔔";position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;font-family:var(--emoji,system-ui)}
-  #toast.ok::before{content:"✅"} #toast.warn::before{content:"⚠️"}
+  /* The banner's picture, drawn (v28.63): the bell, the tick, the warning — icons.js's own paths, as a mask in the text colour. */
+  #toast::before{content:"";position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;background:currentColor;
+    -webkit-mask:var(--toastico) center/contain no-repeat;mask:var(--toastico) center/contain no-repeat;
+    --toastico:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z'/><path d='M10 20a2 2 0 0 0 4 0'/></svg>")}
+  #toast.ok::before{--toastico:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6.5 9.5 17 4 11.5'/></svg>")}
+  #toast.warn::before{--toastico:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3.5 22 20.5H2z'/><path d='M12 10v4'/><path d='M12 17.2v.3'/></svg>")}
   #toast.ok,#toast.warn,body.dark #toast.ok{background:color-mix(in srgb,var(--card) 88%,transparent);color:var(--ink)}
   #toast.warn{box-shadow:var(--sh3),inset 3px 0 0 var(--neg)}
   #toast.show{transform:none}
@@ -2642,7 +2656,7 @@ body.dark{--tr-line:#34A874}
   #tbSide,#tbBack,#tbFwd{display:none}
   .tbtitle{display:flex;align-items:center;gap:8px;min-width:0;font-size:16px;font-weight:700;letter-spacing:-.01em;color:var(--ink);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .tbtile{flex:none;width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:14px;font-family:var(--emoji,system-ui);
+  .tbtile{flex:none;width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:14px;font-family:var(--emoji,system-ui);color:#fff;
     background:linear-gradient(160deg,color-mix(in srgb,var(--nc) 72%,#fff),var(--nc));
     box-shadow:0 1px 1.5px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.28)}
   .quickbtns{flex:none;flex-wrap:nowrap;gap:4px;justify-content:flex-end}
@@ -2650,6 +2664,7 @@ body.dark{--tr-line:#34A874}
      ico() marks the picture aria-hidden, so the text IS the name; e2e 04j). */
   .qbar .qbtn{flex:none;width:40px;height:40px;min-width:0;max-width:none;padding:0;gap:0;justify-content:center;font-size:0;border-radius:10px}
   .qbar .qbtn>.emo{transform:scale(1.25)}
+  .qbar .qbtn>svg{width:20px;height:20px}
   .qbtn .bid{display:none}
   /* -- the ⋯ menu: the toolbar's other chips, one tap further in -- */
   .qbmore{display:inline-flex;position:relative;flex:none}
@@ -2664,6 +2679,7 @@ body.dark{--tr-line:#34A874}
   .qbmenu .qbtn{width:auto;height:auto;min-height:46px;flex:none;padding:9px 12px;gap:10px;justify-content:flex-start;
     font-size:14px;font-weight:500;border-color:transparent;border-radius:9px}
   .qbmenu .qbtn>.emo{transform:none}
+  .qbmenu .qbtn>svg{width:18px;height:18px;color:var(--sub)}
   .qbmenu .qbtn .bid{display:inline;margin-left:auto}
   #qbToday .qbn{position:static;margin-left:auto}
   /* The week's countdown is a row of the menu here, not a pill in the bar, and it says the whole of what its
@@ -2708,6 +2724,8 @@ body.dark{--tr-line:#34A874}
     background:linear-gradient(160deg,color-mix(in srgb,var(--nc,var(--accent)) 72%,#fff),var(--nc,var(--accent)));
     box-shadow:0 1px 1.5px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.28)}
   #nav button[data-act=go] .ic .emo{transform:scale(1.5);filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}
+  #nav button[data-act=go] .ic{color:#fff}
+  #nav button[data-act=go] .ic svg{width:22px;height:22px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}
   #nav button[data-act=go].on{background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent-deep)}
   #nav .nbadge,#nav button.on .nbadge{position:absolute;top:4px;right:calc(50% - 30px);margin:0;min-width:16px;height:16px;padding:0 4px;
     border-radius:8px;font-size:10px;line-height:16px;font-weight:700;text-align:center;color:#fff;background:var(--ember)}
@@ -2973,7 +2991,7 @@ button.txsort:hover{color:var(--accent)}
                chips and only .qbrare — the ones used now and then — drops from the ⋯. The week's countdown (weekpct.js)
                is a row of the phone's menu and the first chip of the desktop's bar (order:-1). -->
           <div class="qbmore" id="qbMore">
-            <button class="qbtn" data-act="qbmore" id="qbMoreBtn" title="More: today, undo, sync, refresh, backup, dark mode" aria-label="More" aria-haspopup="true" aria-expanded="false"><span class="emo txt" style="font-size:16px" aria-hidden="true">⋯</span></button>
+            <button class="qbtn" data-act="qbmore" id="qbMoreBtn" title="More: today, undo, sync, refresh, backup, dark mode" aria-label="More" aria-haspopup="true" aria-expanded="false"></button>
             <div class="qbmenu">
               <!-- How much of the week is left before the Wednesday 4am reset (weekpct.js). A render rebuilds #page and #nav, never this. -->
               <button id="weekPct" type="button" title=""></button>
@@ -3005,7 +3023,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.62";
+const APP_V="v28.63";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3027,7 +3045,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="b74c684";
+const APP_BUILD="cc9c6fc";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -3794,7 +3812,48 @@ const ICONS={
   ledger:'M5 3.5h13a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H5zM5 3.5a1.5 1.5 0 0 0 0 3M9 8.5h6M9 12h6M9 15.5h3',
   check:'M20 6.5 9.5 17 4 11.5',
   alert:'M12 3.5 22 20.5H2zM12 10v4M12 17.2v.3',
-  info:'M12 21.5a9.5 9.5 0 1 0 0-19 9.5 9.5 0 0 0 0 19zM12 11v5.5M12 7.7v.3'
+  info:'M12 21.5a9.5 9.5 0 1 0 0-19 9.5 9.5 0 0 0 0 19zM12 11v5.5M12 7.7v.3',
+  /* The pictures headings and figures wear (ui-look.js UI_WORDS), the toolbar's glyphs, the toast's bell and the
+     pin (v28.63): the same grammar, drawn to read at 14px. */
+  lock:'M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3',
+  import:'M12 4v10M8 10l4 4 4-4M4 17v3h16v-3',
+  export:'M12 14V4M8 8l4-4 4 4M4 17v3h16v-3',
+  gift:'M4 11h16v9H4zM4 11V8h16v3M12 8v12M12 8c-2.5-3.5-5.5-3-5.5-1s3 1 5.5 1zM12 8c2.5-3.5 5.5-3 5.5-1s-3 1-5.5 1z',
+  medical:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 8v8M8 12h8',
+  bolt:'M13 3 5 14h6l-1 7 8-11h-6z',
+  family:'M9 10.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16.5 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM3 20a6 6 0 0 1 12 0M16.5 15.5a4.5 4.5 0 0 1 4.5 4.5',
+  helmet:'M15 3.5a5 5 0 0 0-4.6 7L4 16.9 7.1 20l6.4-6.4a5 5 0 0 0 7-4.6l-3 3-2.5-2.5 3-3z',
+  pay:'M3 7h18v10H3zM12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM6 10h.01M18 14h.01',
+  statement:'M6 3.5h9l4 4v13H6zM15 3.5v4h4M9 11h6M9 14.5h6M9 18h4',
+  bricks:'M3 8h18M3 13h18M3 18h18M3 8v10M21 8v10M9 8v5M15 8v5M6 13v5M12 13v5M18 13v5',
+  water:'M12 3.5s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z',
+  pot:'M6.5 12h11l-1.2 8.5H7.7zM5 9h14v3H5zM12 9V5M12 5c-2.2 0-3.5-1.4-3.5-3.2 2.2 0 3.5 1.4 3.5 3.2zM12 5c2.2 0 3.5-1.4 3.5-3.2-2.2 0-3.5 1.4-3.5 3.2z',
+  flask:'M9.5 3.5h5M10 3.5v6L5.5 18a1.5 1.5 0 0 0 1.3 2.5h10.4a1.5 1.5 0 0 0 1.3-2.5L14 9.5v-6M8 15h8',
+  tent:'M12 4 3 20h18zM12 4v16M8.5 20l3.5-7 3.5 7',
+  loan:'M3 11.5 12 4l9 7.5M5.5 10v9.5h13V10M12 17.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
+  cloud:'M7 18.5a4.5 4.5 0 0 1-.5-9 6 6 0 0 1 11.5 1.5A3.75 3.75 0 0 1 17.5 18.5z',
+  sync:'M7 18.5a4.5 4.5 0 0 1-.5-9 6 6 0 0 1 11.5 1.5A3.75 3.75 0 0 1 17.5 18.5zM12 10v7M9.5 14.5 12 17l2.5-2.5',
+  scroll:'M6 4h12v16l-3-2-3 2-3-2-3 2zM9 9h6M9 12.5h6',
+  cabinet:'M5 4h14v16H5zM5 10h14M5 15h14M11 7h2M11 12.5h2M11 17.5h2',
+  floppy:'M5 4h11l3 3v13H5zM8 4v5h7V4M8 20v-6h8v6',
+  tag:'M3.5 12.5v-8a1 1 0 0 1 1-1h8l8 8-9 9zM8 8.5h.01',
+  books:'M4 4h5v16H4zM9 4h5v16H9zM14 6l4.5-1 3 15.5-4.5 1z',
+  flower:'M12.0 8.8a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM8.0 11.1a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM8.0 15.7a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM12.0 18.0a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM16.0 15.7a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM16.0 11.1a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM12 13.2a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4zM12 18v3.5M12 21.5c0-1.6-1.6-2.8-3.2-2.8',
+  alarm:'M12 20a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM12 9.5V13l2.5 1.5M5 5 3 7M19 5l2 2M9 20l-1 1.5M15 20l1 1.5',
+  bars:'M5 20v-8M11 20V5M17 20v-5M3 20h18',
+  upcoming:'M4 6.5h16v14H4zM4 10.5h16M8.5 3.5v4M15.5 3.5v4M12 15.5h.01',
+  pen:'M4 20l4-1 11-11-3-3L5 16zM13 8l3 3',
+  coins:'M12 10c4.4 0 8-1.3 8-3s-3.6-3-8-3-8 1.3-8 3 3.6 3 8 3zM4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3',
+  folder:'M3 6.5h6l2 2h10v11H3zM3 6.5v12',
+  clipboard:'M9 3.5h6v3H9zM6 5.5h3M15 5.5h3M6 5.5v15h12v-15M9.5 11.5h5M9.5 15h5',
+  pin:'M9 4h6l-1 5 2.5 3H7.5L10 9zM12 12v9',
+  refresh:'M4 12a8 8 0 0 1 13.7-5.7L20 8.5M20 4v4.5h-4.5M20 12a8 8 0 0 1-13.7 5.7L4 15.5M4 20v-4.5h4.5',
+  install:'M7 3.5h10v17H7zM12 7v6M9.5 10.5 12 13l2.5-2.5M11 17.5h2',
+  image:'M4 5h16v14H4zM4 15l4.5-4.5 4 4 2.5-2.5 5 5M16 9.5h.01',
+  expand:'M6 9l6 6 6-6',
+  collapse:'M6 15l6-6 6 6',
+  taxpack:'M3 6.5h6l2 2h10v11H3zM7 13h8M7 16h5',
+  bell:'M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0'
 };
 /* ================= EMOJI — the RC Garage icon language ================= */
 const EMOJI={
@@ -3809,8 +3868,9 @@ const EMOJI={
 /* Arrows ride in the text font, monochrome, the way RC Garage sets "↩ Undo" —
    the emoji-presentation ↩️ renders as a boxed blue glyph and reads wrong. */
 const TEXTICO={undo:1,redo:1,refresh:1,expand:1,collapse:1,more:1};
-/* Flip to 'line' to go back to the stroke SVG set in ICONS above. */
-const ICON_STYLE='emoji';
+/* 'line' since v28.63: one drawn set, the same on every device, where the emoji were a different picture on each
+   and clip-art on Windows. EMOJI stays as the record of what each name meant, and 'emoji' still works. */
+const ICON_STYLE='line';
 function ico(name,size){
   const s=size||18;
   if(ICON_STYLE==='emoji'){
@@ -3847,46 +3907,47 @@ function ico(name,size){
    the fold exactly as before, and it is aria-hidden: a screen reader reads
    the words and not the decoration. */
 const UI_WORDS=[
-  [/security|passphrase|password|\block\b|unlock|face id|passkey|keeping it safe/,'🔒'],
-  [/could not|couldn|problem|error|not yet claimed|overdue|missing|late\b/,'⚠️'],
-  [/import|paste|download|upload|capturing|read off|read on|reading|scan|photograph/,'📥'],
-  [/401|retire|\bira\b|roth|pension/,'🏦'],
-  [/\btax|w-2|\bw-|bracket|return\b|\birs\b|filing|harbou?r|deduct|refund|estimated|withh|dollar of pay|marginal/,'🧮'],
-  [/gift|charit|donat/,'🎁'],
-  [/medical|dental|health/,'⚕️'],
-  [/energy/,'⚡'],
-  [/dependent|child ?care/,'👪'],
-  [/claim|reimburs|work expense|paid back|awaiting/,'💼'],
-  [/labou?r|hours|payout/,'👷'],
-  [/pay stub|pay period|payroll|salary|income|earn|wage|bonus|take-home|your pay\b/,'💵'],
-  [/receipt/,'🧾'],
-  [/invoice|statement/,'📑'],
-  [/purchase|material|line item/,'🧱'],
-  [/renovat|\bbuild/,'🔨'],
-  [/train|locomotive|layout/,'🚂'],
-  [/greenhouse|plant|seed|garden/,'🌱'],[/irrigat|\bwater/,'💧'],[/medium|soil|potting/,'🪴'],[/fertili|nutrient/,'🧪'],[/\btent\b|grow light/,'⛺'],
-  [/loan|mortgage|amortiz|principal|interest/,'🏡'],
-  [/archive|\bera|spreadsheet|\bbold\b/,'📦'],
-  [/audit|hold together|question|review|resolve|second opinion|observation|right card/,'🔍'],
-  [/sync|cloud/,'☁️'],[/export|csv/,'📤'],[/rules|publish/,'📜'],[/storage/,'🗄️'],
-  [/backup|restore|\bbook\b|project|device|engine/,'💾'],
+  [/security|passphrase|password|\block\b|unlock|face id|passkey|keeping it safe/,'lock'],
+  [/could not|couldn|problem|error|not yet claimed|overdue|missing|late\b/,'alert'],
+  [/import|paste|download|upload|capturing|read off|read on|reading|scan|photograph/,'import'],
+  [/401|retire|\bira\b|roth|pension/,'checking'],
+  [/\btax|w-2|\bw-|bracket|return\b|\birs\b|filing|harbou?r|deduct|refund|estimated|withh|dollar of pay|marginal/,'taxes'],
+  [/gift|charit|donat/,'gift'],
+  [/medical|dental|health/,'medical'],
+  [/energy/,'bolt'],
+  [/dependent|child ?care/,'family'],
+  [/claim|reimburs|work expense|paid back|awaiting/,'work'],
+  [/labou?r|hours|payout/,'helmet'],
+  [/pay stub|pay period|payroll|salary|income|earn|wage|bonus|take-home|your pay\b/,'pay'],
+  [/receipt/,'receipts'],
+  [/invoice|statement/,'statement'],
+  [/purchase|material|line item/,'bricks'],
+  [/renovat|\bbuild/,'renos'],
+  [/train|locomotive|layout/,'trains'],
+  [/greenhouse|plant|seed|garden/,'greenhouse'],[/irrigat|\bwater/,'water'],[/medium|soil|potting/,'pot'],[/fertili|nutrient/,'flask'],[/\btent\b|grow light/,'tent'],
+  [/loan|mortgage|amortiz|principal|interest/,'loan'],
+  [/archive|\bera|spreadsheet|\bbold\b/,'archive'],
+  [/audit|hold together|question|review|resolve|second opinion|observation|right card/,'audit'],
+  [/sync|cloud/,'cloud'],[/export|csv/,'export'],[/rules|publish/,'scroll'],[/storage/,'cabinet'],
+  [/backup|restore|\bbook\b|project|device|engine/,'floppy'],
   /* Betsy's own (v28.46–49): her list and what she knows wear her flower; her field a tag; the reference a shelf. */
-  [/her field|product|price/,'🏷️'],[/reference|legal|customs|logistics|incoterm/,'📚'],[/betsy|her list|she knows|tell her|ask for an appointment/,'🌼'],
-  [/\badvice|\bmoves?\b|afford|ask the advisor|noticed|this week/,'🧭'],
-  [/insight|worth knowing|worth a look|pay less|what to do/,'💡'],
-  [/trend|twelve months|over time|by year|history|change a figure|brackets|heading/,'📈'],
-  [/budget|target|goal/,'🎯'],
-  [/before|shuts|deadline|days left|left in/,'⏰'],
-  [/where it went|where it goes|categor|spent|spend/,'📊'],
-  [/coming|upcoming|\bnext\b|\bdue\b|until|latest/,'🗓️'],
-  [/\bcard/,'💳'],[/\bbill|fixed|recurring/,'📄'],[/\btoday\b|app icon/,'☀️'],[/subscri/,'🔁'],[/\bchecks?\b|cheque/,'✍️'],
-  [/month|calendar|week|\bday|\byear|\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/,'📅'],
-  [/balance|account|cash|money|total|\bnet\b|saved|saving|left|available|all-in/,'💰'],
-  [/document|\bfile|record|on file/,'🗂️']
+  [/her field|product|price/,'tag'],[/reference|legal|customs|logistics|incoterm/,'books'],[/betsy|her list|she knows|tell her|ask for an appointment/,'flower'],
+  [/\badvice|\bmoves?\b|afford|ask the advisor|noticed|this week/,'advice'],
+  [/insight|worth knowing|worth a look|pay less|what to do/,'insights'],
+  [/trend|twelve months|over time|by year|history|change a figure|brackets|heading/,'trends'],
+  [/budget|target|goal/,'goals'],
+  [/before|shuts|deadline|days left|left in/,'alarm'],
+  [/where it went|where it goes|categor|spent|spend/,'bars'],
+  [/coming|upcoming|\bnext\b|\bdue\b|until|latest/,'upcoming'],
+  [/\bcard/,'cards'],[/\bbill|fixed|recurring/,'bills'],[/\btoday\b|app icon/,'today'],[/subscri/,'subs'],[/\bchecks?\b|cheque/,'pen'],
+  [/month|calendar|week|\bday|\byear|\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/,'months'],
+  [/balance|account|cash|money|total|\bnet\b|saved|saving|left|available|all-in/,'coins'],
+  [/document|\bfile|record|on file/,'folder']
 ];
 /* Words nothing recognises take the page's own picture (uiDecorate passes it),
-   and failing that a clipboard — never the pin, which is the fold's own button. */
-const UI_ICO_DEFAULT='📋';
+   and failing that a clipboard — never the pin, which is the fold's own button.
+   Since v28.63 these are the NAMES of pictures in ICONS (icons.js), drawn by ico(). */
+const UI_ICO_DEFAULT='clipboard';
 function uiIcoFor(text,fallback){
   const s=' '+String(text||'').toLowerCase().replace(/\s+/g,' ')+' ';
   const r=UI_WORDS.find(function(x){ return x[0].test(s); });
@@ -3894,26 +3955,31 @@ function uiIcoFor(text,fallback){
 }
 /* The page's own picture: the one its menu entry wears. Asked of the page
    on screen (no argument), a shut book is the lock screen's padlock. */
-function uiPageIco(view){
-  if(!view&&typeof bookShut==='function'&&bookShut()) return '🔐';
+function uiPageIcoName(view){
+  if(!view&&typeof bookShut==='function'&&bookShut()) return 'lock';
   const v=view||S.view;
-  for(const r of NAVDEF) if(r[0]!=='grp'&&r[0]===v) return EMOJI[r[1]]||'';
-  for(const h of HIDDEN_VIEWS) if(h[0]===v) return EMOJI[h[0]]||'';
+  for(const r of NAVDEF) if(r[0]!=='grp'&&r[0]===v) return r[1];
+  for(const h of HIDDEN_VIEWS) if(h[0]===v) return h[0];
   return '';
 }
-function _uiSpan(cls,ico){
-  const sp=document.createElement('span'); sp.className=cls; sp.setAttribute('aria-hidden','true'); sp.textContent=ico; return sp;
+/* The picture itself, drawn: markup for an HTML string. */
+function uiPageIco(view,size){ const n=uiPageIcoName(view); return n?ico(n,size||18):''; }
+function _uiSpan(cls,html){
+  const sp=document.createElement('span'); sp.className=cls; sp.setAttribute('aria-hidden','true'); sp.innerHTML=html; return sp;
 }
 /* After every render: a picture on each heading and figure that has none. */
 function uiDecorate(){
   const root=document.getElementById('page'); if(!root) return 0;
-  let n=0; const own=uiPageIco();
+  let n=0; const own=uiPageIcoName();
+  /* A heading has a picture of its own when an aria-hidden piece sits in its words — not when one is inside a
+     control on it: the pin's drawn picture (tiles.js, v28.63) is aria-hidden too, and it is a button, not a picture. */
+  const pictured=function(h){ return Array.prototype.some.call(h.querySelectorAll('[aria-hidden="true"]'),function(x){ return !x.closest('.pin,button,select,input'); }); };
   root.querySelectorAll('.sheet>h3').forEach(function(h){
-    if(h.querySelector('[aria-hidden="true"]')) return;
+    if(pictured(h)) return;
     const c=h.cloneNode(true);
     Array.prototype.forEach.call(c.querySelectorAll('.r,.cv,.pin,button,select,input'),function(x){ x.remove(); });
     const words=c.textContent.trim(); if(!words) return;
-    const sp=_uiSpan('uihi',uiIcoFor(words,own)), ft=h.querySelector('.ft');
+    const sp=_uiSpan('uihi',ico(uiIcoFor(words,own),15)), ft=h.querySelector('.ft');
     if(ft){ const cv=ft.querySelector('.cv'); ft.insertBefore(sp,cv?cv.nextSibling:ft.firstChild); }
     else {
       /* A heading that does not fold has no .ft, and its title is bare text. The picture
@@ -3932,7 +3998,7 @@ function uiDecorate(){
   root.querySelectorAll('.plate').forEach(function(p){
     if(p.querySelector('[aria-hidden="true"]')||p.classList.contains('recring')) return;
     const k=p.querySelector('.k'); if(!k||!k.textContent.trim()) return;
-    p.classList.add('uiplate'); p.appendChild(_uiSpan('uipi',uiIcoFor(k.textContent,own)));
+    p.classList.add('uiplate'); p.appendChild(_uiSpan('uipi',ico(uiIcoFor(k.textContent,own),17)));
     n++;
   });
   return n;
@@ -3992,9 +4058,9 @@ function macToolbar(){
   const shut=typeof bookShut==='function'&&bookShut(), cur=navLabel();
   /* A browser with nothing in it is not locked (views/locked.js's third state): it is met by the app's name. */
   const fresh=shut&&typeof lockBlob==='function'&&!lockBlob()&&!(typeof syncPass==='function'&&syncPass());
-  t.innerHTML=fresh?'<span class="tbtile" style="--nc:var(--accent)" aria-hidden="true">'+(EMOJI.ledger||'')+'</span>The Ledger'
-    :shut?'<span class="tbtile" style="--nc:#4B5D93" aria-hidden="true">🔐</span>Locked'
-    :'<span class="tbtile" style="--nc:'+macTint(S.view)+'" aria-hidden="true">'+(uiPageIco(S.view)||'')+'</span>'+esc(cur.txt);
+  t.innerHTML=fresh?'<span class="tbtile" style="--nc:var(--accent)" aria-hidden="true">'+ico('ledger',14)+'</span>The Ledger'
+    :shut?'<span class="tbtile" style="--nc:#4B5D93" aria-hidden="true">'+ico('lock',14)+'</span>Locked'
+    :'<span class="tbtile" style="--nc:'+macTint(S.view)+'" aria-hidden="true">'+(uiPageIco(S.view,14)||'')+'</span>'+esc(cur.txt);
   const b=document.getElementById('tbBack'), f=document.getElementById('tbFwd');
   if(b) b.disabled=shut||!_macH.back.length;
   if(f) f.disabled=shut||!_macH.fwd.length;
@@ -10003,7 +10069,7 @@ function tilePin(h3){
   if(h3.querySelector('.pin')) return;
   const b=document.createElement('button');
   b.type='button'; b.className='pin'; b.dataset.act='pin';
-  b.innerHTML='<span class="emo">\ud83d\udccc</span>';
+  b.innerHTML=ico('pin',13);
   h3.appendChild(b);
 }
 function tileApply(sh,h3){
@@ -11388,7 +11454,7 @@ Views.months=function(){
      the shortcut line under the grid — and the title, the controls and the sheet
      number share a row, because each of those rows was two days of the month
      that did not fit on the screen. */
-  return '<div class="pagehead compact"><span class="pgbadge sm" aria-hidden="true">'+uiPageIco()+'</span><h2>Month Sheets</h2>'
+  return '<div class="pagehead compact"><span class="pgbadge sm" aria-hidden="true">'+uiPageIco(null,15)+'</span><h2>Month Sheets</h2>'
    +'<div class="chips"><button class="chip" data-act="mnav" data-dir="-1">‹ Previous</button>'+sel
    +'<button class="chip" data-act="mnav" data-dir="1">Next ›</button>'
    +(monthByKey(nextK)?'':'<button class="chip" data-act="mnew" data-k="'+nextK+'">+ Start '+MA[Number(nextK.split('-')[1])-1]+' '+nextK.split('-')[0]+'</button>')
@@ -55859,7 +55925,7 @@ function paintChrome(){
   [['qbShoot','camera','Receipt'],['qbToday','today','Today'],['qbSearch','search','Search'],['qbUndo','undo','Undo'],['qbRedo','redo','Redo'],
    ['qbBackup','backup','Backup'],['qbRestore','restore','Restore'],
    ['qbRefresh','refresh','Refresh'],['qbInstall','install','Install'],
-   ['qbSync','sync','Sync']].forEach(function(t){
+   ['qbSync','sync','Sync'],['qbMoreBtn','more','']].forEach(function(t){
     const b=document.getElementById(t[0]); if(b&&b.querySelector('.emo,svg')) return;
     /* Refresh carries the build fingerprint. It has to be built HERE rather than
        written into the markup: this line replaces the button's contents wholesale
@@ -55950,7 +56016,7 @@ function renderOnce(name,fn){
     toast('Added '+_aug.added.join(', ')+' to '+_aug.sheets+' sheet'+(_aug.sheets===1?'':'s')
       +' from August 2026 \u2014 remove any you do not want in Categories','ok');
   },900);
-  window.__PF={S,get DB(){return DB;},set DB(v){DB=v;},setBook,chargeId,chargeIdsFill,quickAdd,isTextEntry,cellTerms,setCellTerms,setCell,gridRestore,_hasPlain,blankMonthTmpl,emptyView,bioAfterReseal,APP_V,APP_BUILD,paintChrome,parseBillAlert,billRouteFor,parseBillAlert,seriesTaken,seriesDelete,seriesFreqAll,_pdfScan,_pdfStreamEnd,pdfDiag,parseRbsInvoices,_rbsCells,rbsToRows,rbsIsInvoice,rbsIsStatement,rbsIsRbs,vendorIsGeneral,suggestDest,rbsLineOff,rbsInvoiceOff,parseRbsStatement,rbsReconcile,rbsStmtPanel,rbsTakeFiles,rbsWireDrop,rbsAlreadyIn,r4DupeRows,r4VendorKey,rbsPanel,pdfRuns,billDupe,billPastePanel,_billToken,_billDate,save,saveFlush,saveSettled,imgPut,imgGet,imgDel,imgHave,imgBytes,imgCount,imgLoadAll,imgMigrate,imgGC,imgMissing,imgMissingCount,imgAdoptFrom,imgAdoptApply,_imgKeyOf,imgPushedRead,imgMarkPushed,imgAtRisk,imgAtRiskCount,imgWouldDrop,imgReady,imgWait,imgSettled,imgUnreadable,rcpImg,rcpHasImg,rcpImgBad,_imgSrcOK,imgSealAll,imgOpenAll,imgSealedCount,imgSealStat,imgSealCatchUp,imgRekey,imgClearAll,imgShutCount,imgBrokeCount,_imgIsEnv,bookWithImages,saveWhy,SAVE_WHY,saveWhere,storageAudit,storagePanel,appInstalled,fbChosen,fbStopOwn,roomForImage,lsBytes,lsHeadroom,lsCeiling,lsRefusedAt,lsNoteRefusal,LS_CEILING,saveWarnPaint,backupMark,backupLast,backupAgeDays,backupWords,backupKindOf,cfChaseParse,bankParse,TILE_SEL,TILE_MENUS,tileMenuFor,tileMenuItems,tileMenusWire,tileMenuOpen,tileMenuClose,tileMenuRates,rwCardsAll,rwOffersAll,rwClosedIds,rwIsClosed,CF_BANK_TYPES,cfBankList,cfMainBank,cfBanks,cfBankGet,cfBankId,cfBook,cfCur,cfBankAdd,cfBankSet,cfBankDel,cfBankState,cfBankBalance,cfBankPoints,cfBankSummaryParse,cfBankInterest,CF_XFER_DAYS,cfXferKey,cfXferWords,cfTransfers,cfXferSay,cfXferNoReset,cfImportXfers,cfProjectAll,reconCards,PLAID_ACCT_K,plaidAcct,MAIL_FILE_V,mailFileReady,mailFileBook,mailFileDest,mailFileQueue,mailFileLabels,mailFilePass,mailFileSheet,mailFileList,MAIL_ASSIST_V,mailAssistReady,mailAssistState,mailAssistFiling,mailAssistOp,mailAssistCost,mailAssistSheet,mailRecapCard,mailFileOnRead,mailFileGuess,mailFileCatLabel,mailFileFind,mailFileSub,plaidAcctSet,plaidCfg,plaidCfgOnly,plaidSignIn,plaidSignOut,plaidBook,plaidTake,plaidMapSet,plaidFile,plaidInboxSettle,plaidWaiting,plaidReview,plaidRow,plaidGuess,plaidCatWord,plaidKeyNew,plaidOpen,plaidKid,plaidStatus,plaidEnsureKey,plaidConnect,plaidPull,plaidAuto,plaidRemove,plaidPanel,plaidLinkLoad,plaidOAuthOnBoot,PLAID_LINK_SRC,PLAID_SEAL_INFO,PLAID_TYPE,hhCfg,hhOn,hhBooksList,hhOpen,hhDocId,hhKeyNew,hhWrapPut,hhKeyFor,syncKeyPass,hhShare,hhInvite,hhLinkTake,hhJoin,hhMembers,hhInvites,hhRevoke,hhActivity,hhRemove,hhRekey,hhLeave,hhStop,hhGone,hhForget,bookPanel,hhInviteModal,hhJoinModal,hhLinkOnBoot,HH_WORDS,bookMerge,syncBaseSet,syncBaseGet,syncBaseForget,syncMergeWith,syncMergeDone,syncMergeAuto,syncMergeWords,syncManId,fsInit,syncBookId,syncBookOldId,syncBookV3,pfDerive3,pfSaltNew,pfSaltOk,BOOK_ID,syncEncOpt,bookSaltGet,bookSaltSet,syncBookMoved,PF_KDF_ITER3,_pkOpen,_unb64,rotatePlan,rotateState,rotateConfirmText,rotateDoneModal,pkDropSeals,_repassSecrets,syncRepass,syncNWrap,syncNUnwrap,syncSeenGet,syncSeenSet,syncIsOlder,syncNextN,cfReconWindows,cfReconDays,cfStmtBacked,mkey,monthByKey,r2v,ONCE_NAMES,ONCE_HITS,renderOnce,vpW,PDF_PARSERS,parseAnyInvoice,anyHeadRoles,anyLineOff,rbsAlreadyIn,zipStore,crc32,foldSheetLazy,zipBookText,ledgerFileText,exportAllFiles,exportAllZip,exportMint,EXPORT_EXTRA,_expGrid,aggParse,aggSniff,cfAggNear,aggToRecon,CF_AGG_DAYS,anyToInv,rbsReadRuns,rbsInvWord,aggDate,aggDateOrder,aggSuggest,cfImpStart,AGG_FORMATS,csvEsc,taxNyRules,taxStateNote,taxStatePaid,taxYearKey,taxYearEnd,taxYearEndOn,yearEndInsights,yearEndModal,YEAREND_FROM_MONTH,taxFileStateBlock,taxPlanState,cfBankGo,cfBankName,cfExpectNs,catHead,catRenamed,catRenameRcp,_cfXferLoose,catAddTo,catLineUp,catLineUpPlan,catRenameFwd,catLater,rcpOtherCats,rcpCatOk,rcpCatEnsure,rcpCatOptions,RCP_CASHBACK,RCP_CASHBACK_DAYS,rcpLooksCashback,rcpCashbackWords,rcpCashbackDest,rcpCashbackCard,rcpCashbackRedemptions,rcpCashbackFields,RW_PT_VAL,RW_PT_PILE,RW_PT_EXP_DAYS,rwPtVal,rwPoints,rwPointsAll,rwPointsLine,rwPointsNudges,rwPointsClosing,mailRedeemSubj,mailRedeemRead,mailRedeemCard,mailRedeemUse,mailRedeemDrop,mailRedeemActs,MAIL_REFUND_NEAR,mailRefundFind,mailRefundHave,mailRefundRecord,mailRefundUndo,mailRefundAuto,mailRefundChecks,mailRefundInsights,mailRefundActs,mailHandled,mailHandledText,mailHandledSheet,MAIL_SELF_DAYS,MAIL_SELF,mailIsPromo,mailSelfRun,mailSelfPass,mailSelfPreview,mailPreviewSheet,mailLessonFor,mailLessonApply,mailLessonHtml,mailSelfUndo,mailSelfChecks,mailSelfInsights,mailSelfActs,mailSelfSheet,CF_SELF_NEAR,MAIL_RCP_SEEN,mailCashBank,mailCashSureAccount,mailSelfCash,mailRcpCat,mailSelfReceipt,mailSelfUndoWhy,mailSelfMoneyUndo,MAIL_WEEK_DAYS,MAIL_WEEK_DUPE,MAIL_WEEK_KINDS,mailWeek,mailWeekSheet,cardPays,cardPayLines,cardPayWords,cardPayPoints,cardPayMissing,cardPayPanel,CARDPAY_BEFORE,CARDPAY_AFTER,cardsOpen,cfPayeeKeyV1,cfAllOn,cfAllPoints,cfAllSpan,cfAllTotal,cfAllMoves,cfXferSeries,cfComingAllPanel,cfImportCat,cfCatIndex,cfXferPanel,TAX_STATES,TAX_NO_WAGE_TAX,taxStateKey,taxStateName,taxStateTaxesWages,taxStateFor,taxIsNY,taxStateWord,taxProfileCard,_stubStateCode,BANKS,bankFrom,bankNamed,bankBody,bankTail,bankWho,bankDate,mailAttSniff,syncLegacyId,syncLegacyGone,cardClosedOn,cardIsClosed,cardClosedSet,cardCloseOpen,cardCloseSave,cardReopen,titleCase,seriesStats,seriesCycle,seriesArea,seriesTile,seriesCountUp,bankOfxParse,bankCsvParse,bankIsOfx,_cfFinish,cfAlertParse,cfAlertPanel,cfPayeeKey,cfMapGet,cfMapSet,cfGuessAccount,cfSugTokens,cfSuggestAccount,cfNewRows,cfBackfill,cfRowEntry,cfBankDays,cfBankDaysMerge,cfBankDaysNew,cfImportPlan,cfAccountAdd,cfAddDays,cfAddMonths,cfDaysBetween,cfSeriesKey,cfSeriesName,cfCadence,cfNextDate,cfNthDate,cfDatesAfter,cfAmountShape,cfCardFor,cfCardLinkGet,cfCardLinkSet,cfCardDue,cfCardDueOn,cfCardDueToggle,cfExpectGet,cfExpectSet,cfSeries,cfSeriesAll,cfSubSeries,taxPaySeries,taxPaydaysLeft,taxPerCheque,taxStubParse,taxStubDerive,taxStubGet,taxStubSave,taxDeferPace,taxWithheldPace,taxStubPanel,stubFileBtn,taxSubTabs,taxTabKey,taxYearNav,taxStamp,taxHomeData,taxHomeHtml,taxSteps,taxStepsHtml,taxDocNeeds,taxKeyDates,taxYoYWords,cfRemaining,cfForecast,cfOneStatement,cfProject,cfMovedSet,cfMovedToggle,cfIsMoved,cfSplit,cfBalancePoints,cfLatestBalance,cfStatedThrough,cfBalanceChartPts,CF_SPANS,cfSpanOk,cfSpanFrom,cfSpanPoints,cfSpanStats,CF_SECTION_ICO,cfHi,cfFresh,CF_TYPE_ICO,cfTypeIco,cfDir,cfFlowBar,SUB_KINDS,SUB_COMMON,subKind,subAvatar,subHi,subFresh,subRenew,subShareBar,BILL_KINDS,billKind,billFresh,cardMono,cardMini,cardStatus,cardFresh,RECON_SECTIONS,reconSheet,reconFresh,reconRing,NAVDEF,EMOJI,UI_WORDS,UI_ICO_DEFAULT,uiIcoFor,uiPageIco,uiDecorate,uiEntered,macTint,macTrack,macBack,macFwd,macToolbar,macSideSet,macBadges,macPages,macGoKey,macMenuItems,macMenuShow,macMenuClose,TRIAL_WARN,TRIAL_GRACE,trialGet,trialSet,trialClear,trialState,trialsDue,trialWords,trialInsights,trialPill,trialKeep,trialCancel,trialNotify,STORE_ICO,storeLines,storePeriods,storeName,storeIco,storeTable,storeMonthly,storeCharges,storeInsights,storeDelta,WORTH_TYPES,WORTH_SPANS,worthType,worthBook,worthEnsure,worthAdd,worthSet,worthRemove,worthSources,worthAt,worthMonthly,worthInsights,worthLinkOk,rcpCardLinkGet,rcpCardLinkSet,cardTallyOpen,rcpCardOf,cardTallies,cardTally,cardTallyLostHtml,cardTallyNow,cfCardDue,cardStmtImported,cardStmtEmail,mailCardStmtSubj,mailCardStmtRead,mailCardStmtCard,mailCardStmtUse,mailCardStmtActs,cardDueGet,stmtSummary,stmtSummaryApply,cardStmtDay,cardBillWord,cardBillNote,CARDBILL_DAYS,worthLinkSet,worthDue,WORTH_MONTHLY,RET_POLICY,retPolicy,retFor,warFor,returnsDue,warrantiesEnding,retWhen,returnsInsights,returnsSheet,returnsFields,returnsRead,returnsApply,ODD_DAYS,oddId,oddCharges,oddWords,oddInsights,oddOk,oddSheet,TAXPACK_HOME,taxPackAgi,taxPackYears,taxPack,taxPackCsv,GUARD_IDLE_CHOICES,GUARD_FREE,guardIdleMinutes,guardIdleSet,guardTouch,guardDue,guardLockNow,guardWaitFor,guardUnlockWait,guardUnlockFailed,guardUnlockPassed,guardWaitWords,guardRow,MAIL_DEPS,MAIL_GAS,MAIL_GAS_V,MAIL_GAS_MANIFEST,MAIL_FROM_DEFAULT,MAIL_KINDS,MAIL_ACT,mailKeyNew,mailKeyOk,mailSigned,mailOpen,mailScriptSource,mailAddr,mailDomain,mailName,mailFromIs,mailAmounts,MAIL_TOTAL_RES,mailTotal,mailRead,mailBook,mailEnsure,mailLinked,mailUrlOk,mailStale,mailAsk,mailMerge,mailPrune,mailPull,mailWaiting,mailItem,mailMark,mailDay,mailAsText,mailQueueReceipts,mailIsPuller,mailLocal,mailLocalSet,mailSenderOk,mailRewind,mailRefusedNew,MAIL_MAX,MAIL_TEXT_SHORT,mailSays,mailAuto,mailRwMatch,mailWhen,mailCursor,mailCovers,mailNoteRefused,mailRetired,mailRetire,mailLocalReset,mailLinkKeep,mailLinkPut,mailRefundAmt,MAIL_NOTE_DAYS,MAIL_REFUND_BACK,MAIL_LOOKBACK_DAYS,MAIL_MARKS,MAIL_PAGE,MAIL_HOLD,mailShape,mailRuleKey,mailRule,mailLearn,mailAmtAs,mailMarkAs,mailResort,mailXferDir,MAIL_XFER_RE,mailCashParse,mailCashOpen,mailSubGuess,mailSubOpen,mailSubPanel,mailLegacyKey,mailTwins,mailIgnore,mailUnignore,MAIL_ATT_AUTO,mailAttIsPdf,mailAttIsImg,mailAttsClean,mailAttTexts,mailAttCan,mailAttFetch,mailAttApply,mailAttRead,mailAttAuto,mailAttIsRbs,mailAttFile,mailAttWent,mailAttOpen,mailAttRow,CLOUD_K,LEDGER_CLOUD_URL,cloudCfg,cloudOn,cloudSet,cloudUrlOk,cloudCall,cloudFs,cloudSignUp,cloudSignIn,cloudSignOut,cloudMe,cloudDeleteAccount,cloudPanel,REC_ID,recKeyNew,recNorm,recFmt,recSeal,recOpen,recHas,recMake,recRecover,recRewrap,cloudUrlKnown,readEngine,cloudForgot,cloudReset,cloudVerify,cloudVerifySend,cloudPwChange,cloudLinkTake,cloudLinkOnBoot,cloudSessions,cloudSessionEnd,cloudSessionsEndOthers,cloudActivity,ACT_WORDS,actWords,actWhen,actPanel,pkSupported,pkAdd,pkSignIn,pkList,pkRemove,pkRewrap,_pkDocId,WEL_CATS,WEL_STEPS,welDraft,welList,welPlan,welApply,welWanted,MAIL_ATT_LOOK,mailAttTargets,cfReconPoints,cfReconDays,cfStmtBacked,cfReconWindows,cfReconSummary,cfReconBlame,cfImportPanel,cfComingPanel,cfOverdue,CF_STANDIN_DAYS,cfPaidNote,cfChipWord,cfChipKey,subPayGet,subPaySet,subPayer,subPayNote,subPayModal,SUBPAY_DAYS,cfSettled,cfSettledSummary,CF_SETTLED_BACK,cfSettledPanel,CF_ASSUMED,cfIsAssumed,cfLateSkipSet,cfAssumedSpent,get saveBlock(){return saveBlock;},get saveState(){return saveState;},render,Views,healFromSeed,money,catSums,
+  window.__PF={S,get DB(){return DB;},set DB(v){DB=v;},setBook,chargeId,chargeIdsFill,quickAdd,isTextEntry,cellTerms,setCellTerms,setCell,gridRestore,_hasPlain,blankMonthTmpl,emptyView,bioAfterReseal,APP_V,APP_BUILD,paintChrome,parseBillAlert,billRouteFor,parseBillAlert,seriesTaken,seriesDelete,seriesFreqAll,_pdfScan,_pdfStreamEnd,pdfDiag,parseRbsInvoices,_rbsCells,rbsToRows,rbsIsInvoice,rbsIsStatement,rbsIsRbs,vendorIsGeneral,suggestDest,rbsLineOff,rbsInvoiceOff,parseRbsStatement,rbsReconcile,rbsStmtPanel,rbsTakeFiles,rbsWireDrop,rbsAlreadyIn,r4DupeRows,r4VendorKey,rbsPanel,pdfRuns,billDupe,billPastePanel,_billToken,_billDate,save,saveFlush,saveSettled,imgPut,imgGet,imgDel,imgHave,imgBytes,imgCount,imgLoadAll,imgMigrate,imgGC,imgMissing,imgMissingCount,imgAdoptFrom,imgAdoptApply,_imgKeyOf,imgPushedRead,imgMarkPushed,imgAtRisk,imgAtRiskCount,imgWouldDrop,imgReady,imgWait,imgSettled,imgUnreadable,rcpImg,rcpHasImg,rcpImgBad,_imgSrcOK,imgSealAll,imgOpenAll,imgSealedCount,imgSealStat,imgSealCatchUp,imgRekey,imgClearAll,imgShutCount,imgBrokeCount,_imgIsEnv,bookWithImages,saveWhy,SAVE_WHY,saveWhere,storageAudit,storagePanel,appInstalled,fbChosen,fbStopOwn,roomForImage,lsBytes,lsHeadroom,lsCeiling,lsRefusedAt,lsNoteRefusal,LS_CEILING,saveWarnPaint,backupMark,backupLast,backupAgeDays,backupWords,backupKindOf,cfChaseParse,bankParse,TILE_SEL,TILE_MENUS,tileMenuFor,tileMenuItems,tileMenusWire,tileMenuOpen,tileMenuClose,tileMenuRates,rwCardsAll,rwOffersAll,rwClosedIds,rwIsClosed,CF_BANK_TYPES,cfBankList,cfMainBank,cfBanks,cfBankGet,cfBankId,cfBook,cfCur,cfBankAdd,cfBankSet,cfBankDel,cfBankState,cfBankBalance,cfBankPoints,cfBankSummaryParse,cfBankInterest,CF_XFER_DAYS,cfXferKey,cfXferWords,cfTransfers,cfXferSay,cfXferNoReset,cfImportXfers,cfProjectAll,reconCards,PLAID_ACCT_K,plaidAcct,MAIL_FILE_V,mailFileReady,mailFileBook,mailFileDest,mailFileQueue,mailFileLabels,mailFilePass,mailFileSheet,mailFileList,MAIL_ASSIST_V,mailAssistReady,mailAssistState,mailAssistFiling,mailAssistOp,mailAssistCost,mailAssistSheet,mailRecapCard,mailFileOnRead,mailFileGuess,mailFileCatLabel,mailFileFind,mailFileSub,plaidAcctSet,plaidCfg,plaidCfgOnly,plaidSignIn,plaidSignOut,plaidBook,plaidTake,plaidMapSet,plaidFile,plaidInboxSettle,plaidWaiting,plaidReview,plaidRow,plaidGuess,plaidCatWord,plaidKeyNew,plaidOpen,plaidKid,plaidStatus,plaidEnsureKey,plaidConnect,plaidPull,plaidAuto,plaidRemove,plaidPanel,plaidLinkLoad,plaidOAuthOnBoot,PLAID_LINK_SRC,PLAID_SEAL_INFO,PLAID_TYPE,hhCfg,hhOn,hhBooksList,hhOpen,hhDocId,hhKeyNew,hhWrapPut,hhKeyFor,syncKeyPass,hhShare,hhInvite,hhLinkTake,hhJoin,hhMembers,hhInvites,hhRevoke,hhActivity,hhRemove,hhRekey,hhLeave,hhStop,hhGone,hhForget,bookPanel,hhInviteModal,hhJoinModal,hhLinkOnBoot,HH_WORDS,bookMerge,syncBaseSet,syncBaseGet,syncBaseForget,syncMergeWith,syncMergeDone,syncMergeAuto,syncMergeWords,syncManId,fsInit,syncBookId,syncBookOldId,syncBookV3,pfDerive3,pfSaltNew,pfSaltOk,BOOK_ID,syncEncOpt,bookSaltGet,bookSaltSet,syncBookMoved,PF_KDF_ITER3,_pkOpen,_unb64,rotatePlan,rotateState,rotateConfirmText,rotateDoneModal,pkDropSeals,_repassSecrets,syncRepass,syncNWrap,syncNUnwrap,syncSeenGet,syncSeenSet,syncIsOlder,syncNextN,cfReconWindows,cfReconDays,cfStmtBacked,mkey,monthByKey,r2v,ONCE_NAMES,ONCE_HITS,renderOnce,vpW,PDF_PARSERS,parseAnyInvoice,anyHeadRoles,anyLineOff,rbsAlreadyIn,zipStore,crc32,foldSheetLazy,zipBookText,ledgerFileText,exportAllFiles,exportAllZip,exportMint,EXPORT_EXTRA,_expGrid,aggParse,aggSniff,cfAggNear,aggToRecon,CF_AGG_DAYS,anyToInv,rbsReadRuns,rbsInvWord,aggDate,aggDateOrder,aggSuggest,cfImpStart,AGG_FORMATS,csvEsc,taxNyRules,taxStateNote,taxStatePaid,taxYearKey,taxYearEnd,taxYearEndOn,yearEndInsights,yearEndModal,YEAREND_FROM_MONTH,taxFileStateBlock,taxPlanState,cfBankGo,cfBankName,cfExpectNs,catHead,catRenamed,catRenameRcp,_cfXferLoose,catAddTo,catLineUp,catLineUpPlan,catRenameFwd,catLater,rcpOtherCats,rcpCatOk,rcpCatEnsure,rcpCatOptions,RCP_CASHBACK,RCP_CASHBACK_DAYS,rcpLooksCashback,rcpCashbackWords,rcpCashbackDest,rcpCashbackCard,rcpCashbackRedemptions,rcpCashbackFields,RW_PT_VAL,RW_PT_PILE,RW_PT_EXP_DAYS,rwPtVal,rwPoints,rwPointsAll,rwPointsLine,rwPointsNudges,rwPointsClosing,mailRedeemSubj,mailRedeemRead,mailRedeemCard,mailRedeemUse,mailRedeemDrop,mailRedeemActs,MAIL_REFUND_NEAR,mailRefundFind,mailRefundHave,mailRefundRecord,mailRefundUndo,mailRefundAuto,mailRefundChecks,mailRefundInsights,mailRefundActs,mailHandled,mailHandledText,mailHandledSheet,MAIL_SELF_DAYS,MAIL_SELF,mailIsPromo,mailSelfRun,mailSelfPass,mailSelfPreview,mailPreviewSheet,mailLessonFor,mailLessonApply,mailLessonHtml,mailSelfUndo,mailSelfChecks,mailSelfInsights,mailSelfActs,mailSelfSheet,CF_SELF_NEAR,MAIL_RCP_SEEN,mailCashBank,mailCashSureAccount,mailSelfCash,mailRcpCat,mailSelfReceipt,mailSelfUndoWhy,mailSelfMoneyUndo,MAIL_WEEK_DAYS,MAIL_WEEK_DUPE,MAIL_WEEK_KINDS,mailWeek,mailWeekSheet,cardPays,cardPayLines,cardPayWords,cardPayPoints,cardPayMissing,cardPayPanel,CARDPAY_BEFORE,CARDPAY_AFTER,cardsOpen,cfPayeeKeyV1,cfAllOn,cfAllPoints,cfAllSpan,cfAllTotal,cfAllMoves,cfXferSeries,cfComingAllPanel,cfImportCat,cfCatIndex,cfXferPanel,TAX_STATES,TAX_NO_WAGE_TAX,taxStateKey,taxStateName,taxStateTaxesWages,taxStateFor,taxIsNY,taxStateWord,taxProfileCard,_stubStateCode,BANKS,bankFrom,bankNamed,bankBody,bankTail,bankWho,bankDate,mailAttSniff,syncLegacyId,syncLegacyGone,cardClosedOn,cardIsClosed,cardClosedSet,cardCloseOpen,cardCloseSave,cardReopen,titleCase,seriesStats,seriesCycle,seriesArea,seriesTile,seriesCountUp,bankOfxParse,bankCsvParse,bankIsOfx,_cfFinish,cfAlertParse,cfAlertPanel,cfPayeeKey,cfMapGet,cfMapSet,cfGuessAccount,cfSugTokens,cfSuggestAccount,cfNewRows,cfBackfill,cfRowEntry,cfBankDays,cfBankDaysMerge,cfBankDaysNew,cfImportPlan,cfAccountAdd,cfAddDays,cfAddMonths,cfDaysBetween,cfSeriesKey,cfSeriesName,cfCadence,cfNextDate,cfNthDate,cfDatesAfter,cfAmountShape,cfCardFor,cfCardLinkGet,cfCardLinkSet,cfCardDue,cfCardDueOn,cfCardDueToggle,cfExpectGet,cfExpectSet,cfSeries,cfSeriesAll,cfSubSeries,taxPaySeries,taxPaydaysLeft,taxPerCheque,taxStubParse,taxStubDerive,taxStubGet,taxStubSave,taxDeferPace,taxWithheldPace,taxStubPanel,stubFileBtn,taxSubTabs,taxTabKey,taxYearNav,taxStamp,taxHomeData,taxHomeHtml,taxSteps,taxStepsHtml,taxDocNeeds,taxKeyDates,taxYoYWords,cfRemaining,cfForecast,cfOneStatement,cfProject,cfMovedSet,cfMovedToggle,cfIsMoved,cfSplit,cfBalancePoints,cfLatestBalance,cfStatedThrough,cfBalanceChartPts,CF_SPANS,cfSpanOk,cfSpanFrom,cfSpanPoints,cfSpanStats,CF_SECTION_ICO,cfHi,cfFresh,CF_TYPE_ICO,cfTypeIco,cfDir,cfFlowBar,SUB_KINDS,SUB_COMMON,subKind,subAvatar,subHi,subFresh,subRenew,subShareBar,BILL_KINDS,billKind,billFresh,cardMono,cardMini,cardStatus,cardFresh,RECON_SECTIONS,reconSheet,reconFresh,reconRing,NAVDEF,EMOJI,ico,ICON_STYLE,UI_WORDS,UI_ICO_DEFAULT,uiIcoFor,uiPageIco,uiPageIcoName,uiDecorate,uiEntered,macTint,macTrack,macBack,macFwd,macToolbar,macSideSet,macBadges,macPages,macGoKey,macMenuItems,macMenuShow,macMenuClose,TRIAL_WARN,TRIAL_GRACE,trialGet,trialSet,trialClear,trialState,trialsDue,trialWords,trialInsights,trialPill,trialKeep,trialCancel,trialNotify,STORE_ICO,storeLines,storePeriods,storeName,storeIco,storeTable,storeMonthly,storeCharges,storeInsights,storeDelta,WORTH_TYPES,WORTH_SPANS,worthType,worthBook,worthEnsure,worthAdd,worthSet,worthRemove,worthSources,worthAt,worthMonthly,worthInsights,worthLinkOk,rcpCardLinkGet,rcpCardLinkSet,cardTallyOpen,rcpCardOf,cardTallies,cardTally,cardTallyLostHtml,cardTallyNow,cfCardDue,cardStmtImported,cardStmtEmail,mailCardStmtSubj,mailCardStmtRead,mailCardStmtCard,mailCardStmtUse,mailCardStmtActs,cardDueGet,stmtSummary,stmtSummaryApply,cardStmtDay,cardBillWord,cardBillNote,CARDBILL_DAYS,worthLinkSet,worthDue,WORTH_MONTHLY,RET_POLICY,retPolicy,retFor,warFor,returnsDue,warrantiesEnding,retWhen,returnsInsights,returnsSheet,returnsFields,returnsRead,returnsApply,ODD_DAYS,oddId,oddCharges,oddWords,oddInsights,oddOk,oddSheet,TAXPACK_HOME,taxPackAgi,taxPackYears,taxPack,taxPackCsv,GUARD_IDLE_CHOICES,GUARD_FREE,guardIdleMinutes,guardIdleSet,guardTouch,guardDue,guardLockNow,guardWaitFor,guardUnlockWait,guardUnlockFailed,guardUnlockPassed,guardWaitWords,guardRow,MAIL_DEPS,MAIL_GAS,MAIL_GAS_V,MAIL_GAS_MANIFEST,MAIL_FROM_DEFAULT,MAIL_KINDS,MAIL_ACT,mailKeyNew,mailKeyOk,mailSigned,mailOpen,mailScriptSource,mailAddr,mailDomain,mailName,mailFromIs,mailAmounts,MAIL_TOTAL_RES,mailTotal,mailRead,mailBook,mailEnsure,mailLinked,mailUrlOk,mailStale,mailAsk,mailMerge,mailPrune,mailPull,mailWaiting,mailItem,mailMark,mailDay,mailAsText,mailQueueReceipts,mailIsPuller,mailLocal,mailLocalSet,mailSenderOk,mailRewind,mailRefusedNew,MAIL_MAX,MAIL_TEXT_SHORT,mailSays,mailAuto,mailRwMatch,mailWhen,mailCursor,mailCovers,mailNoteRefused,mailRetired,mailRetire,mailLocalReset,mailLinkKeep,mailLinkPut,mailRefundAmt,MAIL_NOTE_DAYS,MAIL_REFUND_BACK,MAIL_LOOKBACK_DAYS,MAIL_MARKS,MAIL_PAGE,MAIL_HOLD,mailShape,mailRuleKey,mailRule,mailLearn,mailAmtAs,mailMarkAs,mailResort,mailXferDir,MAIL_XFER_RE,mailCashParse,mailCashOpen,mailSubGuess,mailSubOpen,mailSubPanel,mailLegacyKey,mailTwins,mailIgnore,mailUnignore,MAIL_ATT_AUTO,mailAttIsPdf,mailAttIsImg,mailAttsClean,mailAttTexts,mailAttCan,mailAttFetch,mailAttApply,mailAttRead,mailAttAuto,mailAttIsRbs,mailAttFile,mailAttWent,mailAttOpen,mailAttRow,CLOUD_K,LEDGER_CLOUD_URL,cloudCfg,cloudOn,cloudSet,cloudUrlOk,cloudCall,cloudFs,cloudSignUp,cloudSignIn,cloudSignOut,cloudMe,cloudDeleteAccount,cloudPanel,REC_ID,recKeyNew,recNorm,recFmt,recSeal,recOpen,recHas,recMake,recRecover,recRewrap,cloudUrlKnown,readEngine,cloudForgot,cloudReset,cloudVerify,cloudVerifySend,cloudPwChange,cloudLinkTake,cloudLinkOnBoot,cloudSessions,cloudSessionEnd,cloudSessionsEndOthers,cloudActivity,ACT_WORDS,actWords,actWhen,actPanel,pkSupported,pkAdd,pkSignIn,pkList,pkRemove,pkRewrap,_pkDocId,WEL_CATS,WEL_STEPS,welDraft,welList,welPlan,welApply,welWanted,MAIL_ATT_LOOK,mailAttTargets,cfReconPoints,cfReconDays,cfStmtBacked,cfReconWindows,cfReconSummary,cfReconBlame,cfImportPanel,cfComingPanel,cfOverdue,CF_STANDIN_DAYS,cfPaidNote,cfChipWord,cfChipKey,subPayGet,subPaySet,subPayer,subPayNote,subPayModal,SUBPAY_DAYS,cfSettled,cfSettledSummary,CF_SETTLED_BACK,cfSettledPanel,CF_ASSUMED,cfIsAssumed,cfLateSkipSet,cfAssumedSpent,get saveBlock(){return saveBlock;},get saveState(){return saveState;},render,Views,healFromSeed,money,catSums,
     undo,undo,redo,snap,snapCancel,toast,palOpen,palClose,palSearch,palIsOpen,PAL,UNDO,REDO,
     computeInsights,bookIntegrity,taxOpenMoney,taxOpenMoneyHtml,integrityHtml,_grpMonthly,chartW,chartBand,billMonths,billPerMonth,cfCadenceFromFreq,seriesMonthsPer,seriesFreqLabel,seriesPerMonth,seriesRate,seriesFreqGet,SERIES_FREQ_OPTS,SERIES_AUTO,seriesIsAuto,seriesAutoGet,seriesAutoWindow,seriesAutoDue,seriesAutoNext,seriesAutoRun,seriesRecord,seriesAutoSet,seriesAutoTick,seriesAutoAfterSync,workOverdue,workDepositKey,workReimbMatches,workPaidBy,workFollowInsights,WORK_LATE_DAYS,subsHistory,subsHistorySheet,SUBS_HIST_MONTHS,subsMerchantKey,subsDisplayName,subsFound,subsFoundAdd,subsFoundNot,subsFoundSheet,subsLineSeries,subsFromLine,subsLineUnlink,subsLineLink,subsLinePicker,seriesPriceChange,seriesPriceWatched,seriesPriceRecent,seriesCosts,RW_ALWAYS_FROM,RW_ALWAYS_TO,rwIsAlways,rwWhen,rwOfferAlways,rwCards,rwOffers,rwCard,rwOffer,rwCardAdd,rwCardSet,rwCardDel,rwOfferAdd,rwOfferDel,rwMax,rwSpent,rwStatus,rwDaysLeft,RW_TOPICS,rwTopicsOf,rwCovers,rwBest,rwEarnedYear,RW_PRESETS,rwPresetsOpen,rwCardFind,rwMerge,rwPresetApply,rwPrompt,rwRead,rwStmtCards,rwStmtGuess,rwStmtFor,rwCardForStmt,rwLineTopics,rwExcludes,rwLineCovered,rwLines,rwOfferSpend,rwRateFor,rwMissed,rwNudges,RW_NUDGE_MAX,rwIsRedemption,rwRedemptions,rwRedeemedYear,reconRewardsSettle,FOODSPLIT_WORDS,foodSplitGuess,foodSplitPlan,foodSplitApply,foodSplitOpen,closeYm,closeLabel,closeRange,closeShift,closeDefault,closeGet,closeSet,closeItems,closeSummary,closeInsights,RW_FLAT,rwStatementFees,rwCardYear,rwWorthAll,rwWorthInsights,rwWorthSheet,RW_ICO,rwIcoFor,rwFresh,rwCardColor,rwTier,rwPill,rwBar,seriesStaleAfter,seriesIsCold,computeAudit,csv,CSVSETS,focusCell,startCellEdit,catManager,CAT_SUGGEST,aliasGet,aliasSet,aliasReset,aliasWords,ALIAS_DEFAULT,grpManager,grp,gcolor,curMonth,dashPace,dashBudgetSplit,dashCatOrder,dashDaily,dashCash,budgetTotal,budgetPrevCol,budgetCached,budgetSync,catAugustColumns,catAugustAfterBook,dayDrawer,dayDrawerSave,calMonth,calendarHtml,txAll,txFiltered,txCsv,txReceiptIndex,dayCharges,dayMerchant,dayAddRow,dayRowsNow,dayAmt,dayCountHtml,dayRecount,catDropColumns,CAT_AUG_FLAG,CAT_DROP_FLAG,modal,closeModal,modalStale,get BOOKGEN(){return BOOKGEN;},
     RCP,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
