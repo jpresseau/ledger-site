@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Q9h5697/bMDM7mNCRJEfIMoHXbAaa6wHAdsGGXuV75U=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Ol8r/AnDT9uvhQfdRjUbRfMP1T0H/Q12gpb4TSAxMDg=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -224,10 +224,10 @@ label.qbtn{cursor:pointer}
    belongs to. Quiet enough to ignore until you are looking for it. */
 .qbtn .bid{margin-left:1px;font:600 9px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   letter-spacing:.02em;color:var(--sub)}   /* not opacity:.5 — that was 3.36:1 (axe, v27.11); --sub is the quiet colour that passes */
-/* The phone treatment of this bar is NOT here. Every app-wide mobile rule lives
-   in styles/receipts.css, which is included after this file and would override
-   anything written here anyway — `.qbtn{padding:6px 9px}` in its 560px block
-   silently beat a copy of these rules put in this file. Search there. */
+/* The phone treatment of this bar is NOT here. The phone's chrome — the top bar, the ⋯ menu, the tab bar and
+   the map behind More — is styles/phone.css, included LAST; the rest of the app-wide mobile rules are in
+   styles/receipts.css. Both come after this file and would override anything written here anyway —
+   `.qbtn{padding:6px 9px}` in receipts.css's 560px block silently beat a copy of these rules put here. */
 .save-indicator{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--sub2);
   white-space:nowrap}
 .save-dot{width:7px;height:7px;border-radius:50%;background:var(--meter);flex:none;
@@ -235,16 +235,6 @@ label.qbtn{cursor:pointer}
 .save-dot.saving{background:var(--amber);box-shadow:0 0 0 3px rgba(180,83,9,.16)}
 .save-dot.volatile{background:var(--ember);box-shadow:0 0 0 3px rgba(226,75,74,.18)}
 #nav{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
-/* The small-screen disclosure. Always in the markup so the stylesheet is the
-   only thing deciding whether it shows — see nav() — and off by default here,
-   since a wide rail holds all nineteen views at once and has nothing to open.
-   The rule that shows it lives in styles/receipts.css with the rest of the
-   phone layout, which is included AFTER this file and would win anyway.
-
-   Scoped to #nav on purpose: `#nav button` below is (1,0,1) and a bare
-   .navtoggle is (0,1,0), so the class alone loses to it and the toggle appeared
-   on the desktop rail as a twentieth chip. */
-#nav .navtoggle{display:none}
 .navseg{display:inline-flex;align-items:center;gap:1px;background:var(--card);border:1px solid var(--hair);
   border-radius:8px;padding:2px 2px 2px 0;box-shadow:var(--sh1);max-width:100%}
 .navseg .grp{flex:none;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub2);
@@ -257,19 +247,23 @@ label.qbtn{cursor:pointer}
 #nav button.on{background:var(--btnbg);color:#fff;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.14)}
 #nav button .ic .emo{font-size:11.5px}
 @media(prefers-reduced-motion:no-preference){
-  .qbmore.open .qbmenu{animation:menuin .16s cubic-bezier(.16,1,.3,1)}
+  .qbmore.open .qbmenu,.qbmore.open .qbrare{animation:menuin .16s cubic-bezier(.16,1,.3,1)}
   @keyframes menuin{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
 }
 /* From 901px the rail is a Mac window's sidebar and toolbar — styles/mac.css. */
-/* The quick bar's ⋯: what is used now and then. */
-.qbmore{position:relative;display:inline-flex}
-#qbMoreBtn{font-weight:700;letter-spacing:.06em;padding-left:10px;padding-right:10px}
+/* THE ⋯ AND ITS MENU, ON A DESKTOP (v28.62). The markup is one list under the ⋯ (index.skeleton.html): Today, Undo,
+   Redo, Sync, Refresh, Install, then .qbrare — Expand all, Backup, Restore, Theme. Here the wrappers are
+   display:contents, so the first six sit in the toolbar as chips exactly as before, the ⋯ goes last (order), and
+   only .qbrare drops from it. styles/phone.css lays the same list out as one menu below 901px. */
+.qbmore,.qbmenu{display:contents}
+#qbMoreBtn{order:99;font-weight:700;letter-spacing:.06em;padding-left:10px;padding-right:10px}
+#weekPct{order:-1;margin-right:6px}
 .qbmore.open #qbMoreBtn{background:var(--shelf);border-color:var(--accent)}
-.qbmenu{display:none;position:absolute;right:0;top:calc(100% + 5px);z-index:80;min-width:180px;
+.qbrare{display:none;position:absolute;right:12px;top:calc(100% + 5px);z-index:80;min-width:180px;
   flex-direction:column;align-items:stretch;gap:2px;padding:5px;background:var(--card);
   border:1px solid var(--hair);border-radius:11px;box-shadow:var(--sh3)}
-.qbmore.open .qbmenu{display:flex}
-.qbmenu .qbtn{border-color:transparent;padding:7px 10px;font-size:12.5px;justify-content:flex-start}
+.qbmore.open .qbrare{display:flex}
+.qbrare .qbtn{border-color:transparent;padding:7px 10px;font-size:12.5px;justify-content:flex-start}
 /* NO MAX-WIDTH. It was 1560px, and the toolbar above it has always run edge
    to edge — so on a 1920 screen the rail reached the right-hand edge and the
    page stopped 360px short of it, with the whole gap on one side because the
@@ -1044,44 +1038,8 @@ tr:hover .rowdel,.rowdel:focus{opacity:1}
   .chgtbl th:nth-child(4),.chgtbl td:nth-child(4){display:none}
 }
 @media(max-width:900px){
-  #rail{padding:.4rem .8rem .36rem;gap:5px}
-  .logo-icon{width:26px;height:26px;border-radius:7px}
-  .logo-icon svg{width:15px;height:15px}
-  .logo-text{font-size:13.5px}
-  .qbar{gap:6px}
-  .save-indicator{display:none}
-  /* The rail is sticky and two rows here; the countdown takes the empty end of the lower one (the page picker's). */
-  #weekPct{position:absolute;right:.8rem;bottom:calc(.36rem + 2px);z-index:2}
-  .qbtn{padding:4px 8px;font-size:11.5px;gap:4px}
-  #rail,.railtop,.qbar{min-width:0;max-width:100%}
-  /* ---- the tab strip becomes one row that opens ----
-     It was a horizontal scroller. Measured at 390pt that put THIRTEEN TO FIFTEEN
-     of the nineteen views off the right-hand edge — Taxes, Data and Audit among
-     them — reachable only by swiping a strip 1686px wide, with whichever one
-     straddled the edge clipped mid-word.
-
-     Wrapping is not the fix on its own: a .navseg is one inline-flex box wider
-     than the display, so four buttons stayed off-screen AND the page began
-     scrolling sideways. Both are needed — the strip wraps and so does each
-     segment — and then the rail is 270px, a third of the screen, which is worse
-     than the problem it solves. See state.js for why that is not a trade worth
-     making here.
-
-     So the segments are wrapped AND hidden until asked for. Collapsed the rail
-     costs what the scroller cost and says where you are; open it is 180px with
-     nothing off the edge, and picking a view shuts it. */
-  #nav{flex-wrap:wrap;overflow-x:visible;min-width:0;width:100%;gap:4px}
-  .navseg{flex-wrap:wrap;max-width:100%}
-  #nav:not(.open) .navseg{display:none}
-  #nav .navtoggle{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
-    background:var(--card);border:1px solid var(--hair);border-radius:8px;
-    padding:5px 11px 5px 9px;color:var(--ink);font-size:12px;font-weight:700;
-    box-shadow:var(--sh1)}
-  #nav .navtoggle .ic{width:14px;flex:none;display:flex;align-items:center;justify-content:center}
-  #nav .navtoggle .cv{font-size:10px;color:var(--sub2);transition:transform .13s}
-  #nav.open .navtoggle .cv{transform:rotate(180deg)}
-  /* Each group's label heads its row in the opened map. */
-  .navseg .grp{display:block}
+  /* The rail's phone treatment — the top bar, the ⋯ menu, the tab bar, the map behind More — is styles/phone.css
+     (v28.62), included last. Only the page's own measures stay here. */
   main{padding:12px .8rem 64px}
   .pagehead h2{font-size:19px}
   .catrow{grid-template-columns:88px 1fr 118px;gap:10px}
@@ -1105,11 +1063,6 @@ tr:hover .rowdel,.rowdel:focus{opacity:1}
      min-width drops to 96px because three across 364pt is 118 each. */
   #page .plates.leadplate .plate{min-width:96px}
   #page .plates.leadplate .plate:first-child{flex:1 1 100%}
-  /* The wordmark is decoration, and it cost 38px of EVERY view on a phone —
-     a 26px box plus the row gap above the quick bar. In an installed app the
-     home-screen icon has already said which app this is. The save indicator
-     went the same way at 900px, for the same reason. */
-  .brand{display:none}
   /* ---- a decision row must fit the phone it is decided on ----
      Reconcile's rows carry up to three buttons — "+ $9.64 tip", "Not a tip —
      leave it", "Not that" — and .tbl td.acts holds them on one line so they
@@ -1201,54 +1154,6 @@ tr:hover .rowdel,.rowdel:focus{opacity:1}
      them, nothing hidden. That is the same bargain the quick bar and the
      Reconcile rows strike, and it is what receipts.css says twice already. */
   .svgbox svg{max-width:100%;height:auto}
-  /* ---- the quick bar becomes a strip of icons ----
-     Nine labelled chips wrapped onto THREE rows at 390pt: 104px of the 191px the
-     rail was taking, before a single figure of the page. A quarter of the screen
-     spent on controls, on the device with the least screen to spend.
-
-     It is the LABELS that cost it, not the buttons, so here they come off and
-     the bar is one row. Nothing is hidden and nothing moves behind an overflow
-     ⋯: every one of them is still exactly one tap, which is the entire point of
-     a quick bar. Measured after: 121px of rail, one row of chips.
-
-     `font-size:0` rather than `display:none` on the label — ico() marks the
-     emoji aria-hidden, so the text node IS the accessible name, and hiding it
-     would leave nine buttons a screen reader calls nothing at all.
-
-     They share the row rather than taking a fixed width each: Expand all and
-     Install are conditional, so the count runs from seven to nine, and a fixed
-     width either overflows at nine or leaves a hole at seven. */
-  /* The bar takes the whole row it has wrapped onto — brand and nine chips never
-     share a line at this width, so the alternative is a strip sized to its own
-     content with 60px of the row left empty beside it and the tap targets 29px
-     wide instead of 37. */
-  .qbar{flex:1 1 100%}
-  /* ---- and it wraps rather than sliding off the left ----
-     nowrap was right for nine chips and wrong for eleven. `justify-content:
-     flex-end` means the overflow goes off the START of the row, so when the
-     camera chip made eleven the measurement was: 360pt put it at x=-22.8, off
-     the screen entirely, and 390pt put it at 7.2 inside a rail that begins at
-     12.8. Neither showed as a sideways scroll — content overflowing to the LEFT
-     never does — so every "nothing pans the page" assertion in the suite was
-     perfectly happy with a button nobody could press.
-
-     Two changes. The gap comes down to 3px, which is what buys the eleventh
-     chip its place at 390 (11 x 30 + 10 x 3 = 360, inside 364.4). And the row
-     is allowed to WRAP again, so the phones too narrow for one row get two
-     rather than losing a button off the edge — 38px of rail, at 360pt and
-     below, in exchange for nothing being hidden. That is the same bargain the
-     labels-off rule above struck, and this is the case it did not cover. */
-  .quickbtns{flex:1 1 auto;flex-wrap:wrap;gap:3px;justify-content:flex-end;min-width:0}
-  .qbtn{flex:1 1 0;min-width:30px;max-width:46px;height:34px;
-    padding:0;gap:0;justify-content:center;font-size:0}
-  /* The fingerprint keeps the dashboard footer, which prints it in full and
-     somewhere it can be read. Four characters of 9px monospace tucked under an
-     icon is not that place. */
-  .qbtn .bid{display:none}
-  /* The ⋯ is a chip like the rest; its menu keeps its words. */
-  .qbmore{flex:1 1 0;min-width:30px;max-width:46px}
-  #qbMoreBtn{width:100%;padding:0}
-  .qbmore .qbmenu .qbtn{flex:none;max-width:none;height:auto;padding:9px 11px;gap:8px;justify-content:flex-start;font-size:13px}
 }
 .rettbl .retwhen{white-space:nowrap;font-size:12.5px}
 .rettbl .retwhen.soon{color:var(--neg);font-weight:600}
@@ -2249,7 +2154,7 @@ body.dark{--sbbg:color-mix(in srgb,var(--page) 80%,#000);--tbbg:color-mix(in srg
 @media(min-width:901px) and (max-width:1279px){
   .qbar .qbtn{font-size:0;gap:0;padding:0 8px;height:30px}
   .qbar .qbtn .bid,#saveLbl{display:none}
-  .qbmenu .qbtn{font-size:12.5px;gap:8px;padding:7px 10px;height:auto}
+  .qbrare .qbtn{font-size:12.5px;gap:8px;padding:7px 10px;height:auto}
 }
 /* A page's count in the sidebar, the way Mail shows unread. */
 #nav .nbadge{margin-left:auto;min-width:20px;padding:1px 6px;border-radius:999px;font-size:11px;font-weight:650;
@@ -2717,6 +2622,108 @@ body.dark{--tr-line:#34A874}
 .budpick{display:inline-flex;align-items:center;gap:6px;min-height:24px;cursor:pointer;font-size:12.5px}
 
 
+/* ---- THE PHONE'S CHROME (v28.62) ----
+   Below 901px the app is a phone app: a slim top bar that names the page, with the camera, Search and a ⋯ menu;
+   and a tab bar along the bottom with the four pages a member opens most and More, which lifts the whole map as a
+   sheet. Included LAST, so it wins over every rule above it. What it replaces lived in styles/receipts.css and
+   chrome.css: nine labelled chips wrapped onto three rows, then one row of nine icons; and a "▾ Dashboard" row that
+   unfolded nineteen chips. Measured at 390×844 (e2e 04b, 04b2, 04d, 04g): the rail is about 52px of screen where it
+   was 121, every page is one tap from the bar or two through More, and nothing is behind a swipe.
+   On a desktop (styles/mac.css, from 901px) none of this applies: the sidebar lists every page, the toolbar keeps
+   its labelled chips, and the tab bar is display:none. */
+#tabbar{display:none}
+@media(max-width:900px){
+  /* -- the top bar: where you are, the shutter, Search, ⋯ -- */
+  #rail{padding:calc(.3rem + var(--sat)) calc(.6rem + var(--sar)) .3rem calc(.6rem + var(--sal));gap:0}
+  .railtop{flex-wrap:nowrap;align-items:center;gap:8px}
+  .brand{display:none}
+  .qbar{flex:1 1 auto;display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:nowrap;min-width:0;height:44px}
+  .tbnav{display:flex;align-items:center;flex:1 1 auto;min-width:0;margin-right:auto;gap:0}
+  #tbSide,#tbBack,#tbFwd{display:none}
+  .tbtitle{display:flex;align-items:center;gap:8px;min-width:0;font-size:16px;font-weight:700;letter-spacing:-.01em;color:var(--ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tbtile{flex:none;width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:14px;font-family:var(--emoji,system-ui);
+    background:linear-gradient(160deg,color-mix(in srgb,var(--nc) 72%,#fff),var(--nc));
+    box-shadow:0 1px 1.5px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.28)}
+  .quickbtns{flex:none;flex-wrap:nowrap;gap:4px;justify-content:flex-end}
+  /* Three 40px targets, pictures only. The label stays as the accessible name (font-size:0, not display:none —
+     ico() marks the picture aria-hidden, so the text IS the name; e2e 04j). */
+  .qbar .qbtn{flex:none;width:40px;height:40px;min-width:0;max-width:none;padding:0;gap:0;justify-content:center;font-size:0;border-radius:10px}
+  .qbar .qbtn>.emo{transform:scale(1.25)}
+  .qbtn .bid{display:none}
+  /* -- the ⋯ menu: the toolbar's other chips, one tap further in -- */
+  .qbmore{display:inline-flex;position:relative;flex:none}
+  #qbMoreBtn{width:40px;height:40px;padding:0;letter-spacing:0}
+  .qbmenu{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:80;min-width:236px;max-width:calc(100vw - 20px);
+    flex-direction:column;align-items:stretch;gap:2px;padding:6px;background:var(--card);border:1px solid var(--hair);
+    border-radius:14px;box-shadow:var(--sh3)}
+  .qbmore.open .qbmenu{display:flex}
+  /* One menu: the desktop's dropdown (.qbrare, chrome.css) is just more rows of it here. */
+  .qbmore .qbrare,.qbmore.open .qbrare{display:contents;position:static}
+  .save-indicator{display:none}
+  .qbmenu .qbtn{width:auto;height:auto;min-height:46px;flex:none;padding:9px 12px;gap:10px;justify-content:flex-start;
+    font-size:14px;font-weight:500;border-color:transparent;border-radius:9px}
+  .qbmenu .qbtn>.emo{transform:none}
+  .qbmenu .qbtn .bid{display:inline;margin-left:auto}
+  #qbToday .qbn{position:static;margin-left:auto}
+  /* The week's countdown is a row of the menu here, not a pill in the bar, and it says the whole of what its
+     title says: a bare "96%" in a list of words is a riddle. The figure stays its text (weekpct.js, e2e 04g). */
+  .qbmenu #weekPct{position:static;align-self:stretch;min-height:46px;padding:9px 12px;border-radius:9px;border-color:transparent;
+    text-align:left;font-size:0;font-weight:500;white-space:normal;line-height:1.35}
+  .qbmenu #weekPct::after{content:attr(title);font-size:13.5px}
+  /* News behind the ⋯ — a conflict or a newer copy to sync, a newer build, something to do today — is a dot on it. */
+  .qbmore:has(#qbSync.newer,#qbSync.choose,#qbRefresh.newer,#qbToday.has) #qbMoreBtn::after{content:"";position:absolute;top:7px;right:7px;
+    width:8px;height:8px;border-radius:50%;background:var(--ember);box-shadow:0 0 0 2px var(--card)}
+  /* -- the tab bar -- */
+  /* Opaque, not frosted: a label's contrast is measured against whatever the page scrolls under a translucent
+     bar, and a green button beneath took --sub to 3.84:1 (axe, e2e 29). The card is the ground it was measured on. */
+  #tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;height:calc(56px + var(--sab));
+    padding:0 var(--sar) var(--sab) var(--sal);background:var(--card);border-top:1px solid var(--hair)}
+  #tabbar:empty{display:none}
+  #tabbar button{flex:1 1 0;min-width:0;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    padding:0 2px;border:0;border-radius:0;background:none;color:var(--sub);font-size:10.5px;font-weight:600;letter-spacing:.01em;
+    white-space:nowrap;position:relative}
+  #tabbar button .ic{width:30px;height:26px;display:grid;place-items:center;border-radius:8px}
+  #tabbar button.on{color:var(--accent-deep)}
+  #tabbar button.on .ic{background:var(--verdiglow)}
+  #tabbar .nbadge{position:absolute;top:5px;left:calc(50% + 4px);margin:0;min-width:16px;height:16px;padding:0 4px;border-radius:8px;
+    font-size:10px;line-height:16px;font-weight:700;text-align:center;color:#fff;background:var(--ember)}
+  /* The page keeps clear of the bar, and a toast rises above it. */
+  main{padding-bottom:calc(72px + var(--sab))}
+  main.gridview{padding-bottom:calc(64px + var(--sab))}
+  #toast{bottom:calc(68px + var(--sab))}
+  /* -- More: the whole map, as a sheet over the page; a tap anywhere else shuts it (events/click.js) -- */
+  #nav{display:none}
+  #nav.open{display:block;position:fixed;left:0;right:0;bottom:calc(56px + var(--sab));z-index:61;
+    max-height:calc(100vh - 56px - var(--sab) - 44px);overflow:auto;background:var(--card);border-top:1px solid var(--hair);
+    border-radius:16px 16px 0 0;padding:12px calc(12px + var(--sar)) 14px calc(12px + var(--sal));
+    /* The spread is the scrim: everything but the sheet itself, dimmed, with no element to get in a tap's way. */
+    box-shadow:0 0 0 100vmax rgba(16,19,21,.35),0 -12px 40px rgba(0,0,0,.18)}
+  #nav .navseg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:0 0 10px;padding:0;background:none;border:0;
+    box-shadow:none;border-radius:0;max-width:none}
+  #nav .navseg .grp{grid-column:1/-1;display:block;padding:6px 4px 2px;font-size:10.5px;letter-spacing:.06em;color:var(--sub2)}
+  #nav button[data-act=go]{flex-direction:column;justify-content:flex-start;gap:6px;min-height:74px;padding:8px 2px 6px;border-radius:12px;
+    color:var(--ink);font-size:11px;font-weight:600;white-space:normal;text-align:center;line-height:1.15;position:relative;box-shadow:none}
+  #nav button[data-act=go] .ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+    background:linear-gradient(160deg,color-mix(in srgb,var(--nc,var(--accent)) 72%,#fff),var(--nc,var(--accent)));
+    box-shadow:0 1px 1.5px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.28)}
+  #nav button[data-act=go] .ic .emo{transform:scale(1.5);filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}
+  #nav button[data-act=go].on{background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent-deep)}
+  #nav .nbadge,#nav button.on .nbadge{position:absolute;top:4px;right:calc(50% - 30px);margin:0;min-width:16px;height:16px;padding:0 4px;
+    border-radius:8px;font-size:10px;line-height:16px;font-weight:700;text-align:center;color:#fff;background:var(--ember)}
+  /* -- less said (v28.62): a keyboard legend has nothing to tell a thumb -- */
+  .kbdhint{display:none}
+}
+/* On a phone proper, the page's sentence of explanation and its status pill come off — each says what the page
+   itself says a line further down — and the chips that belong to a desk (paste a month, export a CSV) with them. */
+@media(max-width:560px){
+  .pagehead .lede,.pagehead .stamp,.chip.deskonly{display:none}
+  /* The page's own heading says what the top bar already says, 40px higher. Kept for a screen reader, which has no
+     top bar to read it from; taken off the screen. */
+  .pagehead .pghrow,.pagehead h2,.pagehead>.pgbadge{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;margin:0}
+  .pagehead{margin-bottom:6px;min-height:0}
+}
+
 /* ---- installed-app (PWA) chrome ----
    viewport-fit=cover lets the page use the full screen, so the notch/home-bar
    insets have to be paid back by hand or the topbar sits under the status bar.
@@ -2957,28 +2964,32 @@ button.txsort:hover{color:var(--accent)}
           <span class="tbtitle" id="tbTitle"></span>
         </div>
         <div class="save-indicator"><span class="save-dot" id="saveDot"></span><span id="saveLbl">Saved</span></div>
-        <!-- How much of the week is left before the Wednesday 4am reset (weekpct.js). In the toolbar since v27.77: it
-             floated over the page and sat on whatever was under it. A render rebuilds #page and #nav, never this. -->
-        <button id="weekPct" type="button" title=""></button>
         <div class="quickbtns">
           <label class="qbtn" id="qbShoot" for="qbShootIn" title="Photograph a receipt — straight to the camera">Receipt</label>
           <input class="shootin" type="file" accept="image/*" capture="environment" multiple data-act="rcpquick" id="qbShootIn">
-          <!-- Today (today.js, v28.08): Advice's first pile, with its count; the same count goes on the installed app's icon. -->
-          <button class="qbtn" data-act="go" data-view="today" title="Today" id="qbToday">Today</button>
           <button class="qbtn" data-act="palopen" title="Search everything (⌘K)" id="qbSearch">Search</button>
-          <button class="qbtn" data-act="undo" title="Undo (⌘Z)" id="qbUndo">Undo</button>
-          <button class="qbtn" data-act="redo" title="Redo (⌘⇧Z)" id="qbRedo">Redo</button>
-          <button class="qbtn" data-act="sync" title="Sync this book with your other devices" id="qbSync">Sync</button>
-          <button class="qbtn" data-act="swrefresh" title="Clear the cached copy and reload the latest deployed version. The code beside it is this build's fingerprint — if it still reads the same after refreshing, you are on a cached copy." id="qbRefresh">Refresh</button>
-          <button class="qbtn" data-act="install" title="Install The Ledger as an app" id="qbInstall">Install</button>
-          <!-- The ones used now and then, one tap further in (state.js, qbMoreToggle). -->
+          <!-- ONE LIST, LAID OUT TWO WAYS (v28.62). On a phone the ⋯ opens .qbmenu, a menu of everything below it. On a
+               desktop .qbmore and .qbmenu are display:contents (chrome.css), so Today … Install sit in the toolbar as
+               chips and only .qbrare — the ones used now and then — drops from the ⋯. The week's countdown (weekpct.js)
+               is a row of the phone's menu and the first chip of the desktop's bar (order:-1). -->
           <div class="qbmore" id="qbMore">
-            <button class="qbtn" data-act="qbmore" id="qbMoreBtn" title="More: backup, restore, dark mode" aria-label="More" aria-haspopup="true" aria-expanded="false"><span class="emo txt" style="font-size:16px" aria-hidden="true">⋯</span></button>
+            <button class="qbtn" data-act="qbmore" id="qbMoreBtn" title="More: today, undo, sync, refresh, backup, dark mode" aria-label="More" aria-haspopup="true" aria-expanded="false"><span class="emo txt" style="font-size:16px" aria-hidden="true">⋯</span></button>
             <div class="qbmenu">
-              <button class="qbtn" data-act="expandall" id="qbExpand">Expand all</button>
-              <button class="qbtn" data-act="backup" title="Download backup" id="qbBackup">Backup</button>
-              <button class="qbtn" data-act="go" data-view="data" title="Restore and data" id="qbRestore">Restore</button>
-              <button class="qbtn" data-act="theme" title="Toggle dark mode" id="qbTheme">Theme</button>
+              <!-- How much of the week is left before the Wednesday 4am reset (weekpct.js). A render rebuilds #page and #nav, never this. -->
+              <button id="weekPct" type="button" title=""></button>
+              <!-- Today (today.js, v28.08): Advice's first pile, with its count; the same count goes on the installed app's icon. -->
+              <button class="qbtn" data-act="go" data-view="today" title="Today" id="qbToday">Today</button>
+              <button class="qbtn" data-act="undo" title="Undo (⌘Z)" id="qbUndo">Undo</button>
+              <button class="qbtn" data-act="redo" title="Redo (⌘⇧Z)" id="qbRedo">Redo</button>
+              <button class="qbtn" data-act="sync" title="Sync this book with your other devices" id="qbSync">Sync</button>
+            <button class="qbtn" data-act="swrefresh" title="Clear the cached copy and reload the latest deployed version. The code beside it is this build's fingerprint — if it still reads the same after refreshing, you are on a cached copy." id="qbRefresh">Refresh</button>
+              <button class="qbtn" data-act="install" title="Install The Ledger as an app" id="qbInstall">Install</button>
+              <div class="qbrare">
+                <button class="qbtn" data-act="expandall" id="qbExpand">Expand all</button>
+                <button class="qbtn" data-act="backup" title="Download backup" id="qbBackup">Backup</button>
+                <button class="qbtn" data-act="go" data-view="data" title="Restore and data" id="qbRestore">Restore</button>
+                <button class="qbtn" data-act="theme" title="Toggle dark mode" id="qbTheme">Theme</button>
+              </div>
             </div>
           </div>
         </div>
@@ -2987,12 +2998,14 @@ button.txsort:hover{color:var(--accent)}
     <div id="nav"></div>
   </nav>
   <main><div class="pagewrap" id="page"></div></main>
+  <!-- The phone's tab bar (state.js tabbar; styles/phone.css): the four pages opened most, and More. Empty on a desktop and on the lock screen. -->
+  <nav id="tabbar" aria-label="Pages"></nav>
 </div>
 <script id="pfseed" type="application/json">{"meta":{"source":"","generated":"","firstMonth":"","lastMonth":""},"settings":{"salary":null,"takeHome":null,"fixedTotal":null,"fixed":[],"nextPay":""},"months":[],"income":[],"billOrder":[],"subs":{},"subOrder":[],"bills":{},"seriesArch":{"bills":[],"cards":[],"subs":[]},"seriesFreq":{"bills":{},"cards":{},"subs":{}},"cardOrder":[],"cards":{},"catTotals":{"cats":[],"rows":[]},"amortize":[],"cashflow":{"accounts":[],"entries":[]},"checking":[],"taxes":{},"renos":{"r1":{"name":"","total":null,"debt":null,"items":[]},"r2":{"name":"","total":null,"items":[]},"r3":{"name":"","purchases":[],"hours":[],"blocks":[]},"r4":{"name":"","rows":[],"hours":[],"payouts":[],"totals":{"block":[],"labor":null,"materials":null}}},"trains":{"n":[],"t":[]},"greenhouse":[],"recon":{},"taxdocs":[],"taxwork":{},"archive":{},"receipts":[]}</script>
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.61";
+const APP_V="v28.62";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3014,7 +3027,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="ca6c37a";
+const APP_BUILD="b74c684";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -3726,6 +3739,8 @@ function gcolor(g){ if(GCOLORS[g]) return GCOLORS[g]; let h=0; for(const ch of g
 /* ================= ICONS — 20px stroke set, no emoji ================= */
 const ICONS={
   dash:'M3 11.5 12 4l9 7.5M5.5 10v9.5h13V10M10 19.5v-6h4v6',
+  /* More: the tab bar's fifth tab (v28.62). */
+  more:'M5 12h.01M12 12h.01M19 12h.01',
   months:'M4 6.5h16v14H4zM4 10.5h16M8.5 3.5v4M15.5 3.5v4M8 14.5h2M14 14.5h2M8 17.5h2M14 17.5h2',
   mail:'M3.5 6.5h17v11h-17zM3.5 7l8.5 6.5L20.5 7',
   stores:'M4 9.5 5.5 4h13L20 9.5M4 9.5h16M4 9.5v10h16v-10M9.5 19.5v-5h5v5',
@@ -3785,7 +3800,7 @@ const ICONS={
 const EMOJI={
   dash:'🏠', betsy:'🌼', advice:'🧭', today:'☀️', months:'📅', receipts:'🧾', mail:'📬', stores:'🏪', worth:'🏛️', goals:'🎯', year:'🗓️', trends:'📈', insights:'💡',
   bills:'📄', subs:'🔁', cards:'💳', charges:'💸', reconcile:'⚖️', work:'💼', rewards:'💰', close:'✅', cashflow:'💵', checking:'🏦', taxes:'🧮', taxpack:'🗂️',
-  renos:'🔨', trains:'🚂', greenhouse:'🌱',
+  renos:'🔨', trains:'🚂', greenhouse:'🌱', more:'⋯',
   amortize:'🏡', archive:'📦', audit:'🔍', data:'💾',
   search:'🔍', undo:'↩', redo:'↪', backup:'📦', restore:'♻️',
   moon:'🌙', sun:'☀️', camera:'📷', image:'🖼️', ledger:'📒', refresh:'⟳', install:'📲', sync:'☁️', expand:'▾', collapse:'▴',
@@ -3793,7 +3808,7 @@ const EMOJI={
 };
 /* Arrows ride in the text font, monochrome, the way RC Garage sets "↩ Undo" —
    the emoji-presentation ↩️ renders as a boxed blue glyph and reads wrong. */
-const TEXTICO={undo:1,redo:1,refresh:1,expand:1,collapse:1};
+const TEXTICO={undo:1,redo:1,refresh:1,expand:1,collapse:1,more:1};
 /* Flip to 'line' to go back to the stroke SVG set in ICONS above. */
 const ICON_STYLE='emoji';
 function ico(name,size){
@@ -3975,7 +3990,10 @@ function macFwd(){
 function macToolbar(){
   const t=document.getElementById('tbTitle'); if(!t) return;
   const shut=typeof bookShut==='function'&&bookShut(), cur=navLabel();
-  t.innerHTML=shut?'<span class="tbtile" style="--nc:#4B5D93" aria-hidden="true">🔐</span>Locked'
+  /* A browser with nothing in it is not locked (views/locked.js's third state): it is met by the app's name. */
+  const fresh=shut&&typeof lockBlob==='function'&&!lockBlob()&&!(typeof syncPass==='function'&&syncPass());
+  t.innerHTML=fresh?'<span class="tbtile" style="--nc:var(--accent)" aria-hidden="true">'+(EMOJI.ledger||'')+'</span>The Ledger'
+    :shut?'<span class="tbtile" style="--nc:#4B5D93" aria-hidden="true">🔐</span>Locked'
     :'<span class="tbtile" style="--nc:'+macTint(S.view)+'" aria-hidden="true">'+(uiPageIco(S.view)||'')+'</span>'+esc(cur.txt);
   const b=document.getElementById('tbBack'), f=document.getElementById('tbFwd');
   if(b) b.disabled=shut||!_macH.back.length;
@@ -9477,17 +9495,14 @@ const S={
    Search, Undo, Redo, Sync, Refresh stay one tap); since v26.04 only the
    occasional ones — Backup, Restore, the theme, Expand all — sit behind its ⋯.
    This is nineteen DESTINATIONS of which anyone uses three or four; a tap that
-   replaces an imprecise swipe past fifteen of them is a straight gain. */
+   replaces an imprecise swipe past fifteen of them is a straight gain.
+
+   v28.62: the phone has a tab bar instead (tabbar.js, styles/phone.css); More lifts
+   #nav — the same markup the desktop's sidebar is built from — as a sheet of tiles. */
 let _navOpen=false;
-function navLabel(){
-  for(const r of NAVDEF) if(r[0]!=='grp'&&r[0]===S.view) return {ico:r[1],txt:r[2]};
-  /* A hidden view names its own icon — ico() returns '' for a name it does not
-     have, so an invented one would silently leave the row iconless. */
-  for(const h of HIDDEN_VIEWS) if(h[0]===S.view) return {ico:h[0],txt:h[1]};
-  return {ico:'dash',txt:'Menu'};
-}
 function navSet(on){ _navOpen=!!on; const el=document.getElementById('nav');
-  if(el) el.classList.toggle('open',_navOpen); }
+  if(el) el.classList.toggle('open',_navOpen);
+  const m=document.querySelector('#tabbar [data-act=navmenu]'); if(m) m.setAttribute('aria-expanded',_navOpen?'true':'false'); }
 /* THE WIDE RAIL. v26.04 made it Daily tabs plus three dropdowns ("too much
    wasted space"); v26.12 made it a Mac window's sidebar (mac.js,
    styles/mac.css), where every page is listed under its group, so there is
@@ -9507,15 +9522,14 @@ function qbMoreToggle(){
   m.classList.toggle('open',on);
   const t=document.getElementById('qbMoreBtn'); if(t) t.setAttribute('aria-expanded',on?'true':'false');
 }
-document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&menusOpen()) menusClose(); });
+document.addEventListener('keydown',function(e){ if(e.key!=='Escape') return;
+  if(menusOpen()) menusClose(); else if(_navOpen){ navSet(false); nav(); } });
 function nav(){
   const el=document.getElementById('nav');
-  const cur=navLabel();
-  /* Always rendered, never conditional on the width: CSS decides whether it is
-     shown, so there is no width at which the markup and the stylesheet can
-     disagree and leave a phone with no way out of the view it is on. */
-  let html='<button class="navtoggle" data-act="navmenu" aria-expanded="'+(_navOpen?'true':'false')+'">'
-    +'<span class="cv">▾</span><span class="ic">'+ico(cur.ico,13)+'</span>'+esc(cur.txt)+'</button>';
+  /* Always rendered, never conditional on the width: CSS decides how it shows — the desktop's sidebar, or the
+     phone's sheet behind More — so there is no width at which the markup and the stylesheet can disagree and
+     leave a phone with no way out of the view it is on. The tab bar is drawn with it, from the same list. */
+  let html='';
   let open=false;
   /* The counts (mac.js) and the ⌘ key for each of the first nine pages. */
   const bd=typeof macBadges==='function'?macBadges():{}, keyed=typeof macPages==='function'?macPages():[];
@@ -9543,6 +9557,7 @@ function nav(){
   el.style.setProperty('--navn',String(el.querySelectorAll('button[data-act=go]').length||1));
   el.style.setProperty('--navg',String(el.querySelectorAll('.navseg').length||1));
   el.classList.toggle('open',_navOpen);
+  tabbar();
 }
 /* The deployed page carries no book — only the shape of one. A browser that has
    never been unlocked therefore has nothing to show, and rendering eighteen
@@ -9698,8 +9713,10 @@ function gridFit(){
   const rows=tbl.querySelectorAll('tbody tr').length; if(!rows) return;
   const thead=tbl.querySelector('thead'), tfoot=tbl.querySelector('tfoot');
   const hint=document.querySelector('.kbdhint');
-  /* What is under the grid and has to stay on screen with it. */
-  const below=(hint?hint.getBoundingClientRect().height+8:0)+6;
+  /* What is under the grid and has to stay on screen with it — and, on a phone, the tab bar over the foot of the
+     window (styles/phone.css), which a grid fitted to the window would otherwise end behind. */
+  const tb=document.getElementById('tabbar'), tbh=tb&&getComputedStyle(tb).position==='fixed'?tb.getBoundingClientRect().height:0;
+  const below=(hint?hint.getBoundingClientRect().height+8:0)+6+tbh;
   const avail=Math.max(200,Math.floor(window.innerHeight-p.getBoundingClientRect().top-below));
   /* Rounded UP, plus a pixel: these are fractional heights, and a grid that
      overflows by one pixel still shows a scrollbar and still is not one window. */
@@ -10339,6 +10356,40 @@ function budgetSync(mo){
   mo.budget.Total=tot(vals);
 }
 function monthLabel(mo){ return MN[mo.m-1]+' '+mo.y; }
+
+/* ================= THE PHONE'S TAB BAR (v28.62) =================
+   The one row that said where you are, and the quick bar's nine icons above it, were 121px of every phone screen
+   and still put every page two taps away behind a "▾". Now (styles/phone.css, below 901px) the top bar names the
+   page and keeps the camera, Search and ⋯, and a bar along the bottom holds the four pages a member opens most and
+   More, which lifts the whole map — #nav, laid out as tiles — as a sheet over the page. The sheet shuts when a page
+   is chosen or on a tap anywhere else (events/click.js). Drawn by nav() (state.js) on every render, from NAVDEF. */
+/* The bottom bar's pages, in NAVDEF's order and words. Four, because a fifth is More. */
+const PHONE_TABS=['dash','months','receipts','bills'];
+function navLabel(){
+  for(const r of NAVDEF) if(r[0]!=='grp'&&r[0]===S.view) return {ico:r[1],txt:r[2]};
+  /* A hidden view names its own icon — ico() returns '' for a name it does not
+     have, so an invented one would silently leave the row iconless. */
+  for(const h of HIDDEN_VIEWS) if(h[0]===S.view) return {ico:h[0],txt:h[1]};
+  return {ico:'dash',txt:'Menu'};
+}
+/* The phone's tab bar (styles/phone.css shows it below 901px). Empty on the lock screen, where there is nowhere to
+   go; a page's count (macBadges) rides its tab, and the counts of the pages behind More add up on More. */
+function tabbar(){
+  const el=document.getElementById('tabbar'); if(!el) return;
+  if(typeof bookShut==='function'&&bookShut()){ el.innerHTML=''; return; }
+  const rows=NAVDEF.filter(function(r){ return r[0]!=='grp'; }), bd=typeof macBadges==='function'?macBadges():{};
+  const tabs=PHONE_TABS.map(function(v){ return rows.find(function(r){ return r[0]===v; }); }).filter(Boolean);
+  let rest=0; Object.keys(bd).forEach(function(k){ if(PHONE_TABS.indexOf(k)<0) rest+=bd[k]; });
+  const badge=function(n){ return n?'<span class="nbadge" aria-label="'+n+' waiting">'+n+'</span>':''; };
+  let html='';
+  tabs.forEach(function(r){ const on=S.view===r[0];
+    html+='<button data-act="go" data-view="'+r[0]+'" class="'+(on?'on':'')+'"'+(on?' aria-current="page"':'')
+      +'><span class="ic">'+ico(r[1],20)+'</span>'+esc(r[2])+badge(bd[r[0]])+'</button>'; });
+  const more=PHONE_TABS.indexOf(S.view)<0;
+  html+='<button data-act="navmenu" class="'+(more||_navOpen?'on':'')+'" aria-haspopup="true" aria-expanded="'+(_navOpen?'true':'false')+'">'
+    +'<span class="ic">'+ico('more',20)+'</span>More'+badge(rest)+'</button>';
+  el.innerHTML=html;
+}
 
 /* ================= VIEWS ================= */
 const Views={};
@@ -11347,8 +11398,9 @@ Views.months=function(){
    /* "Categories" reads as a place to look at them. It is also the only way to
       make one, which is not something the word offers. */
    +'<button class="chip" data-act="catmg">Categories +</button>'
-   +'<button class="chip" data-act="mpaste">📋 Paste a month</button>'
-   +'<button class="chip" data-act="mcsv">Export CSV</button></div>'
+   /* Pasting a month and exporting one belong to a desk: off on a phone (styles/phone.css, v28.62). */
+   +'<button class="chip deskonly" data-act="mpaste">📋 Paste a month</button>'
+   +'<button class="chip deskonly" data-act="mcsv">Export CSV</button></div>'
    +'<div class="stamp">SHEET '+(idx+1)+' OF '+DB.months.length+'</div></div>'
    +catOfferBar(mo)
    +monthPastePanel(mo)
@@ -12601,7 +12653,7 @@ function subsCostSheet(){
       +C.rows.map(row).join('')+'</tbody></table></div>');
 }
 Views.cards=function(){
-  return '<div class="cardpage'+(cardFresh()?' cardin':'')+'">'+head('Cards','Credit-card statement history — the monthly damage, card by card.','SINCE ’08')
+  return '<div class="cardpage'+(cardFresh()?' cardin':'')+'">'+head('Cards','Credit-card statement history — the monthly damage, card by card.','')
    +'<div class="chips"><button class="chip" data-act="seradd" data-kind="cards">+ <span class="subqi" aria-hidden="true">💳</span>Add a card</button></div>'
    +seriesView('cards')+'</div>';
 };
@@ -12946,7 +12998,7 @@ Views.checking=function(){
   for(let i=0;i<C.length;i+=step){ if(C[i][5]!=null) pts.push({x:C[i][0].slice(2,7),y:C[i][5]}); }
   const last=C[C.length-1];
   const add='<div class="formrow" data-form="chkadd"><label>Date</label><input type="date" name="d" value="'+todayISO()+'"><label>Type</label><input name="t" placeholder="ACH Debit" style="width:130px"><label>Counterparty</label><input name="p" placeholder="Who" style="width:160px"><label>Debit</label><input name="db" inputmode="decimal" style="width:90px"><label>Credit</label><input name="cr" inputmode="decimal" style="width:90px"><button class="btn" data-act="chkadd">Record</button></div>';
-  return head('Checking','The Chase register, 2014 – mid-2020, when Cash Flow took over. Balance carried: '+money(last?last[5]:0)+'.','REGISTER')
+  return head('Checking','The Chase register, 2014 – mid-2020, when Cash Flow took over. Balance carried: '+money(last?last[5]:0)+'.','')
    +'<div class="sheet plain"><div class="svgbox">'+lineChart(pts,{w:chartW(false,860),h:170})+'</div></div>'
    +'<div class="sheet"><div class="searchrow"><input type="search" placeholder="Search counterparty or type…" value="'+esc(F.q)+'" data-act="chkq"><span class="mut" style="align-self:center;font-size:12px">'+rowsAll.length+' transactions</span></div>'
    +'<div class="tblwrap"><table class="tbl tight"><thead><tr><th>Date</th><th>Type</th><th>Counterparty</th><th class="n">Debit</th><th class="n">Credit</th><th class="n">Balance</th><th></th></tr></thead><tbody>'+body+'</tbody></table></div>'
@@ -23090,7 +23142,7 @@ Views.renos=function(){
   const tabs=[['r1','Reno 1 · 2021'],['r2','Reno 2 · 2022'],['r3','Bathroom · 2025'],['r4','Basement · 2025–26']];
   let body='';
   if(t==='r4') body=renoR4(); else if(t==='r3') body=renoR3(); else body=renoR12(t);
-  return head('Renovations','Four campaigns on the house, receipts and labor to the penny.','THE HOUSE')
+  return head('Renovations','Four campaigns on the house, receipts and labor to the penny.','')
    +'<div class="tabs">'+tabs.map(([k,l])=>'<button class="'+(t===k?'on':'')+'" data-act="renotab" data-v="'+k+'">'+l+'</button>').join('')+'</div>'+body;
 };
 /* A pay period pasted out of the day sheet. The rows come as they are kept:
@@ -24171,7 +24223,7 @@ Views.trains=function(){
       let rows=''; arr.forEach(i=>{ rows+='<tr><td class="num mut" style="font-size:11px">'+esc(i.item||'')+'</td><td>'+esc(i.desc||'')+'</td><td class="n num">'+(i.price!=null?money(i.price):'')+'</td><td class="mut" style="font-size:11px">'+esc(i.store||'')+'</td><td class="n num mut">'+(i.stock!=null?esc(i.stock):'')+'</td><td class="n num mut">'+(i.using!=null?esc(i.using):'')+'</td></tr>'; });
       body+='<div class="sheet"><h3>'+esc(k)+' <span class="r">'+arr.length+' · '+money(st,0)+'</span></h3><div class="tblwrap"><table class="tbl tight"><thead><tr><th>Item #</th><th>Description</th><th class="n">Price</th><th>Store</th><th class="n">Stock</th><th class="n">Using</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'; });
   }
-  return head('Train Collections','The N-gauge roster and the T-gauge fleet — every locomotive, car and coupler on the books.','ROLLING STOCK')+tabs+body;
+  return head('Train Collections','The N-gauge roster and the T-gauge fleet — every locomotive, car and coupler on the books.','')+tabs+body;
 };
 
 /* ---- Greenhouse ---- */
@@ -24184,7 +24236,7 @@ Views.greenhouse=function(){
     byDate(s.items).forEach(x=>{ const i=x.r, ii=x.i; rows+='<tr><td class="num mut">'+fD(i.date)+'</td><td>'+esc(i.store)+'</td><td>'+esc(i.desc)+'</td><td class="n num">'+mcell(i.amt)+'</td><td style="width:22px"><button class="rowdel" data-act="delrow" data-set="gh" data-si="'+si+'" data-i="'+ii+'" title="Delete">×</button></td></tr>'; });
     body+='<div class="sheet"><h3>'+esc(s.section)+' <span class="r">'+money(tot(s.items.map(i=>i.amt||0)),0)+'</span></h3><div class="tblwrap"><table class="tbl tight ghtbl"><thead><tr><th>Date</th><th>Store</th><th>What</th><th class="n">Amount</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
      +'<div class="formrow" data-form="ghadd"><input type="hidden" name="si" value="'+si+'"><label>Date</label><input type="date" name="d" value="'+todayISO()+'"><label>Store</label><input name="s" style="width:120px"><label>What</label><input name="w" style="width:200px"><label>Amount</label><input name="a" inputmode="decimal" style="width:90px"><button class="btn sm" data-act="ghadd" data-si="'+si+'">Add</button></div></div>'; });
-  return head('Greenhouse','Irrigation, medium, fertilizer — the growing operation, itemized.','UNDER GLASS')+body;
+  return head('Greenhouse','Irrigation, medium, fertilizer — the growing operation, itemized.','')+body;
 };
 
 /* ---- Amortize ---- */
@@ -24202,7 +24254,7 @@ Views.amortize=function(){
     html+='<div class="sheet"><h3>'+MN[b.m-1]+' '+(b.y||'')+' <span class="r">net '+(b.net!=null?mcell(b.net,0):'—')+'</span></h3>'+rows+'</div>';
   }
   const more=(!q&&!S.amort.all&&blocks.length>18)?'<div style="text-align:center"><button class="btn ghost" data-act="amall">Show all '+blocks.length+' months</button></div>':'';
-  return head('Amortize','Big purchases smoothed over months — the (paid / of) ledger, 2008 onward. The couch, the aquarium, Mom’s 70th.','SINKING FUNDS')
+  return head('Amortize','Big purchases smoothed over months — the (paid / of) ledger, 2008 onward. The couch, the aquarium, Mom’s 70th.','')
    +'<div class="searchrow"><input type="search" placeholder="Find an item — aquarium, couch, Indochino…" value="'+esc(S.amort.q)+'" data-act="amq"></div>'+html+more;
 };
 
@@ -24261,7 +24313,7 @@ Views.archive=function(){
   /* Reachable with nothing in it only by a stale S.view — a restored book, or a
      sync that arrived while this view was open. It says so and names nobody. */
   if(!archHas())
-    return head('Archive','Closed books, once there are any.','FILED')
+    return head('Archive','Closed books, once there are any.','')
       +'<div class="card"><div class="muted">Nothing is archived in this book. This page holds books that '
       +'are finished and no longer edited; it fills in from a restore or a sync that carries them.</div></div>';
   const keys=archKeys();
@@ -24280,7 +24332,7 @@ Views.archive=function(){
     let tr=''; rows.forEach(r=>{ tr+='<tr>'+cols.map(c=>'<td'+(typeof r[c]==='number'?' class="n num"':'')+'>'+(typeof r[c]==='number'?money(r[c]):esc(r[c]==null?'':String(r[c])))+'</td>').join('')+'</tr>'; });
     body='<div class="sheet"><h3>'+esc(lab)+'</h3><div class="tblwrap"><table class="tbl tight"><thead><tr>'+cols.map(c=>'<th>'+esc(archPretty(c))+'</th>').join('')+'</tr></thead><tbody>'+tr+'</tbody></table></div></div>';
   }
-  return head('Archive','Books that are finished and no longer edited.','FILED')
+  return head('Archive','Books that are finished and no longer edited.','')
    +'<div class="tabs">'+keys.map(k=>'<button class="'+(t===k?'on':'')+'" data-act="archtab" data-v="'+esc(k)+'">'+esc(archLabel(k))+'</button>').join('')
    +'<button class="ghost" data-act="archren" data-v="'+esc(t)+'" title="Rename this tab">Rename</button></div>'+body;
 };
@@ -36124,7 +36176,7 @@ Views.mail=function(){
   const items=(M.items||[]).slice().sort(function(a,b){ return b.at-a.at; }), L=mailLocal();
   const wait=mailWaiting(), q=items.filter(function(x){ return x.kind==='receipt'&&x.state==='new'; }).length;
   const plate=function(k,v,s,alert){ return '<div class="plate'+(alert?' alert':'')+'"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="s">'+s+'</div></div>'; };
-  let html=head('Email','Read from Gmail every time the Ledger opens, and every fifteen minutes while it is open.','LINKED')
+  let html=head('Email','Read from Gmail every time the Ledger opens, and every fifteen minutes while it is open.','')
     +'<div class="formrow" style="gap:8px;margin-bottom:10px">'+_mailBtn('mailcheck',null,'📬 Check now','')
     +(wait.length?_mailBtn('mailpreview',null,'🔍 What would they do?','ghost'):'')
     +(q?_mailBtn('mailgo',null,'🧾 '+q+' receipt'+(q===1?'':'s')+' to file ›','',' data-view="receipts"'):'')+'</div>'
@@ -36532,7 +36584,7 @@ Views.locked=function(){
       ?'This device is locked. The book is here, encrypted \u2014 the passphrase opens it.'
       :fresh
       ?'Nothing is in this browser yet. A ledger lives on the device it is kept on \u2014 start one, bring one in, or unlock one that is already in the cloud.'
-      :'This copy is locked. Nothing about your finances is stored in this page — it is fetched and decrypted with your passphrase.','LOCKED')
+      :'This copy is locked. Nothing about your finances is stored in this page — it is fetched and decrypted with your passphrase.','')
    /* At a Ledger Cloud address, the account comes first (views/join.js, v28.60). */
    +(fresh&&typeof joinCard==='function'?joinCard():'')
    +(fresh
@@ -37455,8 +37507,8 @@ Views.receipts=function(){
     +'</div>'
     +'</div>';
   const keyWall=rcpKeyWall(RCP.queue,key);
-  return head('Receipts','Photographs are outlined and cropped to the receipt, then read, routed by your own vendor history, and filed where it belongs. ('+APP_V+')',
-      RCP.queue.length?RCP.queue.length+' IN QUEUE':'READY')
+  return head('Receipts','Photographs are outlined and cropped to the receipt, then read, routed by your own vendor history, and filed where it belongs.',
+      RCP.queue.length?RCP.queue.length+' IN QUEUE':'')
     +cap+keyWall+'<div class="sheet plain">'+drop+queue+'</div>'+panel+(typeof returnsSheet==='function'?returnsSheet(30,60):'')+logHtml+keyPanel;
 };
 
@@ -38341,7 +38393,7 @@ Views.data=function(){
   const st=_sw
     ? '<span class="neg">⚠ Not saving — '+esc(_sw.why)+'</span><div class="mut" style="font-size:12.5px;margin-top:5px">'+esc(_sw.fix)+'</div>'
     : '<span class="pos">✓ '+esc(saveWhere())+'</span>';
-  return head('Data','Backups, restores, and what lives in the book.','HOUSEKEEPING')
+  return head('Data','Backups, restores, and what lives in the book.','')
    +'<div class="sheet"><h3>Storage</h3><div style="font-size:13px">'+st+'</div>'
    +'<div class="formrow"><button class="btn" data-act="backup">Download backup (JSON)</button>'
    +'<button class="btn ghost" data-act="exportall" title="The backup, every list as a spreadsheet, the tax sheets, the photos, and a Mint-style file other apps import">Export everything (.zip)</button>'
@@ -45958,6 +46010,9 @@ document.addEventListener('click',ev=>{
   /* An open menu (state.js) shuts on any click but the one on its own toggle —
      choosing from it included, before what was chosen runs. */
   if(!ev.target.closest('[data-act=qbmore]')) menusClose();
+  /* The phone's map is a sheet over the page (state.js, v28.62): a tap outside it and the tab bar shuts it, and
+     that tap is spent — the page under a dimmed sheet is not what was pressed. */
+  if(_navOpen&&!ev.target.closest('#nav,#tabbar')){ navSet(false); nav(); return; }
   const b=ev.target.closest('[data-act]'); if(!b) return;
   const act=b.dataset.act;
   /* Folding is done to the element in place, not by re-rendering the page: a
