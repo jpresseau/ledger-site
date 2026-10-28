@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-8Vrq+oFKEMFW2HC7zK69T8oZsRKYeN6SyDTdB0IVnS0=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0wAaO9PDHjAf6YlXUuSp0cmOkDeyjkabH/uW/LjxUT8=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -3063,7 +3063,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.66";
+const APP_V="v28.67";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3085,7 +3085,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="d08314b";
+const APP_BUILD="0783955";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -52229,8 +52229,12 @@ function authErrText(e){
    check of the project, which would have said configuration-not-found. So on that code the project is
    asked the same question here, with the key the page already carries — the endpoint the SDK reads for
    its own check, so nothing new is reached — and its answer names the step that is missing: Authentication
-   never set up, the Google provider not on, this hostname not authorised, or a key that refuses this page.
-   Anything else stays the SDK's own word. */
+   never set up, this hostname not authorised, or a key that refuses this page. Anything else stays the SDK's
+   own word.
+   NOT WHICH PROVIDERS ARE ON (v28.67). That answer, asked with a web key, holds the project and its authorised
+   domains and nothing more (the SDK's own GetProjectConfigResponse is authorizedDomains alone). v28.66 read a
+   missing idpConfig as "Google is off" and told the owner so about a project whose Google sign-in was on. A
+   disabled provider is the SDK's own auth/operation-not-allowed, which authErrText already names. */
 const AUTH_CFG_URL='https://www.googleapis.com/identitytoolkit/v3/relyingparty/getProjectConfig?key=';
 async function authExplain(e){
   const c=String((e&&e.code)||'');
@@ -52242,8 +52246,6 @@ async function authExplain(e){
     if(/CONFIGURATION_NOT_FOUND/.test(said)) return authErrText({code:'auth/configuration-not-found'});
     if(said) return 'Sign-in failed: '+fbConfig().projectId+' answered \u201c'+said+'\u201d \u2014 Google Cloud console \u2192 '
       +'APIs & Services \u2192 Credentials \u2192 this API key \u2192 its restrictions.';
-    const idp=(j.idpConfig||[]).find(function(x){ return x&&x.provider==='google.com'; });
-    if(!idp||idp.enabled===false) return authErrText({code:'auth/operation-not-allowed'});
     const doms=j.authorizedDomains||[];
     if(location.hostname&&doms.length&&doms.indexOf(location.hostname)<0) return authErrText({code:'auth/unauthorized-domain'});
   }catch(err){}
