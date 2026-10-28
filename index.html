@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-qW5MB49Ss3X7pRi34zYk8nfv+lQvf1ecOFkRmrLFbqk=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-8Vrq+oFKEMFW2HC7zK69T8oZsRKYeN6SyDTdB0IVnS0=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -3063,7 +3063,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.65";
+const APP_V="v28.66";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3085,7 +3085,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="c58e54e";
+const APP_BUILD="d08314b";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -52203,7 +52203,7 @@ async function authInit(){
   });
   /* A redirect sign-in finishes by coming back to this page, so the result is
      waiting here rather than in the call that started it. */
-  try{ if(_authMod.getRedirectResult) await _authMod.getRedirectResult(_auth); }catch(e){ AUTH.err=authErrText(e); }
+  try{ if(_authMod.getRedirectResult) await _authMod.getRedirectResult(_auth); }catch(e){ AUTH.err=await authExplain(e); }
   try{ if(_auth.authStateReady) await _auth.authStateReady(); }catch(e){}
   AUTH.ready=true;
   return _auth;
@@ -52222,6 +52222,32 @@ function authErrText(e){
   if(/popup-closed-by-user|cancelled-popup/.test(c)) return 'The sign-in window was closed before it finished.';
   if(/network-request-failed/.test(c)) return 'Could not reach Google — check the connection and try again.';
   return 'Sign-in failed: '+(c||m);
+}
+/* WHY THE POPUP SAID ONLY "internal-error" (v28.66). The owner pressed Sign in with Google on a project
+   whose Authentication had never been set up, and the toast said auth/internal-error: the popup's
+   handler page reports every failure it cannot name that way, and its word lands before the SDK's own
+   check of the project, which would have said configuration-not-found. So on that code the project is
+   asked the same question here, with the key the page already carries — the endpoint the SDK reads for
+   its own check, so nothing new is reached — and its answer names the step that is missing: Authentication
+   never set up, the Google provider not on, this hostname not authorised, or a key that refuses this page.
+   Anything else stays the SDK's own word. */
+const AUTH_CFG_URL='https://www.googleapis.com/identitytoolkit/v3/relyingparty/getProjectConfig?key=';
+async function authExplain(e){
+  const c=String((e&&e.code)||'');
+  if(!/internal-error/.test(c)) return authErrText(e);
+  try{
+    const r=await fetch(AUTH_CFG_URL+encodeURIComponent(fbConfig().apiKey));
+    const j=await r.json();
+    const said=String((j&&j.error&&j.error.message)||'');
+    if(/CONFIGURATION_NOT_FOUND/.test(said)) return authErrText({code:'auth/configuration-not-found'});
+    if(said) return 'Sign-in failed: '+fbConfig().projectId+' answered \u201c'+said+'\u201d \u2014 Google Cloud console \u2192 '
+      +'APIs & Services \u2192 Credentials \u2192 this API key \u2192 its restrictions.';
+    const idp=(j.idpConfig||[]).find(function(x){ return x&&x.provider==='google.com'; });
+    if(!idp||idp.enabled===false) return authErrText({code:'auth/operation-not-allowed'});
+    const doms=j.authorizedDomains||[];
+    if(location.hostname&&doms.length&&doms.indexOf(location.hostname)<0) return authErrText({code:'auth/unauthorized-domain'});
+  }catch(err){}
+  return authErrText(e);
 }
 async function authSignIn(){
   AUTH.busy=true; AUTH.err=''; _authPaint();
@@ -52243,7 +52269,7 @@ async function authSignIn(){
     }
     authSetWanted(true);
     return {ok:true,uid:AUTH.user&&AUTH.user.uid};
-  }catch(e){ AUTH.err=authErrText(e); return {ok:false,why:AUTH.err}; }
+  }catch(e){ AUTH.err=await authExplain(e); return {ok:false,why:AUTH.err}; }
   finally{ AUTH.busy=false; _authPaint(); }
 }
 async function authSignOut(){
@@ -56135,7 +56161,7 @@ function renderOnce(name,fn){
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
     historyForget,
-    AUTH,authUser,authWanted,authSetWanted,authSignIn,authSignOut,authErrText,_rulesOwn,_rulesShared,
+    AUTH,authUser,authWanted,authSetWanted,authSignIn,authSignOut,authErrText,authExplain,authInit,AUTH_CFG_URL,_rulesOwn,_rulesShared,
     pfDerive,syncFingerprint,pfEncrypt,pfDecrypt,bookEmpty,syncFetch,syncDeleteDoc,syncTornWhy,syncSecure,syncPushDoc,syncPullDoc,_syncPartId,syncSnapList,syncSnapKeep,syncSnapRows,syncSnapFail,_snapPlan,PF_SNAP_MIN,get _syncLastWrite(){return _syncLastWrite;},PF_SNAP_TIERS,PF_SNAP_N,
     taxRuns,TAX_LIMITS,taxFacts,taxPlays,taxPlaysHtml,taxPlaysRowHtml,taxPlayById,_taxPlayList,TAX_PLAYS_DEDUCT,TAX_PLAYS_INCOME,taxFilingFor,TAX_FILINGS,taxFilingKey,taxFilingLabel,taxSurtaxThreshold,taxCtcThreshold,taxSaltCap,taxStage,taxAmendBy,taxDueDate,taxFiled,taxFiledRead,taxFiledSet,TAX_INTAKE,taxIntakeRead,taxGifts,taxGiftLong,taxGiftValue,taxGiftSummary,taxGiftAdd,taxGiftDel,taxGiftAck,taxGiftsHtml,taxGiftDraftRead,taxGiftsShown,taxGiftsSheetHtml,taxGiftCandidates,taxGiftAdopt,taxGiftLetters,taxGiftLetterLink,taxGiftLetterSet,taxGiftLetterFlags,TAXDOC_LETTER,taxLogShown,taxBookCandidates,GIFT_CARRY_YEARS,taxGiftLimit,taxGiftCarry,taxGiftCarryFlags,_giftRows,_giftCats,MED_FLOOR,taxMedical,taxMedValue,taxMedSummary,taxMedAdd,taxMedDel,taxMedCandidates,taxMedAdopt,taxMedShown,taxMedicalSheetHtml,taxMedicalHtml,taxMedDraftRead,ESTPAY_TO,taxEstPays,taxEstPaySummary,taxEstPayFed,taxEstPayAdd,taxEstPayDel,taxEstPayExplains,taxEstPayShown,taxEstPaySheetHtml,taxEstPayHtml,taxEstPayDraftRead,taxIntakeSet,taxIntakeSummary,taxIntakeKey,taxDoneRead,taxDoneIs,taxDoneSet,taxPlaysSplit,taxPlaysGroups,taxAmendByFor,taxNyAmendBy,_taxRollFwd,taxPublished,taxDedWorth,taxDeferWorth,_bunchAnnual,_bunchDoubled,taxMedDeductible,TAX_SUPP,taxSupRate,taxSupHeld,taxSupWages,taxQualDivWorth,TAX_PLAYS_INVEST,TAX_PLAYS_BANDS,TAX_PLAYS_ACCOUNTS,TAX_PLAYS_BROKERAGE,taxDueLater,taxPlaysText,taxDeferStack,taxDeferPlan,taxDeferHtml,taxDeferYears,taxCapGains,taxPairsAll,_taxHeldFor,_taxPrevFor,_jurKey,taxBlocks,taxBlockHtml,fmtTax,taxFormLines,taxPairs,taxBrackets,taxReturn,taxChecks,taxReturnHtml,TAX_FORMS,taxBracketBar,taxSplitBar,_rateLab,taxYearLine,taxHero,taxWhyFor,taxMarginal,taxAdvice,taxAdviceHtml,taxPlanBands,_planOpenBand,taxPlanFill,taxPlanSeed,taxPlanCompute,taxPlanForget,taxPlanHtml,taxPlanPaint,taxFilePack,taxFilePackText,taxFileHtml,taxConst,TAX_CONST,taxProfile,taxProfileParse,taxProfileSave,taxDeductScan,taxQuarterly,taxHarborPct,taxCreditScan,taxAdvisorHtml,taxDocs,taxDocsFor,taxDocAdd,taxDocParse,taxDocRead,taxDocCheck,taxDocExpected,taxDocsHtml,TAXDOC_PROMPT,TAX_FED,TAX_LTCG,taxFedBrackets,taxFedEstimate,taxEstimateInputs,taxSecondOpinion,taxSecondOpinionHtml,TAX_ENERGY,taxEnergyRows,taxEnergyCredit,taxEnergyHtml,taxYoY,taxYoYHtml,taxW4,taxW4Html,taxDepCare,taxDepCareHtml,weekDoneShown,weekLeft,weekResetPrev,weekResetNext,weekLeftWords,weekBadgePaint,taxVerify,taxVerifyRows,taxVerifyHtml,taxEvidence,taxEvidenceHtml,TAX_SETTLES,taxReviewFlags,taxReviewSummary,taxReviewRank,taxSurtaxFlags,taxStaleFlags,taxStaleCells,taxNyDeductionFrozen,taxNyDeductionFlag,taxNyClock,taxCellFrozenSince,taxCellVintage,TAX_SHEET_CONSTANTS,taxMedhiBase,taxNiitBase,_taxNonWage,taxReviewHtml,TAXWORK_FIELDS,taxWork,taxWorkSet,taxWorkInputs,taxWorkEstimate,taxBuildHtml,
     stmtParse,stmtPhotoLines,_stmtIsSummary,_stmtDateParts,_stmtYearFrom,_stmtIso,_stmtDate,stmtPhotoMerge,stmtPhotoRead,STMT_PHOTO_PROMPT,_stmtLineKey,reconMatch,reconCandidates,reconScore,stmtNameScore,cardMatches,stmtCat,gridParse,gridDiff,
