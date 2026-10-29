@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-lLP7Zft63hhmENhGbQGSS2su9BBWVa6dVPGCiQc4w9Y=' 'sha256-b9IbYmXc/QE7sIt+dydfA50N7AX4JwHghsuWPMCyhQA=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-O/a3I0NNuQCcnAR77fUKJYJVs0TRqEg/NjhY2YYqY9Q=' 'sha256-XIHGMGCCNOO8yjRD9S3C+cWSqE3ViBTSkmdiyN3CLtU=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -3063,7 +3063,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.70";
+const APP_V="v28.71";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3085,7 +3085,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="3ff63ab";
+const APP_BUILD="d2a7fd4";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -38288,9 +38288,9 @@ function securityPanel(){
         +'with neither reporting a problem.')
     : P.state==='new'
     ? row('mid','Only this device so far',
-        'Each device stamps itself on the cloud copy when it pushes, and the other one joins the first '
-        +'time it syncs after this update. Come back once it has — if this still says only this device, '
-        +'the two are writing to different places, and the three settings above are what to compare.')
+        'A device is listed here once it has sent a change to the cloud copy; one that has only downloaded the book '
+        +'is not listed yet (v28.71). Once another device has sent a change of its own it appears here; if it still '
+        +'does not, the two are writing to different places, and the three settings above are what to compare.')
     : row('mid','Which devices write here — not recorded yet',
         'This cloud copy was last written by a version that did not keep the record. It starts on the '
         +'next sync from each device, and then this row says whether they are actually meeting — the one '
@@ -48252,6 +48252,8 @@ function _imgLossOk(what){
     try{
       const r=await syncRepass(v,{rotate:leak});
       SYNCST.busy=false;
+      /* Another device's book is already under that passphrase (v28.71): never overwritten from here (sync/paint.js). */
+      if(!r.ok&&r.exists) return repassJoinAsk(v,leak,r);
       if(!r.ok){ SYNCST.msg=''; syncPaint(); return toast(r.why,'warn'); }
       /* Moved here, not yet in the cloud: neither "moved" nor "failed" is true. */
       if(r.moved===false){
@@ -54812,6 +54814,22 @@ async function syncRepass(newPass,opt){
     if(typeof PF_SNAP_N==='number')
       for(let i=0;i<PF_SNAP_N;i++) old.push('pfLedger2_'+d.id+'_s'+i);
   }
+  /* A BOOK ALREADY UNDER THE NEW NAME (v28.71). On Firebase the document is named from the passphrase alone, so
+     changing to a passphrase another device uses names THAT device's book, and the move below wrote this
+     device's book over it without a word: the owner, told to bring a phone onto the laptop's passphrase, would
+     have put the phone's older book over the laptop's. Asked before anything changes, here or in the cloud:
+     found, nothing is done and the caller is told (exists), so it can offer to JOIN that book instead (opt.join,
+     below). Not on Ledger Cloud, where "book" is the account's one document and is written over in place by
+     design, nor for a shared book, which does not move. */
+  if(cloud&&oldPass&&!(opt&&opt.join)&&!syncBookV3()&&!(typeof hhOn==='function'&&hhOn())){
+    const nid=await syncBookId(newPass);
+    for(const c of [PF_COLL,PF_COLL_OLD]){
+      let d=null; try{ d=await _fs.getDoc(_fs.doc(db,c,nid)); }catch(e){ d=null; }
+      if(d&&d.exists()){ const x=d.data()||{};
+        return {ok:false,exists:true,ts:x._ts||0,bytes:x.bytes||0,
+          why:'A book is already in the cloud under that passphrase, so nothing was changed.'}; }
+    }
+  }
   syncSetPass(newPass);
   /* The locked copy on this device was encrypted with the OLD passphrase, and
      nothing else re-writes it. Left alone it becomes unopenable the moment the
@@ -54848,6 +54866,16 @@ async function syncRepass(newPass,opt){
   const rs=await bioReseal(newPass);
   if(!cloud) return {ok:true,moved:false,local:true,rotated:rotate,relocked:lockOn(),
     bioLost:rs&&rs.forgot?rs.why:''};
+  /* JOINING THE BOOK ALREADY THERE: this device takes the passphrase (done above, with its lock and its
+     seals) and sends nothing. It counts as never synced under the new name, so its next Sync asks which copy
+     to keep instead of deciding; the copies under the old name go the next time this device pushes. */
+  if(opt&&opt.join){
+    _repassLeftSet(syncRepassLeft().concat((old||[]).filter(_repassKeep)));
+    /* syncSetPass above already forgot this device's sync history (it belonged to the old name). */
+    SYNCST.remoteTs=0; SYNCST.cloud=null;
+    const sec=await _repassSecrets(oldPass,newPass,rotate);
+    return Object.assign({ok:true,moved:false,joined:true,relocked:lockOn(),bioLost:rs&&rs.forgot?rs.why:''},sec);
+  }
   /* A shared book does not move: only this person's sealed copy of its key is sealed again (household.js). */
   if(typeof hhOn==='function'&&hhOn()){
     let why='';
@@ -54887,6 +54915,24 @@ async function syncRepass(newPass,opt){
   const sec=await _repassSecrets(oldPass,newPass,rotate);
   return Object.assign({ok:true,moved:true,removed,bytes:r.bytes,relocked:lockOn(),
     bioLost:rs&&rs.forgot?rs.why:''},sec);
+}
+/* The passphrase dialog's answer when another device's book is already under the new passphrase (v28.71):
+   ask, and on OK switch this device to it without sending its book, then Sync, which asks which copy to keep. */
+async function repassJoinAsk(v,leak,r){
+  SYNCST.msg=''; syncPaint(); render();
+  const when=r.ts?new Date(r.ts).toLocaleString():'at some point';
+  if(!confirm('A book is already in the cloud under that passphrase \u2014 last written '+when
+    +'. Moving this device\u2019s book there would replace it.\n\nOK: switch this device to that passphrase without '
+    +'sending its book. Sync then asks which copy to keep (Save both copies keeps both as files).\n\nCancel: change nothing.')) return false;
+  SYNCST.busy=true; SYNCST.msg='Switching the passphrase\u2026'; syncPaint();
+  let j=null;
+  try{ j=await syncRepass(v,{rotate:leak,join:true}); }finally{ SYNCST.busy=false; }
+  if(!j||!j.ok){ SYNCST.msg=''; syncPaint(); toast((j&&j.why)||'The passphrase was not changed.','warn'); return false; }
+  SYNCST.ok=null; SYNCST.msg='Passphrase changed on this device. Its book was not sent; Sync asks which copy to keep.';
+  syncPaint(); render(); toast('Passphrase changed \u2014 now choose which copy to keep','ok');
+  if(j.bioLost) toast('Face ID no longer opens this device \u2014 '+j.bioLost+' Enrol it again from Security.','warn');
+  syncNow(true);
+  return true;
 }
 /* THE OLD COPIES A PASSPHRASE MOVE COULD NOT DELETE, kept until a write lands
    under the new passphrase (syncNow calls syncRepassFinish after its push).
@@ -56262,19 +56308,77 @@ function renderOnce(name,fn){
          there is nothing to ask and nothing to protect (e2e 12 drives Refresh from file://). */
       if(location.protocol === 'file:') return Promise.resolve(true);
       if(navigator.onLine === false) return Promise.resolve(false);
+      lastProbe = '';
       var probe = fetch('build.txt?reach=' + Date.now(), { method: 'HEAD', cache: 'no-store' }).then(function(r){
         var ct = '';
         try{ ct = String((r && r.headers && r.headers.get('content-type')) || ''); }catch(e){}
-        return !/text\/html/i.test(ct);
+        if(/text\/html/i.test(ct)){ lastProbe = 'page'; return false; }
+        return true;
       }, function(){ return false; });
       return Promise.race([probe, new Promise(function(r){ setTimeout(function(){ r(false); }, 8000); })]);
     }catch(e){ return Promise.resolve(true); }   /* no fetch at all: Refresh as it always was */
+  }
+  var lastProbe = '';
+  /* ...AND WHEN IT DOES NOT, GITHUB HAS THE SAME PAGE (v28.71). The owner's work laptop cannot resolve
+     ledger.jpresseau.com at all, so after v28.68 Refresh there kept the copy but could never bring a newer one,
+     and every update meant pasting a script into the worker's console. The page this address serves is
+     published, byte for byte, to jpresseau.github.io/ledger/ and to the ledger-site repository, both of which
+     answer with an open CORS header. So with its own address out of reach, Refresh asks those, and when one
+     holds a different build it is written into the worker's cache as the offline copy (the cache the worker
+     itself uses, found by this app's prefix) and the page reloads through the worker, which serves it because
+     the network still fails. Only for the two addresses that serve exactly that page: Ledger Cloud serves it
+     with its own address written in (cloud/web.py), so a GitHub copy is not its page. Not when the "answer" was
+     an HTML page in build.txt's place: a filter or a portal is answering for the address, and a reload would
+     fetch its page rather than the cache. */
+  var MIRRORS = {
+    'https://ledger.jpresseau.com': ['https://jpresseau.github.io/ledger/index.html', 'https://raw.githubusercontent.com/jpresseau/ledger-site/main/index.html'],
+    'https://jpresseau.github.io': ['https://raw.githubusercontent.com/jpresseau/ledger-site/main/index.html']
+  };
+  function refreshMirrors(){
+    var P = window.__PF || {};
+    if(Object.prototype.toString.call(P._refreshMirrors) === '[object Array]') return P._refreshMirrors;   /* a suite's stand-in */
+    return MIRRORS[location.origin] || [];
+  }
+  function pageBuild(html){ var m = /const APP_BUILD="([0-9a-f]{7})"/.exec(String(html || '')); return m ? m[1] : ''; }
+  function fromMirror(){
+    var list = refreshMirrors().slice(), i = 0;
+    if(!list.length || !window.caches || lastProbe === 'page') return Promise.resolve(null);
+    var next = function(){
+      if(i >= list.length) return Promise.resolve(null);
+      return fetch(list[i++], { cache: 'no-store' }).then(function(r){ return r && r.ok ? r.text() : ''; })
+        .then(function(t){ return t && t.indexOf('__PF') >= 0 && pageBuild(t) ? { html: t, build: pageBuild(t) } : next(); }, next);
+    };
+    return next();
+  }
+  function mirrorInstall(m){
+    say('Can\u2019t reach ' + location.host + ', so the latest version came from GitHub \u2014 reloading\u2026', 'warn');
+    var saved;
+    try{ var P = window.__PF || {}; saved = typeof P.saveSettled === 'function' ? P.saveSettled() : Promise.resolve(); }catch(e){ saved = Promise.resolve(); }
+    var safe = Promise.race([Promise.resolve(saved)['catch'](function(){}), new Promise(function(r){ setTimeout(r, 4000); })]);
+    return safe.then(function(){ return caches.keys(); }).then(function(ks){
+      var name = (ks || []).filter(function(k){ return k.indexOf('ledger-') === 0; })[0] || 'ledger-v2';
+      return caches.open(name).then(function(c){
+        var put = function(p){ return c.put(new URL(p, location.href).href, new Response(m.html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })); };
+        return Promise.all([put('./'), put('./index.html')]);
+      });
+    }).then(function(){
+      /* A plain reload: it goes through the worker, whose fetch fails and whose cache now holds the new page. */
+      var nav = window.__PF && window.__PF._refreshNav;
+      if(typeof nav === 'function') nav(location.pathname + location.search + location.hash); else location.reload();
+    }, function(e){
+      say('Could not keep the version from GitHub (' + ((e && e.message) || e) + '). The copy on this device is kept.', 'warn');
+    });
   }
   function hardRefresh(){
     say('Checking for the latest version…');
     return refreshReachable().then(function(ok){
       if(ok) return refreshNow();
-      say('Can\u2019t reach ' + location.host + ' right now, so nothing was refreshed. The copy on this device is kept and the app keeps working from it.', 'warn');
+      return fromMirror().then(function(m){
+        if(m && m.build !== runningBuild()) return mirrorInstall(m);
+        say('Can\u2019t reach ' + location.host + ' right now, so nothing was refreshed. '
+          + (m ? 'GitHub has this same version, so there is nothing newer. ' : '')
+          + 'The copy on this device is kept and the app keeps working from it.', 'warn');
+      });
     });
   }
   function refreshNow(){
