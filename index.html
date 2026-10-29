@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0wAaO9PDHjAf6YlXUuSp0cmOkDeyjkabH/uW/LjxUT8=' 'sha256-kKFrRsFCicu5C3WiGAsqEKfWDOiwWxZGr9ih/i/Zd7Y=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-yZIyudDtGhnv3OiG3YGB1+obNLG28jGyXxPVT5/QLQU=' 'sha256-b9IbYmXc/QE7sIt+dydfA50N7AX4JwHghsuWPMCyhQA=' https://www.gstatic.com/firebasejs/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -3063,7 +3063,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.67";
+const APP_V="v28.68";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3085,7 +3085,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="0783955";
+const APP_BUILD="c5b7cb2";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -56237,7 +56237,38 @@ function renderOnce(name,fn){
   }
 
   /* ---- ⟳ Refresh: drop the cached copy, then reload ---- */
+  /* ONLY WHEN THE SITE ANSWERS (v28.68). The owner's work network stopped resolving ledger.jpresseau.com; the
+     worker kept the book open from its offline copy; ⟳ Refresh deleted that copy and reloaded into nothing, and
+     Chrome said ERR_FAILED. Twice in a day, the second time after the copy had been put back by hand. Refresh is
+     for fetching a newer page, and with the site out of reach there is none to fetch, so it now asks first and
+     keeps everything when nothing answers.
+     The question is a HEAD of build.txt, because the worker hands every request that is not a GET straight to
+     the network (sw.js): a GET would be answered from the very cache Refresh is about to delete, and say "here"
+     with the site gone. Any answer at all is the site answering (Ledger Cloud's 405 or 404 included), except an
+     HTML page: build.txt is plain text everywhere it is served, so HTML is a filter's block page or a captive
+     portal standing in for it. Eight seconds without an answer is no answer. */
+  function refreshReachable(){
+    try{
+      /* A page opened from a file has no worker and no offline copy to keep, and fetch cannot reach a file: so
+         there is nothing to ask and nothing to protect (e2e 12 drives Refresh from file://). */
+      if(location.protocol === 'file:') return Promise.resolve(true);
+      if(navigator.onLine === false) return Promise.resolve(false);
+      var probe = fetch('build.txt?reach=' + Date.now(), { method: 'HEAD', cache: 'no-store' }).then(function(r){
+        var ct = '';
+        try{ ct = String((r && r.headers && r.headers.get('content-type')) || ''); }catch(e){}
+        return !/text\/html/i.test(ct);
+      }, function(){ return false; });
+      return Promise.race([probe, new Promise(function(r){ setTimeout(function(){ r(false); }, 8000); })]);
+    }catch(e){ return Promise.resolve(true); }   /* no fetch at all: Refresh as it always was */
+  }
   function hardRefresh(){
+    say('Checking for the latest version…');
+    return refreshReachable().then(function(ok){
+      if(ok) return refreshNow();
+      say('Can\u2019t reach ' + location.host + ' right now, so nothing was refreshed. The copy on this device is kept and the app keeps working from it.', 'warn');
+    });
+  }
+  function refreshNow(){
     say('Fetching the latest version…');
     /* Not location.reload(): a reload is still served by the browser's HTTP
        cache, which on Pages holds this file for ten minutes. A URL it has
@@ -56245,7 +56276,10 @@ function renderOnce(name,fn){
        network. The parameter is stripped again on boot. */
     var done = false, go = function(){
       if(done) return; done = true;
-      try{ location.replace(location.pathname + '?fresh=' + Date.now() + location.hash); }
+      var to = location.pathname + '?fresh=' + Date.now() + location.hash;
+      /* A suite stands in for the navigation, which jsdom cannot do. */
+      var nav = window.__PF && window.__PF._refreshNav;
+      try{ if(typeof nav === 'function') nav(to); else location.replace(to); }
       catch(e){ location.reload(); }
     };
     /* Tapping this blurs the cell you were in, which commits the edit and
@@ -56419,7 +56453,7 @@ function renderOnce(name,fn){
   });
 
   /* Exposed for the suites: waiting four seconds and hoping is not a test. */
-  try{ if(window.__PF) window.__PF.updateCheck = updateCheck; }catch(e){}
+  try{ if(window.__PF){ window.__PF.updateCheck = updateCheck; window.__PF.refreshReachable = refreshReachable; window.__PF.hardRefresh = hardRefresh; } }catch(e){}
 
   /* ---- ?view=receipts deep link (manifest shortcut / bookmark) ---- */
   try{
