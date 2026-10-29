@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-LZtN65Qg8HUc/u0ppf06aXj5dw11j3T2Sn00hFWnZYE=' 'sha256-b9IbYmXc/QE7sIt+dydfA50N7AX4JwHghsuWPMCyhQA=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-lLP7Zft63hhmENhGbQGSS2su9BBWVa6dVPGCiQc4w9Y=' 'sha256-b9IbYmXc/QE7sIt+dydfA50N7AX4JwHghsuWPMCyhQA=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -3063,7 +3063,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.69";
+const APP_V="v28.70";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3085,7 +3085,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="7bf564f";
+const APP_BUILD="3ff63ab";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -54351,14 +54351,21 @@ async function syncNow(interactive,again){
      book is what every other device then adopts. Refused rather than sent, in
      the same words and for the same reason as the empty-book guard below: one
      device's bad day is not a decision for all of them. */
-  if(typeof imgUnreadable==='function'&&imgUnreadable()){
+  /* ...BUT TAKING THE CLOUD COPY PUBLISHES NOTHING (v28.70). This used to return here, before the cloud was even
+     read, so a device whose own photographs would not open could not receive the book either: the owner's
+     phone, switched to the project the laptop syncs through, met "Could not read this device's photographs" on
+     every Sync and could never take the laptop's book, which carries the photographs it was missing. Now the
+     flag rides along: the cloud is read and a take goes through, and every path that WRITES — the push, a
+     merge, the in-step earlier copy, the legacy re-save — refuses in the same words. */
+  const imgBad=typeof imgUnreadable==='function'&&imgUnreadable();
+  const imgRefuse=function(){
     SYNCST.ok=false;
     SYNCST.msg='Nothing was pushed — this browser would not let the app read its stored photographs, '
-      +'and a copy sent now would have all of them stripped out of it. Reload the page and try again; '
-      +'if it keeps happening, take a backup file before syncing.';
+      +'and a copy sent now would have all of them stripped out of it. Taking the cloud copy still works; '
+      +'or reload the page and try again, and if it keeps happening, take a backup file before syncing.';
     if(interactive) toast('Could not read this device’s photographs — nothing was pushed','warn');
-    syncPaint(); return;
-  }
+    syncPaint();
+  };
   /* A locked device that has not been opened holds the seed, not the book.
      Syncing from here could decide this device is the newer one and put an empty
      book over the real one. Nothing leaves until it is open. */
@@ -54520,7 +54527,7 @@ async function syncNow(interactive,again){
       /* Both changed: merged over the base when this device has one (base.js); only what both
          changed waits for a person, and the dialog offers to merge around it. */
       const mc={db:db,docId:docId,legacyId:legacyId,man:remote,rev:remoteRev,remoteTs:remoteTs,pass:pass,gotN:_syncGotN};
-      const mg=lastHash&&dirty&&!emptiedHere&&fetched!=null&&activeId===docId&&activeColl===PF_COLL&&!syncIsOlder(docId,_syncGotN)?await syncMergeWith(docId,pass,fetched):null;
+      const mg=!imgBad&&lastHash&&dirty&&!emptiedHere&&fetched!=null&&activeId===docId&&activeColl===PF_COLL&&!syncIsOlder(docId,_syncGotN)?await syncMergeWith(docId,pass,fetched):null;
       if(mg&&!mg.res.held.length){ const ok2=await syncMergeDone(mc,mg); changed=true; SYNCST.remoteTs=0; SYNCST.ok=true;
         SYNCST.msg='Merged the cloud copy\u2019s changes with this device\u2019s.'; toast(ok2?'Merged — both devices\u2019 changes kept':'Merged here; another device synced again, so sync once more','ok'); return; }
       const choice=emptiedHere?'push'
@@ -54544,7 +54551,7 @@ async function syncNow(interactive,again){
              localStorage.setItem(SYNC_HASH,older?'':await sha256(syncPayload())); }catch(e){}
         if(!older){ syncSeenSet(activeId,gotN); await syncBaseSet(activeId,syncPayload(),pass); }
         let extra='';
-        if(activeId===legacyId){
+        if(activeId===legacyId&&!imgBad){
           const r=await syncSecure(db,docId,legacyId,pass);
           extra=r.cleaned?' Re-saved it encrypted, and deleted the old unencrypted copy.'
                          :' Re-saved it encrypted.';
@@ -54577,7 +54584,7 @@ async function syncNow(interactive,again){
          copies from any push, which is the common case; this branch exists for
          the device that is already in step and would otherwise get none. */
       try{
-        const dueNow=interactive&&(await syncSnapList(db,docId)).some(function(sn){
+        const dueNow=interactive&&!imgBad&&(await syncSnapList(db,docId)).some(function(sn){
           return !sn.ts||(Date.now()-sn.ts)>sn.tier; });
         if(dueNow){
           const env2=await pfEncrypt(payload,pass,syncEncOpt(docId));
@@ -54595,6 +54602,8 @@ async function syncNow(interactive,again){
       if(interactive){ toast('Already up to date','ok'); render(); }
       return;
     }
+    /* Everything below writes this device's book to the cloud. */
+    if(imgBad){ imgRefuse(); return; }
     /* _writeDisk has refused to write an empty book over a saved one since the
        day a failed unlock nearly did it; the cloud had no such guard at all. So
        every way this device can end up holding nothing — a reset, a bypassed
