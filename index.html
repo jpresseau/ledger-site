@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-O/a3I0NNuQCcnAR77fUKJYJVs0TRqEg/NjhY2YYqY9Q=' 'sha256-XIHGMGCCNOO8yjRD9S3C+cWSqE3ViBTSkmdiyN3CLtU=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-NMaJ1qPZ0Tk/kdQ4EKohJMxQodVCnPobN0OVDa9KD7Q=' 'sha256-XIHGMGCCNOO8yjRD9S3C+cWSqE3ViBTSkmdiyN3CLtU=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -3063,7 +3063,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.71";
+const APP_V="v28.72";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3085,7 +3085,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="d2a7fd4";
+const APP_BUILD="88c53bc";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -37286,7 +37286,7 @@ Views.receipts=function(){
         ? detOverlay(it,it.rawThumb||it.thumb,'',false,{tile:true})
         : it.thumb?'<img src="'+it.thumb+'" alt="">':'<div style="height:66px"></div>')
       +'<div class="nm">'+esc((it.ex&&it.ex.merchant)||it.name)+'</div>'
-      +'<div class="st '+it.status+'">'+(it.status==='reading'?'reading…':it.status==='ready'?money(it.ex.total,0):it.status==='error'?'failed':'queued')+'</div>'
+      +'<div class="st '+it.status+'">'+(it.status==='reading'?'reading…':it.status==='ready'?(fxPending(it.ex)?esc(fxMoney(it.ex.total,it.ex.cur)):money(it.ex.total,0)):it.status==='error'?'failed':'queued')+'</div>'
       +'</button></div>').join('')+'</div>';
     /* A backlog is dropped in a dozen at a time, and most of a dozen emailed
        invoices leave nothing to decide. Those get filed together; the ones that
@@ -37575,6 +37575,7 @@ Views.receipts=function(){
     panel='<div class="sheet nofold"><h3>Review before filing <span class="r">'+esc(sel.name)+'</span></h3>'
       +'<div class="rvw"><div>'+shot+'</div><div>'
       +(RCP.tipMsg?'<div class="recon"><span class="off">'+esc(RCP.tipMsg)+'</span></div>':'')
+      +fxPanel(sel)
       +'<div class="fgrid">'
       +'<div class="fld"><label>Merchant</label><input data-rf="merchant" value="'+esc(ex.merchant||'')+'"></div>'
       +'<div class="fld"><label>Date</label><input type="date" data-rf="date" value="'+esc(ex.date||todayISO())+'"></div>'
@@ -37590,6 +37591,7 @@ Views.receipts=function(){
         +(ex.tip!=null?ex.tip:'')+'"></div>'
       +'<div class="fld"><label>Receipt total'+(ex.tip?' <span class="mut" style="font-weight:400">tip included</span>':'')
         +'</label><input data-rf="total" inputmode="decimal" value="'+(ex.total!=null?ex.total:'')+'"></div>'
+      +fxPick(ex)
       +'<div class="fld"><label>Paid with</label><select data-rf="cardbrand">'
         +['','Visa','Mastercard','Amex','Discover','Debit','Cash','Checking']
           .map(function(b){ return '<option value="'+b+'"'+(b===(ex.cardBrand||'')?' selected':'')+'>'+(b||'—')+'</option>'; }).join('')
@@ -37635,7 +37637,8 @@ Views.receipts=function(){
             +r.split.map(s=>'<span class="gchip" style="--gc:'+gcolor(grp(s.cat))+'">'+esc(s.cat)+' '+money(s.amt,0)+'</span>').join(' ')
             +'</div>':'')+'</td>'
         +'<td class="n num">'+mcell(r.total)
-          +(r.tip?'<div class="mut" style="font-size:10px;font-weight:400">incl. '+money(r.tip)+' tip</div>':'')+'</td>'
+          +(r.tip?'<div class="mut" style="font-size:10px;font-weight:400">incl. '+money(r.tip)+' tip</div>':'')
+          +(r.fx&&fxCode(r.fx.cur)?'<div class="mut" style="font-size:10px;font-weight:400">'+esc(fxMoney(r.fx.amt,fxCode(r.fx.cur)))+' printed</div>':'')+'</td>'
         +'<td class="mut" style="font-size:11px">'+(rc?'<span class="ok">\u2713 '+esc(rc)+'</span>':'not yet')+'</td>'
         +'<td><button class="rowdel" data-act="rcplogdel" data-i="'+i+'" title="Remove from log">×</button></td></tr>'; }).join('')
       +'</tbody></table></div><div class="mut" style="font-size:11.5px;margin-top:7px">Click a row to edit it — a receipt filed to a month sheet takes its entries with it. '
@@ -44161,6 +44164,7 @@ function _rcpApplyText(it,txt){
        twice, one under the other. This adds only what the header cannot know. */
     it.dets='Read with '+how+'.';
     it.loose=!!ex.loose;
+    fxAfterRead(it,it.pdfText);
   }else{
     /* Openable, honest, and empty — the paste is kept on screen to type from. */
     it.ex=normEx({merchant:'',date:todayISO(),total:null,items:[]});
@@ -44172,7 +44176,7 @@ function _rcpApplyText(it,txt){
   if(clipped) it.dets+=' The paste ran longer than any receipt, so only its first '
     +'20,000 characters were read — check the figures, and paste just the receipt if they are short.';
   S.rcp.sel=it.id;
-  return {ok:true,id:it.id,parsed:!!ex,total:ex?it.ex.total:null,merchant:ex?it.ex.merchant:null};
+  return {ok:true,id:it.id,parsed:!!ex,total:ex?it.ex.total:null,cur:it.ex.cur,merchant:ex?it.ex.merchant:null};
 }
 function rcpAddText(txt){
   const probe=_deSmart(String(txt||'')).trim();
@@ -44268,7 +44272,8 @@ async function rcpAddPdf(f){
     it.dest=suggestDest(it.ex); seedLines(it); it.status='ready';
     if(!S.rcp.sel) S.rcp.sel=it.id;
     toast(it.loose?'Read what I could of '+(it.ex.merchant||'that invoice')+' \u2014 please check it'
-      :'Read '+(it.ex.merchant||'invoice')+' \u2014 '+money(it.ex.total),it.loose?'warn':'ok');
+      :'Read '+(it.ex.merchant||'invoice')+' \u2014 '+fxMoney(it.ex.total,it.ex.cur),it.loose?'warn':'ok');
+    fxAfterRead(it,it.pdfText);
   }catch(e){
     rcpNoteErr(it,e);
     toast('Could not read that PDF: '+it.err,'warn');
@@ -44395,7 +44400,7 @@ async function rcpSetCrop(id,on){
 /* ---------- Claude vision extraction ---------- */
 const RCP_PROMPT='You are reading a photograph of a purchase receipt. Return ONLY a JSON object, no markdown fences and no commentary.\n\n'
 +'{"merchant":string|null,"date":"YYYY-MM-DD"|null,"subtotal":number|null,"tax":number|null,"delivery":number|null,"tip":number|null,"total":number|null,'
-+'"payment":string|null,"card_brand":string|null,"card_last4":string|null,'
++'"currency":string|null,"payment":string|null,"card_brand":string|null,"card_last4":string|null,'
 +'"category_guess":string|null,"items":[{"description":string,"group":string|null,"qty":number|null,"unit_price":number|null,"total":number|null}]}\n\n'
 +'"delivery" is any delivery, shipping or freight charge shown as its own line, else null \u2014 it is part of what was charged and naming it stops it looking unexplained.\n'
 +'"tip" is a gratuity written on or printed on the slip \u2014 a restaurant or bar tab usually has one, handwritten on the customer copy. Read the amount, not the percentage, and null if there is none. Same reason as delivery: it is on the document, so it is not unexplained.\n'
@@ -44407,6 +44412,9 @@ const RCP_PROMPT='You are reading a photograph of a purchase receipt. Return ONL
 +'"group": many stores print department headings above blocks of items (GROCERY, PRODUCE, HOME, TOYS, '
 +'BEAUTY, PETS, HARDWARE, ELECTRONICS…). Give each item the heading printed above it, verbatim. '
 +'If the receipt prints no headings, infer a short one-or-two-word department for the item instead.\n'
+/* A slip from a trip prints its own money, and the app converts it (receipts/fx.js) — but only if it is told. */
++'"currency" is the ISO 4217 code of the money the amounts are printed in (USD, GBP, EUR, CAD…), from the symbols, the address and the wording. '
++'Give the amounts exactly as printed in that currency — never convert them. A receipt from outside the US usually prints the day first: 20/10/26 is 2026-10-20.\n'
 +'Rules: numbers are plain (no currency symbols or commas). Use null when a field is not legible. '
 +'"total" is the final amount actually charged. Include every purchased line item you can read; skip subtotal/tax/change lines. '
 +'If the image is not a receipt, return {"error":"not a receipt"}.';
@@ -44606,7 +44614,7 @@ function normEx(raw){
     total:r2v(raw.total),payment:raw.payment||null,category_guess:raw.category_guess||null,
     cardBrand:cardBrand(raw.card_brand!=null&&raw.card_brand!==''?raw.card_brand:raw.payment),
     cardLast4:cardLast4(raw.card_last4!=null&&raw.card_last4!==''?raw.card_last4:raw.payment),
-    refund:!!raw.refund,items:[]};
+    refund:!!raw.refund,cur:fxCode(raw.currency),items:[]};
   if(typeof raw.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(raw.date.trim())) ex.date=raw.date.trim();
   (Array.isArray(raw.items)?raw.items:[]).forEach(i=>{
     if(!i) return;
@@ -44786,7 +44794,8 @@ async function rcpExtract(id){
     /* Only if it is still in the queue: one removed while it was being read
        would become the selection, and every edit after would go nowhere. */
     if(!S.rcp.sel&&RCP.queue.some(x=>x===it)) S.rcp.sel=it.id;
-    toast('Read '+(it.ex.merchant||'receipt')+' — '+money(it.ex.total),'ok');
+    toast('Read '+(it.ex.merchant||'receipt')+' — '+fxMoney(it.ex.total,it.ex.cur),'ok');
+    fxAfterRead(it);
   }catch(e){
     rcpNoteErr(it,e);
     toast('Could not read receipt: '+it.err,'warn');
@@ -44798,6 +44807,191 @@ function rcpManual(id){
   it.ex=normEx({merchant:'',date:todayISO(),total:null,items:[]});
   it.dest=suggestDest(it.ex); seedLines(it); it.status='ready'; it.err=null;
   S.rcp.sel=it.id; render();
+}
+
+/* ================= A RECEIPT IN ANOTHER CURRENCY =================
+   "The app needs to convert to USD."
+
+   A receipt from a trip prints its own money — £30.24 at a London restaurant —
+   and the reader handed the figures over as they were printed. Filed, that put
+   30.24 into a dollar book: the sheet, the budget and the card's tally all read
+   it as $30.24, and the statement showed about $40. Nothing said so.
+
+   So the reader now says which currency the slip is in (RCP_PROMPT's
+   "currency", or a £/€ in pasted text), and a receipt in anything but dollars
+   is converted before it can be filed, at the rate for the day on the receipt.
+   Everything downstream — lines, tax, tip, the split, rcpAlloc, filing — then
+   works in dollars exactly as before, because the amounts ARE dollars.
+
+   The rate is a reference rate, not the card's. A card converts at its
+   network's rate, and some add a fee, so the statement comes in a little off.
+   That is said on the panel, and the printed figure and the rate are kept on
+   the log row (rec.fx). Typing the card's dollar figure into Receipt total, or
+   later into the filed receipt's own editor, is the correction.
+
+   State, on it.ex:
+     cur   the currency the document printed (null for dollars);
+     fx    {rate,day,src,orig} once converted — orig is the printed total.
+   A receipt with cur and no fx still carries the printed figures, and it is
+   NOT filed: rcpFileable holds it and commitReceipt refuses it. */
+const FX_HOME='USD';
+/* The currencies the rate services all carry. */
+const FX_CODES=['USD','GBP','EUR','CAD','MXN','JPY','CHF','AUD','NZD','SEK','NOK','DKK','ISK','PLN','CZK',
+  'HUF','RON','TRY','ILS','ZAR','INR','CNY','HKD','SGD','KRW','THB','PHP','IDR','MYR','BRL'];
+const FX_SIGN={GBP:'£',EUR:'€',JPY:'¥',CNY:'¥',INR:'₹',KRW:'₩',ILS:'₪',TRY:'₺',PHP:'₱',THB:'฿'};
+const FX_NAME={GBP:'pounds',EUR:'euros',CAD:'Canadian dollars',MXN:'pesos',JPY:'yen',CHF:'Swiss francs',
+  AUD:'Australian dollars',NZD:'New Zealand dollars',SEK:'Swedish kronor',NOK:'Norwegian kroner',DKK:'Danish kroner',
+  ISK:'Icelandic krónur',PLN:'złoty',CZK:'Czech korun',HUF:'forint',RON:'lei',TRY:'lira',ILS:'shekels',ZAR:'rand',
+  INR:'rupees',CNY:'yuan',HKD:'Hong Kong dollars',SGD:'Singapore dollars',KRW:'won',THB:'baht',PHP:'pesos',
+  IDR:'rupiah',MYR:'ringgit',BRL:'reais'};
+/* What the reader said, as a code — or null for dollars and for anything that
+   is not a currency the services carry. A bare "$" is dollars: a receipt that
+   is really Canadian says so in its address, and the picker is there for it. */
+function fxCode(v){
+  const s=String(v==null?'':v).trim();
+  if(!s) return null;
+  if(s==='£') return 'GBP';
+  if(s==='€') return 'EUR';
+  const c=s.toUpperCase();
+  return FX_CODES.indexOf(c)>0?c:null;
+}
+/* Pasted text carries its symbols. More £ than $ is a British receipt, and the
+   same for €; one stray symbol in an order page's footer is not. */
+function fxOfText(lines){
+  const t=(lines||[]).map(function(l){ return typeof l==='string'?l:(l&&l.text)||''; }).join('\n');
+  const n=function(re){ return (t.match(re)||[]).length; }, usd=n(/\$/g);
+  if(n(/£/g)>usd) return 'GBP';
+  if(n(/€/g)>usd) return 'EUR';
+  return null;
+}
+function fxSign(cur){ return FX_SIGN[cur]||cur; }
+function fxName(cur){ return FX_NAME[cur]||cur; }
+/* £30.24, or CHF 30.24 where there is no symbol of its own. */
+function fxMoney(v,cur){
+  if(!cur||cur===FX_HOME) return money(v);
+  if(v==null||isNaN(v)) return '—';
+  const s=money(Math.abs(v)).replace('$',''), sg=FX_SIGN[cur];
+  return (v<0?'−':'')+(sg?sg+s:cur+' '+s);
+}
+function fxDayWords(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d||'')?MA[+d.slice(5,7)-1]+' '+(+d.slice(8))+', '+d.slice(0,4):'today'; }
+/* The receipt's own day, never a day that has not happened: a misread year
+   would otherwise ask for a rate nobody has published. */
+function fxDay(date){ const t=todayISO(); return /^\d{4}-\d{2}-\d{2}$/.test(date||'')&&date<t?date:t; }
+function fxPending(ex){ return !!(ex&&ex.cur&&!ex.fx); }
+/* Asked in turn until one answers. All three are free, keyless and answer a
+   browser; the first two are the European Central Bank's reference rates (the
+   service gives the last working day's for a weekend), the third a daily market
+   rate kept on a CDN, there for when the first two are down. */
+const FX_SOURCES=[
+  {src:'ECB',url:function(c,d){ return 'https://api.frankfurter.dev/v1/'+d+'?from='+c+'&to='+FX_HOME; },
+    rate:function(j){ return j&&j.rates&&j.rates[FX_HOME]; }},
+  {src:'ECB',url:function(c,d){ return 'https://api.frankfurter.app/'+d+'?from='+c+'&to='+FX_HOME; },
+    rate:function(j){ return j&&j.rates&&j.rates[FX_HOME]; }},
+  {src:'market',url:function(c,d){ return 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@'+d+'/v1/currencies/'+c.toLowerCase()+'.min.json'; },
+    rate:function(j,c){ const o=j&&j[c.toLowerCase()]; return o&&o[FX_HOME.toLowerCase()]; }}
+];
+const _fxCache={};
+/* How long one service is given before the next is asked. An object so a test can shorten it. */
+const FX_WAIT={ms:8000};
+async function fxRate(cur,day){
+  const k=cur+' '+day;
+  if(_fxCache[k]) return _fxCache[k];
+  if(localOnly()) throw new Error('Local-only mode is on, so no rate was fetched');
+  let why='';
+  for(const s of FX_SOURCES){
+    const ctl=new AbortController(), tm=setTimeout(function(){ ctl.abort(); },FX_WAIT.ms);
+    try{
+      const r=await fetch(s.url(cur,day),{signal:ctl.signal});
+      if(!r.ok){ why='the rate service answered '+r.status; continue; }
+      const j=await r.json(), v=Number(s.rate(j,cur));
+      if(!(v>0)){ why='the rate service had no '+cur+' rate'; continue; }
+      /* A weekend's rate is the Friday's, and the service says so in its own date. */
+      const on=/^\d{4}-\d{2}-\d{2}$/.test(j&&j.date)?j.date:day;
+      return (_fxCache[k]={rate:v,day:on,src:s.src});
+    }catch(e){ why=e&&e.name==='AbortError'?'the rate service did not answer in time':'it could not be reached'; }
+    finally{ clearTimeout(tm); }
+  }
+  throw new Error('No '+cur+' rate: '+why);
+}
+/* Every money figure on the receipt, by f — the read figures and the lines the
+   panel shows, which may already have been edited. */
+function fxScale(it,f){
+  const ex=it.ex, m=function(v){ return v==null||isNaN(v)?v:r2v(v*f); };
+  ['subtotal','tax','delivery','shipping','discount','tip','total'].forEach(function(k){ ex[k]=m(ex[k]); });
+  (ex.items||[]).forEach(function(i){ i.unit_price=m(i.unit_price); i.total=m(i.total); });
+  (it.lines||[]).forEach(function(l){ l.amt=m(l.amt); });
+}
+/* Convert at `rate` dollars per unit — from the printed figures, or from the
+   last rate when it is changed. The total is worked from the printed total
+   itself, so changing the rate twice does not walk it a cent at a time. */
+function fxApply(it,rate,src,day){
+  const ex=it.ex; if(!ex||!ex.cur||!(rate>0)) return false;
+  const was=ex.fx?ex.fx.rate:1, orig=ex.fx?ex.fx.orig:ex.total;
+  fxScale(it,rate/was);
+  ex.fx={rate:rate,day:day||fxDay(ex.date),src:src||'typed',orig:orig};
+  if(orig!=null) ex.total=r2v(orig*rate);
+  if((it.lines||[]).length===1) it.lines[0].amt=ex.total;
+  return true;
+}
+/* Back to the printed figures, then on to another currency (or none). */
+function fxSetCur(it,code){
+  const ex=it.ex; if(!ex) return;
+  if(ex.fx){
+    fxScale(it,1/ex.fx.rate);
+    if(ex.fx.orig!=null) ex.total=r2v(ex.fx.orig);
+    if((it.lines||[]).length===1) it.lines[0].amt=ex.total;
+    delete ex.fx;
+  }
+  ex.cur=fxCode(code); it.fxErr=null;
+  if(ex.cur) return fxConvert(it);
+}
+async function fxConvert(it){
+  const ex=it&&it.ex; if(!fxPending(ex)) return;
+  const cur=ex.cur, day=fxDay(ex.date);
+  it.fxBusy=true; it.fxErr=null;
+  try{
+    const r=await fxRate(cur,day);
+    /* Only onto the receipt it was asked for: one re-read, re-pointed or
+       converted by hand while the rate was on its way is left alone. */
+    if(it.ex!==ex||ex.cur!==cur||ex.fx) return;
+    fxApply(it,r.rate,r.src,r.day);
+    toast('Converted '+fxMoney(ex.fx.orig,cur)+' to '+money(ex.total)+' at the rate for '+fxDayWords(r.day),'ok');
+  }catch(e){ it.fxErr=e&&e.message||String(e); }
+  finally{ it.fxBusy=false; render(); }
+}
+/* Called by every reader once a receipt is read and its lines seeded. */
+function fxAfterRead(it,text){
+  if(!it||!it.ex) return;
+  if(!it.ex.cur&&text) it.ex.cur=fxOfText(text);
+  if(fxPending(it.ex)) fxConvert(it);
+}
+/* The panel's line about it. Said in every state, because the one thing that
+   must never be quiet is a figure that is not in dollars. */
+function fxPanel(it){
+  const ex=it&&it.ex; if(!ex||!ex.cur) return '';
+  const cur=ex.cur, f=ex.fx, sg=fxSign(cur);
+  const box=function(v){ return '<input data-rf="fxrate" inputmode="decimal" aria-label="Dollars per '+esc(cur)
+    +'" placeholder="1.33" value="'+(v!=null?esc(String(v)):'')+'" style="width:80px">'; };
+  if(f){
+    const at=r2v((f.orig||0)*f.rate), set=ex.total!=null&&f.orig!=null&&Math.abs(at-ex.total)>=0.01;
+    return '<div class="recon fxrow" style="margin-bottom:10px"><span>Printed in '+esc(fxName(cur))+': <b>'+esc(fxMoney(f.orig,cur))+'</b> = <b>'
+      +money(at)+'</b> at '+box(f.rate)+' $ per '+esc(sg)+', '
+      +(f.src==='typed'?'the rate you typed':(f.src==='ECB'?'the European Central Bank’s rate':'the market rate')+' for '+fxDayWords(f.day))+'. '
+      +(set?'The total below is the figure you put in.'
+        :'Your card converts at its own rate, so the statement will be a little different — when the charge shows up, put its dollar figure in Receipt total.')
+      +'</span></div>';
+  }
+  if(it.fxBusy) return '<div class="recon fxrow" style="margin-bottom:10px"><span>Printed in '+esc(fxName(cur))
+    +' — the figures below are '+esc(sg)+' until the rate for '+fxDayWords(fxDay(ex.date))+' arrives…</span></div>';
+  return '<div class="recon fxrow" style="margin-bottom:10px"><span class="off">Printed in '+esc(fxName(cur))
+    +', so the figures below are '+esc(sg)+', not dollars'+(it.fxErr?' — '+esc(it.fxErr):'')+'.</span> '
+    +'<span>Type the rate, '+box(null)+' $ per '+esc(sg)+', or <button class="btn sm ghost" data-act="fxretry" data-id="'+it.id
+    +'">try again</button>. It is not filed until it is in dollars.</span></div>';
+}
+function fxPick(ex){
+  const cur=(ex&&ex.cur)||FX_HOME;
+  return '<div class="fld"><label>Currency</label><select data-rf="cur">'+FX_CODES.map(function(c){
+    return '<option value="'+c+'"'+(c===cur?' selected':'')+'>'+c+(FX_SIGN[c]?' '+FX_SIGN[c]:'')+'</option>'; }).join('')+'</select></div>';
 }
 
 /* Shared by every path that files a photographed receipt — see the call site.
@@ -44821,6 +45015,8 @@ function commitReceipt(id,quiet){
   /* From an email settled since it was queued — filed on the other device — it is booked already. */
   if(it.mailId&&typeof mailItem==='function'){ const e=mailItem(it.mailId);
     if(e&&e.state!=='new'){ if(!quiet) toast('That email was settled already ('+(e.note||e.state)+') — nothing filed','warn'); return false; } }
+  /* Never into a dollar book in pounds: until it is converted its figures are the printed ones (receipts/fx.js). */
+  if(fxPending(it.ex)){ if(!quiet) toast('This receipt is in '+fxName(it.ex.cur)+' \u2014 it is filed once it is converted to dollars','warn'); return false; }
   const D=it.dest||{},ex=it.ex;
   const lines=rcpLines(it);
   const al=rcpAlloc(it);
@@ -44971,6 +45167,8 @@ function commitReceipt(id,quiet){
      percentage is computed off, and without it the editor would read a tipped
      total as though the whole thing were the printed figure. */
   if(r2v(ex.tip)) rec.tip=r2v(ex.tip);
+  /* What was printed and the rate it came over at, so the row still says £30.24 and Reconcile allows for the card's own rate. */
+  if(ex.cur&&ex.fx) rec.fx={cur:ex.cur,amt:ex.fx.orig,rate:ex.fx.rate,day:ex.fx.day,src:ex.fx.src};
   /* The split is recorded next to the total on purpose: the statement shows one
      charge, the book shows several entries, and this is the row that ties them
      together when the receipts get audited against a card statement. */
@@ -45042,6 +45240,7 @@ function rcpFileable(it){
   if(!D.kind) return {ok:false,why:'no destination'};
   if(D.conf!=null&&D.conf<70) return {ok:false,why:'unsure where it goes'};
   if(it.ex.total==null) return {ok:false,why:'no total'};
+  if(fxPending(it.ex)) return {ok:false,why:'in '+it.ex.cur+', not yet in dollars'};
   if(D.kind!=='month'&&!rcpLines(it).length) return {ok:false,why:'nothing ticked'};
   /* Asked before anything about the money: filing twice is silent afterwards —
      the copy looks exactly like the original — and a batch is where it happens.
@@ -46255,7 +46454,7 @@ document.addEventListener('click',ev=>{
       const r=cid!=null?rcpClipApply(cid,txt):rcpAddText(txt);
       if(!r.ok){ toast(r.why,'warn'); return; }
       render();
-      toast(r.parsed?('Read on this device — '+(r.merchant?r.merchant+' — ':'')+(r.total!=null?money(r.total):'check the figures'))
+      toast(r.parsed?('Read on this device — '+(r.merchant?r.merchant+' — ':'')+(r.total!=null?fxMoney(r.total,r.cur):'check the figures'))
         :'Nothing read as a receipt — enter it against the paste','ok');
     })();
   }
@@ -46266,10 +46465,12 @@ document.addEventListener('click',ev=>{
     const r=rcpAddText(ta?ta.value:'');
     if(!r.ok){ toast(r.why,'warn'); return; }
     render();
-    toast(r.parsed?('Read on this device — '+(r.merchant?r.merchant+' — ':'')+(r.total!=null?money(r.total):'check the figures'))
+    toast(r.parsed?('Read on this device — '+(r.merchant?r.merchant+' — ':'')+(r.total!=null?fxMoney(r.total,r.cur):'check the figures'))
       :'Nothing read as a receipt — enter it against the paste','ok');
   }
   else if(act==='rcpretry'){ rcpRedetect(Number(b.dataset.id)); }
+  /* A receipt in another currency whose rate did not come (receipts/fx.js). */
+  else if(act==='fxretry'){ const it=RCP.queue.find(x=>x.id===Number(b.dataset.id)); if(it) fxConvert(it); render(); }
   else if(act==='rcplocalfix'){ setLocalOnly(false); rcpRedetect(Number(b.dataset.id)); }
   /* "Enter it by hand" is what the failed-read panel offers, so it is reached
      precisely when something has already gone wrong. It called suggestDest
@@ -50614,6 +50815,11 @@ function rcpField(el,live){
     return;
   }
   const f=el.dataset.rf, D=it.dest||(it.dest={kind:'month'});
+  /* The money it was printed in, and the rate it goes into dollars at (receipts/fx.js). On change only: each is a fetch or a rescale. */
+  if(f==='cur'){ if(!live){ fxSetCur(it,el.value); render(); } return; }
+  if(f==='fxrate'){ if(live) return;
+    if(!fxApply(it,pnum(el.value),'typed')) toast('\u201c'+el.value+'\u201d is not a rate \u2014 type dollars per '+fxSign(it.ex.cur)+', like 1.33','warn');
+    render(); return; }
   if(f==='cardbrand'){ it.ex.cardBrand=el.value||null; if(!live) render(); return; }
   if(f==='cardlast4'){ /* only ever four digits, whatever gets typed or pasted */
     it.ex.cardLast4=cardLast4(el.value)||(String(el.value||'').replace(/\D/g,'').slice(-4)||null);
@@ -50751,7 +50957,7 @@ document.addEventListener('paste',ev=>{
   ev.preventDefault();
   const r=rcpAddText(txt);
   if(!r.ok){ toast(r.why,'warn'); render(); return; }
-  toast(r.parsed?'Read '+(r.merchant||'that paste')+(r.total!=null?' \u2014 '+money(r.total):''):'Pasted \u2014 nothing read as a receipt',
+  toast(r.parsed?'Read '+(r.merchant||'that paste')+(r.total!=null?' \u2014 '+fxMoney(r.total,r.cur):''):'Pasted \u2014 nothing read as a receipt',
     r.parsed?'ok':'warn');
   render();
 });
@@ -56210,7 +56416,7 @@ function renderOnce(name,fn){
   window.__PF={S,get DB(){return DB;},set DB(v){DB=v;},setBook,chargeId,chargeIdsFill,quickAdd,isTextEntry,cellTerms,setCellTerms,setCell,gridRestore,_hasPlain,blankMonthTmpl,emptyView,bioAfterReseal,APP_V,APP_BUILD,paintChrome,parseBillAlert,billRouteFor,parseBillAlert,seriesTaken,seriesDelete,seriesFreqAll,_pdfScan,_pdfStreamEnd,pdfDiag,parseRbsInvoices,_rbsCells,rbsToRows,rbsIsInvoice,rbsIsStatement,rbsIsRbs,vendorIsGeneral,suggestDest,rbsLineOff,rbsInvoiceOff,parseRbsStatement,rbsReconcile,rbsStmtPanel,rbsTakeFiles,rbsWireDrop,rbsAlreadyIn,r4DupeRows,r4VendorKey,rbsPanel,pdfRuns,billDupe,billPastePanel,_billToken,_billDate,save,saveFlush,saveSettled,imgPut,imgGet,imgDel,imgHave,imgBytes,imgCount,imgLoadAll,imgMigrate,imgGC,imgMissing,imgMissingCount,imgAdoptFrom,imgAdoptApply,_imgKeyOf,imgPushedRead,imgMarkPushed,imgAtRisk,imgAtRiskCount,imgWouldDrop,imgReady,imgWait,imgSettled,imgUnreadable,rcpImg,rcpHasImg,rcpImgBad,_imgSrcOK,imgSealAll,imgOpenAll,imgSealedCount,imgSealStat,imgSealCatchUp,imgRekey,imgClearAll,imgShutCount,imgBrokeCount,_imgIsEnv,bookWithImages,saveWhy,SAVE_WHY,saveWhere,storageAudit,storagePanel,appInstalled,fbChosen,fbStopOwn,roomForImage,lsBytes,lsHeadroom,lsCeiling,lsRefusedAt,lsNoteRefusal,LS_CEILING,saveWarnPaint,backupMark,backupLast,backupAgeDays,backupWords,backupKindOf,cfChaseParse,bankParse,TILE_SEL,TILE_MENUS,tileMenuFor,tileMenuItems,tileMenusWire,tileMenuOpen,tileMenuClose,tileMenuRates,rwCardsAll,rwOffersAll,rwClosedIds,rwIsClosed,CF_BANK_TYPES,cfBankList,cfMainBank,cfBanks,cfBankGet,cfBankId,cfBook,cfCur,cfBankAdd,cfBankSet,cfBankDel,cfBankState,cfBankBalance,cfBankPoints,cfBankSummaryParse,cfBankInterest,CF_XFER_DAYS,cfXferKey,cfXferWords,cfTransfers,cfXferSay,cfXferNoReset,cfImportXfers,cfProjectAll,reconCards,PLAID_ACCT_K,plaidAcct,MAIL_FILE_V,mailFileReady,mailFileBook,mailFileDest,mailFileQueue,mailFileLabels,mailFilePass,mailFileSheet,mailFileList,MAIL_ASSIST_V,mailAssistReady,mailAssistState,mailAssistFiling,mailAssistOp,mailAssistCost,mailAssistSheet,mailRecapCard,mailFileOnRead,mailFileGuess,mailFileCatLabel,mailFileFind,mailFileSub,plaidAcctSet,plaidCfg,plaidCfgOnly,plaidSignIn,plaidSignOut,plaidBook,plaidTake,plaidMapSet,plaidFile,plaidInboxSettle,plaidWaiting,plaidReview,plaidRow,plaidGuess,plaidCatWord,plaidKeyNew,plaidOpen,plaidKid,plaidStatus,plaidEnsureKey,plaidConnect,plaidPull,plaidAuto,plaidRemove,plaidPanel,plaidLinkLoad,plaidOAuthOnBoot,PLAID_LINK_SRC,PLAID_SEAL_INFO,PLAID_TYPE,hhCfg,hhOn,hhBooksList,hhOpen,hhDocId,hhKeyNew,hhWrapPut,hhKeyFor,syncKeyPass,hhShare,hhInvite,hhLinkTake,hhJoin,hhMembers,hhInvites,hhRevoke,hhActivity,hhRemove,hhRekey,hhLeave,hhStop,hhGone,hhForget,bookPanel,hhInviteModal,hhJoinModal,hhLinkOnBoot,HH_WORDS,bookMerge,syncBaseSet,syncBaseGet,syncBaseForget,syncMergeWith,syncMergeDone,syncMergeAuto,syncMergeWords,syncManId,fsInit,syncBookId,syncBookOldId,syncBookV3,pfDerive3,pfSaltNew,pfSaltOk,BOOK_ID,syncEncOpt,bookSaltGet,bookSaltSet,syncBookMoved,PF_KDF_ITER3,_pkOpen,_unb64,rotatePlan,rotateState,rotateConfirmText,rotateDoneModal,pkDropSeals,_repassSecrets,syncRepass,syncNWrap,syncNUnwrap,syncSeenGet,syncSeenSet,syncIsOlder,syncNextN,cfReconWindows,cfReconDays,cfStmtBacked,mkey,monthByKey,r2v,ONCE_NAMES,ONCE_HITS,renderOnce,vpW,PDF_PARSERS,parseAnyInvoice,anyHeadRoles,anyLineOff,rbsAlreadyIn,zipStore,crc32,foldSheetLazy,zipBookText,ledgerFileText,exportAllFiles,exportAllZip,exportMint,EXPORT_EXTRA,_expGrid,aggParse,aggSniff,cfAggNear,aggToRecon,CF_AGG_DAYS,anyToInv,rbsReadRuns,rbsInvWord,aggDate,aggDateOrder,aggSuggest,cfImpStart,AGG_FORMATS,csvEsc,taxNyRules,taxStateNote,taxStatePaid,taxYearKey,taxYearEnd,taxYearEndOn,yearEndInsights,yearEndModal,YEAREND_FROM_MONTH,taxFileStateBlock,taxPlanState,cfBankGo,cfBankName,cfExpectNs,catHead,catRenamed,catRenameRcp,_cfXferLoose,catAddTo,catLineUp,catLineUpPlan,catRenameFwd,catLater,rcpOtherCats,rcpCatOk,rcpCatEnsure,rcpCatOptions,RCP_CASHBACK,RCP_CASHBACK_DAYS,rcpLooksCashback,rcpCashbackWords,rcpCashbackDest,rcpCashbackCard,rcpCashbackRedemptions,rcpCashbackFields,RW_PT_VAL,RW_PT_PILE,RW_PT_EXP_DAYS,rwPtVal,rwPoints,rwPointsAll,rwPointsLine,rwPointsNudges,rwPointsClosing,mailRedeemSubj,mailRedeemRead,mailRedeemCard,mailRedeemUse,mailRedeemDrop,mailRedeemActs,MAIL_REFUND_NEAR,mailRefundFind,mailRefundHave,mailRefundRecord,mailRefundUndo,mailRefundAuto,mailRefundChecks,mailRefundInsights,mailRefundActs,mailHandled,mailHandledText,mailHandledSheet,MAIL_SELF_DAYS,MAIL_SELF,mailIsPromo,mailSelfRun,mailSelfPass,mailSelfPreview,mailPreviewSheet,mailLessonFor,mailLessonApply,mailLessonHtml,mailSelfUndo,mailSelfChecks,mailSelfInsights,mailSelfActs,mailSelfSheet,CF_SELF_NEAR,MAIL_RCP_SEEN,mailCashBank,mailCashSureAccount,mailSelfCash,mailRcpCat,mailSelfReceipt,mailSelfUndoWhy,mailSelfMoneyUndo,MAIL_WEEK_DAYS,MAIL_WEEK_DUPE,MAIL_WEEK_KINDS,mailWeek,mailWeekSheet,cardPays,cardPayLines,cardPayWords,cardPayPoints,cardPayMissing,cardPayPanel,CARDPAY_BEFORE,CARDPAY_AFTER,cardsOpen,cfPayeeKeyV1,cfAllOn,cfAllPoints,cfAllSpan,cfAllTotal,cfAllMoves,cfXferSeries,cfComingAllPanel,cfImportCat,cfCatIndex,cfXferPanel,TAX_STATES,TAX_NO_WAGE_TAX,taxStateKey,taxStateName,taxStateTaxesWages,taxStateFor,taxIsNY,taxStateWord,taxProfileCard,_stubStateCode,BANKS,bankFrom,bankNamed,bankBody,bankTail,bankWho,bankDate,mailAttSniff,syncLegacyId,syncLegacyGone,cardClosedOn,cardIsClosed,cardClosedSet,cardCloseOpen,cardCloseSave,cardReopen,titleCase,seriesStats,seriesCycle,seriesArea,seriesTile,seriesCountUp,bankOfxParse,bankCsvParse,bankIsOfx,_cfFinish,cfAlertParse,cfAlertPanel,cfPayeeKey,cfMapGet,cfMapSet,cfGuessAccount,cfSugTokens,cfSuggestAccount,cfNewRows,cfBackfill,cfRowEntry,cfBankDays,cfBankDaysMerge,cfBankDaysNew,cfImportPlan,cfAccountAdd,cfAddDays,cfAddMonths,cfDaysBetween,cfSeriesKey,cfSeriesName,cfCadence,cfNextDate,cfNthDate,cfDatesAfter,cfAmountShape,cfCardFor,cfCardLinkGet,cfCardLinkSet,cfCardDue,cfCardDueOn,cfCardDueToggle,cfExpectGet,cfExpectSet,cfSeries,cfSeriesAll,cfSubSeries,taxPaySeries,taxPaydaysLeft,taxPerCheque,taxStubParse,taxStubDerive,taxStubGet,taxStubSave,taxDeferPace,taxWithheldPace,taxStubPanel,stubFileBtn,taxSubTabs,taxTabKey,taxYearNav,taxStamp,taxHomeData,taxHomeHtml,taxSteps,taxStepsHtml,taxDocNeeds,taxKeyDates,taxYoYWords,cfRemaining,cfForecast,cfOneStatement,cfProject,cfMovedSet,cfMovedToggle,cfIsMoved,cfSplit,cfBalancePoints,cfLatestBalance,cfStatedThrough,cfBalanceChartPts,CF_SPANS,cfSpanOk,cfSpanFrom,cfSpanPoints,cfSpanStats,CF_SECTION_ICO,cfHi,cfFresh,CF_TYPE_ICO,cfTypeIco,cfDir,cfFlowBar,SUB_KINDS,SUB_COMMON,subKind,subAvatar,subHi,subFresh,subRenew,subShareBar,BILL_KINDS,billKind,billFresh,cardMono,cardMini,cardStatus,cardFresh,RECON_SECTIONS,reconSheet,reconFresh,reconRing,NAVDEF,EMOJI,ico,ICON_STYLE,UI_WORDS,UI_ICO_DEFAULT,uiIcoFor,uiPageIco,uiPageIcoName,uiDecorate,uiEntered,macTint,macTrack,macBack,macFwd,macToolbar,macSideSet,macBadges,macPages,macGoKey,macMenuItems,macMenuShow,macMenuClose,TRIAL_WARN,TRIAL_GRACE,trialGet,trialSet,trialClear,trialState,trialsDue,trialWords,trialInsights,trialPill,trialKeep,trialCancel,trialNotify,STORE_ICO,storeLines,storePeriods,storeName,storeIco,storeTable,storeMonthly,storeCharges,storeInsights,storeDelta,WORTH_TYPES,WORTH_SPANS,worthType,worthBook,worthEnsure,worthAdd,worthSet,worthRemove,worthSources,worthAt,worthMonthly,worthInsights,worthLinkOk,rcpCardLinkGet,rcpCardLinkSet,cardTallyOpen,rcpCardOf,cardTallies,cardTally,cardTallyLostHtml,cardTallyNow,cfCardDue,cardStmtImported,cardStmtEmail,mailCardStmtSubj,mailCardStmtRead,mailCardStmtCard,mailCardStmtUse,mailCardStmtActs,cardDueGet,stmtSummary,stmtSummaryApply,cardStmtDay,cardBillWord,cardBillNote,CARDBILL_DAYS,worthLinkSet,worthDue,WORTH_MONTHLY,RET_POLICY,retPolicy,retFor,warFor,returnsDue,warrantiesEnding,retWhen,returnsInsights,returnsSheet,returnsFields,returnsRead,returnsApply,ODD_DAYS,oddId,oddCharges,oddWords,oddInsights,oddOk,oddSheet,TAXPACK_HOME,taxPackAgi,taxPackYears,taxPack,taxPackCsv,GUARD_IDLE_CHOICES,GUARD_FREE,guardIdleMinutes,guardIdleSet,guardTouch,guardDue,guardLockNow,guardWaitFor,guardUnlockWait,guardUnlockFailed,guardUnlockPassed,guardWaitWords,guardRow,MAIL_DEPS,MAIL_GAS,MAIL_GAS_V,MAIL_GAS_MANIFEST,MAIL_FROM_DEFAULT,MAIL_KINDS,MAIL_ACT,mailKeyNew,mailKeyOk,mailSigned,mailOpen,mailScriptSource,mailAddr,mailDomain,mailName,mailFromIs,mailAmounts,MAIL_TOTAL_RES,mailTotal,mailRead,mailBook,mailEnsure,mailLinked,mailUrlOk,mailStale,mailAsk,mailMerge,mailPrune,mailPull,mailWaiting,mailItem,mailMark,mailDay,mailAsText,mailQueueReceipts,mailIsPuller,mailLocal,mailLocalSet,mailSenderOk,mailRewind,mailRefusedNew,MAIL_MAX,MAIL_TEXT_SHORT,mailSays,mailAuto,mailRwMatch,mailWhen,mailCursor,mailCovers,mailNoteRefused,mailRetired,mailRetire,mailLocalReset,mailLinkKeep,mailLinkPut,mailRefundAmt,MAIL_NOTE_DAYS,MAIL_REFUND_BACK,MAIL_LOOKBACK_DAYS,MAIL_MARKS,MAIL_PAGE,MAIL_HOLD,mailShape,mailRuleKey,mailRule,mailLearn,mailAmtAs,mailMarkAs,mailResort,mailXferDir,MAIL_XFER_RE,mailCashParse,mailCashOpen,mailSubGuess,mailSubOpen,mailSubPanel,mailLegacyKey,mailTwins,mailIgnore,mailUnignore,MAIL_ATT_AUTO,mailAttIsPdf,mailAttIsImg,mailAttsClean,mailAttTexts,mailAttCan,mailAttFetch,mailAttApply,mailAttRead,mailAttAuto,mailAttIsRbs,mailAttFile,mailAttWent,mailAttOpen,mailAttRow,CLOUD_K,LEDGER_CLOUD_URL,cloudCfg,cloudOn,cloudSet,cloudUrlOk,cloudCall,cloudFs,cloudSignUp,cloudSignIn,cloudSignOut,cloudMe,cloudDeleteAccount,cloudPanel,REC_ID,recKeyNew,recNorm,recFmt,recSeal,recOpen,recHas,recMake,recRecover,recRewrap,cloudUrlKnown,readEngine,cloudForgot,cloudReset,cloudVerify,cloudVerifySend,cloudPwChange,cloudLinkTake,cloudLinkOnBoot,cloudSessions,cloudSessionEnd,cloudSessionsEndOthers,cloudActivity,ACT_WORDS,actWords,actWhen,actPanel,pkSupported,pkAdd,pkSignIn,pkList,pkRemove,pkRewrap,_pkDocId,WEL_CATS,WEL_STEPS,welDraft,welList,welPlan,welApply,welWanted,MAIL_ATT_LOOK,mailAttTargets,cfReconPoints,cfReconDays,cfStmtBacked,cfReconWindows,cfReconSummary,cfReconBlame,cfImportPanel,cfComingPanel,cfOverdue,CF_STANDIN_DAYS,cfPaidNote,cfChipWord,cfChipKey,subPayGet,subPaySet,subPayer,subPayNote,subPayModal,SUBPAY_DAYS,cfSettled,cfSettledSummary,CF_SETTLED_BACK,cfSettledPanel,CF_ASSUMED,cfIsAssumed,cfLateSkipSet,cfAssumedSpent,get saveBlock(){return saveBlock;},get saveState(){return saveState;},render,Views,healFromSeed,mviewDefault,dayListHtml,calSumHtml,money,catSums,
     undo,undo,redo,snap,snapCancel,toast,palOpen,palClose,palSearch,palIsOpen,PAL,UNDO,REDO,
     computeInsights,bookIntegrity,taxOpenMoney,taxOpenMoneyHtml,integrityHtml,_grpMonthly,chartW,chartBand,billMonths,billPerMonth,cfCadenceFromFreq,seriesMonthsPer,seriesFreqLabel,seriesPerMonth,seriesRate,seriesFreqGet,SERIES_FREQ_OPTS,SERIES_AUTO,seriesIsAuto,seriesAutoGet,seriesAutoWindow,seriesAutoDue,seriesAutoNext,seriesAutoRun,seriesRecord,seriesAutoSet,seriesAutoTick,seriesAutoAfterSync,workOverdue,workDepositKey,workReimbMatches,workPaidBy,workFollowInsights,WORK_LATE_DAYS,subsHistory,subsHistorySheet,SUBS_HIST_MONTHS,subsMerchantKey,subsDisplayName,subsFound,subsFoundAdd,subsFoundNot,subsFoundSheet,subsLineSeries,subsFromLine,subsLineUnlink,subsLineLink,subsLinePicker,seriesPriceChange,seriesPriceWatched,seriesPriceRecent,seriesCosts,RW_ALWAYS_FROM,RW_ALWAYS_TO,rwIsAlways,rwWhen,rwOfferAlways,rwCards,rwOffers,rwCard,rwOffer,rwCardAdd,rwCardSet,rwCardDel,rwOfferAdd,rwOfferDel,rwMax,rwSpent,rwStatus,rwDaysLeft,RW_TOPICS,rwTopicsOf,rwCovers,rwBest,rwEarnedYear,RW_PRESETS,rwPresetsOpen,rwCardFind,rwMerge,rwPresetApply,rwPrompt,rwRead,rwStmtCards,rwStmtGuess,rwStmtFor,rwCardForStmt,rwLineTopics,rwExcludes,rwLineCovered,rwLines,rwOfferSpend,rwRateFor,rwMissed,rwNudges,RW_NUDGE_MAX,rwIsRedemption,rwRedemptions,rwRedeemedYear,reconRewardsSettle,FOODSPLIT_WORDS,foodSplitGuess,foodSplitPlan,foodSplitApply,foodSplitOpen,closeYm,closeLabel,closeRange,closeShift,closeDefault,closeGet,closeSet,closeItems,closeSummary,closeInsights,RW_FLAT,rwStatementFees,rwCardYear,rwWorthAll,rwWorthInsights,rwWorthSheet,RW_ICO,rwIcoFor,rwFresh,rwCardColor,rwTier,rwPill,rwBar,seriesStaleAfter,seriesIsCold,computeAudit,csv,CSVSETS,focusCell,startCellEdit,catManager,CAT_SUGGEST,aliasGet,aliasSet,aliasReset,aliasWords,ALIAS_DEFAULT,grpManager,grp,gcolor,curMonth,dashPace,dashBudgetSplit,dashCatOrder,dashDaily,dashCash,budgetTotal,budgetPrevCol,budgetCached,budgetSync,catAugustColumns,catAugustAfterBook,dayDrawer,dayDrawerSave,calMonth,calendarHtml,txAll,txFiltered,txCsv,txReceiptIndex,dayCharges,dayMerchant,dayAddRow,dayRowsNow,dayAmt,dayCountHtml,dayRecount,catDropColumns,CAT_AUG_FLAG,CAT_DROP_FLAG,modal,closeModal,modalStale,get BOOKGEN(){return BOOKGEN;},
-    RCP,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
+    RCP,RCP_PROMPT,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
     bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
