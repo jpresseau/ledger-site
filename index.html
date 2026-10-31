@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-NMaJ1qPZ0Tk/kdQ4EKohJMxQodVCnPobN0OVDa9KD7Q=' 'sha256-XIHGMGCCNOO8yjRD9S3C+cWSqE3ViBTSkmdiyN3CLtU=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-8mcNAqPbcXFzZRpbCTOVylKbrTbmw2iJomdBzUavBcY=' 'sha256-XIHGMGCCNOO8yjRD9S3C+cWSqE3ViBTSkmdiyN3CLtU=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -3063,7 +3063,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.72";
+const APP_V="v28.73";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3085,7 +3085,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="88c53bc";
+const APP_BUILD="22d6907";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -26151,7 +26151,8 @@ Views.reconcile=function(){
      short by it, and such a pair scores 0.83 and is taken automatically. So a
      $57.84 charge against a $48.20 receipt sat under Accounted for, with the
      banner reading BALANCED over $9.64 that never reached the sheet. */
-  const isGap=l=>!l.gapOk&&reconGap(l)>0;
+  /* And a converted receipt the card charged differently for, in either direction (receipts/fx.js). */
+  const isGap=l=>!l.gapOk&&(reconGap(l)>0||!!reconFxGap(l));
   /* And the third way a 'matched' line is not settled: the charge it names is
      no longer the charge it was matched against. Ahead of isGap, because a gap
      is measured against mAmt and mAmt is exactly what has stopped being true —
@@ -26200,16 +26201,25 @@ Views.reconcile=function(){
   let body='';
   if(look.length) body+=reconSheet('look')+'Needs a look <span class="r">'+look.length+'</span></h3>'
     +'<div class="mut" style="font-size:12px;margin-bottom:8px">Close enough to propose, not close enough to assume.</div>'
-    +tbl(look.map(l=>row(l,(reconGap(l)?btn('recontip',l.id,'+ '+money(reconGap(l))+' tip',''):'')
-      +btn('reconyes',l.id,'Yes, that’s it',reconGap(l)?'ghost':'')+btn('reconno',l.id,'No'))).join(''))+'</div>';
+    +tbl(look.map(l=>row(l,(reconFxGap(l)?btn('reconfx',l.id,'Use the card’s '+money(l.amt),'')
+        :reconGap(l)?btn('recontip',l.id,'+ '+money(reconGap(l))+' tip',''):'')
+      +btn('reconyes',l.id,'Yes, that’s it',reconGap(l)||reconFxGap(l)?'ghost':'')+btn('reconno',l.id,'No'))).join(''))+'</div>';
 
-  if(gapped.length) body+=reconSheet('gap')+'Matched, but not for the same money <span class="r">'+gapped.length+'</span></h3>'
+  const fxGapped=gapped.filter(l=>reconFxGap(l)), tipGapped=gapped.filter(l=>!reconFxGap(l));
+  if(fxGapped.length) body+=reconSheet('gap')+'Matched, at the card’s own exchange rate <span class="r">'+fxGapped.length+'</span></h3>'
+    +'<div class="mut" style="font-size:12px;margin-bottom:8px">'
+    +'Printed in another currency and converted at a reference rate; the card converted at its own, and may have added a fee. '
+    +'Using the card’s figure puts it onto the receipt and onto the month sheet, so the two agree.</div>'
+    +tbl(fxGapped.map(l=>row(l,btn('reconfx',l.id,'Use the card’s '+money(l.amt),'')
+      +btn('recongapok',l.id,'Keep '+money(l.mAmt))+btn('reconno',l.id,'Not that'))).join(''))+'</div>';
+
+  if(tipGapped.length) body+=reconSheet('gap')+'Matched, but not for the same money <span class="r">'+tipGapped.length+'</span></h3>'
     +'<div class="mut" style="font-size:12px;margin-bottom:8px">'
     +'The receipt and the charge are the same purchase, but the card took '
-    +money(r2v(sum(gapped)-tot(gapped.map(l=>l.mAmt))))+' more than the receipt accounts for. '
+    +money(r2v(sum(tipGapped)-tot(tipGapped.map(l=>l.mAmt))))+' more than the receipt accounts for. '
     +'On a modern reader that is almost always the tip — the slip prints before it is taken. '
     +'Booking it puts the money onto the receipt and onto the month sheet, so the two agree.</div>'
-    +tbl(gapped.map(l=>row(l,btn('recontip',l.id,'+ '+money(reconGap(l))+' tip','')
+    +tbl(tipGapped.map(l=>row(l,btn('recontip',l.id,'+ '+money(reconGap(l))+' tip','')
       +btn('recongapok',l.id,'Not a tip — leave it')+btn('reconno',l.id,'Not that'))).join(''))+'</div>';
 
   /* Said in terms of what happened to the SHEET, not in terms of refs and
@@ -26301,7 +26311,7 @@ Views.reconcile=function(){
    +'<div class="plate recplate">'+reconPi('✅')+'<div class="k">Accounted for</div><div class="v">'+money(sum(matched)+sum(done.filter(l=>l.state==='filed')),0)+'</div>'
      +'<div class="s">'+(matched.length+done.length)+' of '+purch.length+'</div></div>'
    +'<div class="plate recplate'+(toClear?' alert':'')+'">'+reconPi(toClear?'⏳':'🎉')+'<div class="k">Left to clear</div><div class="v">'+toClear+'</div>'
-     +'<div class="s">'+(allDone?'nothing outstanding':money(sum(look)+sum(open)+sum(clash)+sum(moved)+tot(gapped.map(reconGap)),0)+' unexplained')+'</div></div>'
+     +'<div class="s">'+(allDone?'nothing outstanding':money(sum(look)+sum(open)+sum(clash)+sum(moved)+tot(gapped.map(l=>reconGap(l)||Math.abs(reconFxGap(l)))),0)+' unexplained')+'</div></div>'
    +'<div class="plate recplate">'+reconPi('🧮')+'<div class="k">Statement total</div><div class="v">'+(stated!=null?money(stated,0):'—')+'</div>'
      +'<div class="s">'+(stated==null?'add it to check the sum':off===0?'lines add up exactly':'lines differ by '+money(off))+'</div></div></div>'
    +'<div class="formrow" style="margin-top:12px">'
@@ -40464,7 +40474,7 @@ function _days(a,b){ return Math.round(Math.abs(new Date(a+'T00:00:00')-new Date
 function reconReceiptCand(r,i){
   return {kind:'receipt',ref:r.id||i,date:r.date,name:r.merchant||'',amt:r2v(r.total),
     card:r.card||'',label:(r.merchant||'receipt')+' · '+money(r.total),
-    where:r.where||destLabel(r.dest)};
+    where:r.where||destLabel(r.dest),fx:!!(r.fx&&r.fx.cur)};
 }
 function reconCandidates(card,ym){
   const out=[];
@@ -40506,6 +40516,11 @@ function reconScore(line,cand,cardName){
   let amtScore;
   if(da<0.005) amtScore=1;
   else if(exact) amtScore=0.95;
+  /* Printed in another currency and converted at a reference rate (receipts/fx.js). The card converts at its own,
+     and may add a fee, so the charge lands a few percent either side — under as well as over, which no tip explains.
+     The gap is not let through silently: reconFxGap holds the line out of Accounted for until the card's figure is
+     booked or the difference accepted. */
+  else if(cand.fx&&da<=Math.abs(cand.amt)*0.05) amtScore=0.8;
   /* A tip added after the receipt printed is the one honest reason a charge
      exceeds what was recorded — and it can only be recognised where there is a
      merchant to corroborate it. Against a month entry, which carries no name,
@@ -40811,8 +40826,28 @@ function reconRun(card,ym){
 function reconGap(l){
   if(!l||l.matchKind!=='receipt'||l.matchRef==null||l.mAmt==null) return 0;
   if(l.state==='filed'||l.state==='ignored') return 0;
+  /* A converted receipt's difference is the exchange rate's, asked about below rather than offered as a tip. */
+  if(reconFxGap(l)) return 0;
   const d=r2v((l.amt||0)-l.mAmt);
   return d>0.011?d:0;
+}
+/* The same question for a receipt printed in another currency (receipts/fx.js), and SIGNED: it was converted at a
+   reference rate, the card used its own and perhaps a fee, so the charge comes in over or under it and either way
+   the card's figure is the money. Zero for every record that was not converted. */
+function reconFxGap(l){
+  if(!l||l.matchKind!=='receipt'||l.matchRef==null||l.mAmt==null) return 0;
+  const r=reconReceiptAt(l.matchRef);
+  if(!r||!r.fx) return 0;
+  const d=r2v((l.amt||0)-l.mAmt);
+  return Math.abs(d)>0.011?d:0;
+}
+/* A line settled against the receipt it names, after that receipt was changed to agree with it. Re-described from
+   the record rather than reconRun'd: re-matching would re-decide every other line of the statement, which is not
+   what pressing one button asked for. */
+function _reconSettle(l,r){
+  const c=reconReceiptCand(r,l.matchRef);
+  l.mAmt=c.amt; l.matchLabel=c.label+(c.where?' · '+c.where:''); l.score=1; l.state='matched'; l.gapOk=null;
+  l.yes=l.matchKind+':'+l.matchRef;
 }
 function reconDecide(act,id){
   const rec=reconGet(S.recon.card,S.recon.ym); if(!rec) return;
@@ -40846,14 +40881,25 @@ function reconDecide(act,id){
        passing the gap over a receipt that already carried $5 set the tip to
        $3, and the total FELL by $2 when the charge said it should rise by $3. */
     if(!rcpLogSave(ri,{tip:r2v((r2v(r.tip)||0)+gap),quiet:true})){ snapCancel(); return; }
-    /* Re-described from the record rather than reconRun'd: re-matching would
-       re-decide every other line of the statement, which is not what pressing
-       one button asked for. */
-    const c=reconReceiptCand(r,l.matchRef);
-    l.mAmt=c.amt; l.matchLabel=c.label+(c.where?' · '+c.where:''); l.score=1; l.state='matched'; l.gapOk=null;
-    l.yes=l.matchKind+':'+l.matchRef;   /* booking the tip settles this pairing */
+    _reconSettle(l,r);   /* booking the tip settles this pairing */
     save(); render();
     toast(money(gap)+' booked as a tip on '+(r.merchant||'that receipt')+' — now '+money(r.total)+' · ⌘Z to undo','ok');
+    return;
+  }
+  /* THE CARD'S OWN FIGURE FOR A RECEIPT CONVERTED FROM ANOTHER CURRENCY. The receipt, and through it the month
+     sheet, take what the card charged — over or under — by the editor's own path, under one snapshot with the
+     confirmation, the same bargain as the tip above. The rate it comes to is kept, so the row still says what was
+     printed and now what the card charged for it. */
+  else if(act==='reconfx'){
+    const gap=reconFxGap(l);
+    const ri=reconReceiptIndex(l.matchRef), r=gap&&ri>=0?DB.receipts[ri]:null;
+    if(!r||r2v(r.total)!==r2v(l.mAmt)) return toast('That receipt has changed since it was matched — press Match again','warn');
+    snap('card’s figure on '+(r.merchant||'a receipt'));
+    if(!rcpLogSave(ri,{total:r2v(l.amt),quiet:true})){ snapCancel(); return; }
+    if(r.fx.amt) r.fx=Object.assign({},r.fx,{rate:Math.round(r.total/r.fx.amt*1e6)/1e6,src:'card'});
+    _reconSettle(l,r);
+    save(); render();
+    toast((r.merchant||'That receipt')+' is now '+money(r.total)+', what the card charged · ⌘Z to undo','ok');
     return;
   }
   /* Not every gap is a tip. Saying so is a decision and is recorded as one, so
@@ -44826,8 +44872,9 @@ function rcpManual(id){
    The rate is a reference rate, not the card's. A card converts at its
    network's rate, and some add a fee, so the statement comes in a little off.
    That is said on the panel, and the printed figure and the rate are kept on
-   the log row (rec.fx). Typing the card's dollar figure into Receipt total, or
-   later into the filed receipt's own editor, is the correction.
+   the log row (rec.fx). Reconcile matches the charge either side of it and
+   offers the card's figure (recon/decide.js, reconFxGap); typing it into
+   Receipt total, or the filed receipt's editor, does the same by hand.
 
    State, on it.ex:
      cur   the currency the document printed (null for dollars);
@@ -44978,7 +45025,7 @@ function fxPanel(it){
       +money(at)+'</b> at '+box(f.rate)+' $ per '+esc(sg)+', '
       +(f.src==='typed'?'the rate you typed':(f.src==='ECB'?'the European Central Bank’s rate':'the market rate')+' for '+fxDayWords(f.day))+'. '
       +(set?'The total below is the figure you put in.'
-        :'Your card converts at its own rate, so the statement will be a little different — when the charge shows up, put its dollar figure in Receipt total.')
+        :'Your card converts at its own rate, so its charge will be a little different — Reconcile offers the card’s figure when the statement comes in, or put it in Receipt total now if you have it.')
       +'</span></div>';
   }
   if(it.fxBusy) return '<div class="recon fxrow" style="margin-bottom:10px"><span>Printed in '+esc(fxName(cur))
@@ -45470,6 +45517,9 @@ function rcpLogSave(i,over){
     if(isNaN(t)) return toast('That total is not a number','warn');
     total=r2v(t);
   }
+  /* A total a caller names — Reconcile, booking the card's own figure for a receipt converted from another currency
+     (recon/decide.js). Shared across a split's parts by size, as a tip is, so the parts still add up to it. */
+  if(quiet&&o.total!=null){ const d=r2v(r2v(o.total)-total); if(d){ total=r2v(o.total); if(parts) rcpSpreadTip(parts,d); } }
 
   /* The tip, entered the same way as on the review panel: an amount, or a
      percentage of what the paper printed. The total moves by the DIFFERENCE
@@ -46662,7 +46712,7 @@ document.addEventListener('click',ev=>{
   else if(act==='reconhelddrop'){ S.recon.held=null; render(); toast('Discarded — nothing was written','ok'); }
   else if(act==='reconcancelimport'){ S.recon.reimport=false; render(); }
   else if(act==='reconyes'||act==='reconno'||act==='reconskip'||act==='reconreopen'||act==='reconfile'
-        ||act==='recontip'||act==='recongapok'){
+        ||act==='recontip'||act==='reconfx'||act==='recongapok'){
     reconDecide(act,b.dataset.id);
   }
   else if(act==='reconclose'){
@@ -56418,7 +56468,7 @@ function renderOnce(name,fn){
     computeInsights,bookIntegrity,taxOpenMoney,taxOpenMoneyHtml,integrityHtml,_grpMonthly,chartW,chartBand,billMonths,billPerMonth,cfCadenceFromFreq,seriesMonthsPer,seriesFreqLabel,seriesPerMonth,seriesRate,seriesFreqGet,SERIES_FREQ_OPTS,SERIES_AUTO,seriesIsAuto,seriesAutoGet,seriesAutoWindow,seriesAutoDue,seriesAutoNext,seriesAutoRun,seriesRecord,seriesAutoSet,seriesAutoTick,seriesAutoAfterSync,workOverdue,workDepositKey,workReimbMatches,workPaidBy,workFollowInsights,WORK_LATE_DAYS,subsHistory,subsHistorySheet,SUBS_HIST_MONTHS,subsMerchantKey,subsDisplayName,subsFound,subsFoundAdd,subsFoundNot,subsFoundSheet,subsLineSeries,subsFromLine,subsLineUnlink,subsLineLink,subsLinePicker,seriesPriceChange,seriesPriceWatched,seriesPriceRecent,seriesCosts,RW_ALWAYS_FROM,RW_ALWAYS_TO,rwIsAlways,rwWhen,rwOfferAlways,rwCards,rwOffers,rwCard,rwOffer,rwCardAdd,rwCardSet,rwCardDel,rwOfferAdd,rwOfferDel,rwMax,rwSpent,rwStatus,rwDaysLeft,RW_TOPICS,rwTopicsOf,rwCovers,rwBest,rwEarnedYear,RW_PRESETS,rwPresetsOpen,rwCardFind,rwMerge,rwPresetApply,rwPrompt,rwRead,rwStmtCards,rwStmtGuess,rwStmtFor,rwCardForStmt,rwLineTopics,rwExcludes,rwLineCovered,rwLines,rwOfferSpend,rwRateFor,rwMissed,rwNudges,RW_NUDGE_MAX,rwIsRedemption,rwRedemptions,rwRedeemedYear,reconRewardsSettle,FOODSPLIT_WORDS,foodSplitGuess,foodSplitPlan,foodSplitApply,foodSplitOpen,closeYm,closeLabel,closeRange,closeShift,closeDefault,closeGet,closeSet,closeItems,closeSummary,closeInsights,RW_FLAT,rwStatementFees,rwCardYear,rwWorthAll,rwWorthInsights,rwWorthSheet,RW_ICO,rwIcoFor,rwFresh,rwCardColor,rwTier,rwPill,rwBar,seriesStaleAfter,seriesIsCold,computeAudit,csv,CSVSETS,focusCell,startCellEdit,catManager,CAT_SUGGEST,aliasGet,aliasSet,aliasReset,aliasWords,ALIAS_DEFAULT,grpManager,grp,gcolor,curMonth,dashPace,dashBudgetSplit,dashCatOrder,dashDaily,dashCash,budgetTotal,budgetPrevCol,budgetCached,budgetSync,catAugustColumns,catAugustAfterBook,dayDrawer,dayDrawerSave,calMonth,calendarHtml,txAll,txFiltered,txCsv,txReceiptIndex,dayCharges,dayMerchant,dayAddRow,dayRowsNow,dayAmt,dayCountHtml,dayRecount,catDropColumns,CAT_AUG_FLAG,CAT_DROP_FLAG,modal,closeModal,modalStale,get BOOKGEN(){return BOOKGEN;},
     RCP,RCP_PROMPT,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
-    detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
+    detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
     bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
     BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
