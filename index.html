@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-8mcNAqPbcXFzZRpbCTOVylKbrTbmw2iJomdBzUavBcY=' 'sha256-XIHGMGCCNOO8yjRD9S3C+cWSqE3ViBTSkmdiyN3CLtU=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-S2GdpfkzlKHBjmWICjVuI4rTtlaV1+HVT25MLfFnad8=' 'sha256-XIHGMGCCNOO8yjRD9S3C+cWSqE3ViBTSkmdiyN3CLtU=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -3063,7 +3063,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.73";
+const APP_V="v28.74";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3085,7 +3085,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="22d6907";
+const APP_BUILD="cf8fe50";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -24292,8 +24292,8 @@ function renoR3(){
   const hrs=tot(R.hours.map(h=>h.hrs||0));
   const lab=tot((R.blocks||[]).map(b=>b.amt||0));
   let rows=''; byDate(R.purchases).forEach(x=>{ const p=x.r; rows+='<tr><td class="num mut">'+fD(p.date)+'</td><td>'+esc(p.store)+'</td><td>'+esc(p.item)+'</td><td class="n num">'+mcell(p.cost)+'</td><td class="mut" style="font-size:11px">'+esc(p.note||'')+'</td></tr>'; });
-  let hl=''; R.hours.forEach(h=>{ hl+='<tr><td class="num mut">'+fD(h.date)+'</td><td class="num">'+(h.start||'—')+'–'+(h.end||'—')+'</td><td class="n num">'+(h.hrs!=null?h.hrs:0)+'</td></tr>'; });
-  let bl=''; (R.blocks||[]).forEach(b=>{ bl+='<tr><td class="n num">'+b.days+'</td><td class="n num">'+money(b.amt)+'</td></tr>'; });
+  let hl=''; R.hours.forEach(h=>{ hl+='<tr><td class="num mut">'+fD(h.date)+'</td><td class="num">'+esc(h.start||'—')+'–'+esc(h.end||'—')+'</td><td class="n num">'+(Number(h.hrs)||0)+'</td></tr>'; });
+  let bl=''; (R.blocks||[]).forEach(b=>{ bl+='<tr><td class="n num">'+esc(String(b.days==null?'':b.days))+'</td><td class="n num">'+money(b.amt)+'</td></tr>'; });
   return '<div class="plates"><div class="plate"><div class="k">Fixtures & materials</div><div class="v">'+money(pt,0)+'</div><div class="s">'+R.purchases.length+' purchases</div></div>'
    +'<div class="plate"><div class="k">Labor blocks</div><div class="v">'+money(lab,0)+'</div><div class="s">'+hrs+' logged hours</div></div>'
    +'<div class="plate"><div class="k">All-in</div><div class="v">'+money(pt+lab,0)+'</div><div class="s">the green-and-brass bath</div></div></div>'
@@ -31607,7 +31607,7 @@ Views.betsy=function(){
     soon.length?soon.length+' FOR YOU'+(theirs.length?' · '+theirs.length+' MONEY':''):theirs.length?theirs.length+' MONEY MOVES':'ALL QUIET');
   const greet='<div class="sheet nofold advgreet bygreet"><div class="advg1">'+esc(_advGreet())+(name?', '+esc(name):'')+'.</div><div class="advg2">'
     +(soon.length?soon.length+' thing'+(soon.length===1?'':'s')+' for you this month':'Nothing of yours is due this month')
-    +(next?'; '+betsyDateWords(next,T).replace(/^Your /,'your ').replace(/^(\w)/,function(c){ return c; }):'')
+    +(next?'; '+esc(betsyDateWords(next,T).replace(/^Your /,'your ')):'')
     +(due.length?'; '+due.length+' health visit'+(due.length===1?'':'s')+' to book':'')+(cover.length?'; money to move before a bill':'')+'.'
     +(!name&&!B.people.length?' Tell her who you are, below.':'')+'</div></div>';
   const list='<div class="sheet nofold advmoves"><h3>Her list <span class="r">'+(soon.length||'none')+'</span></h3>'
@@ -32192,7 +32192,7 @@ async function mailOpen(env,keyB64){
         key. A request with no signature at all (the owner opening the
         address, a crawler) is not counted: it proves nothing.
    A refusal says only "refused" — a stranger learns nothing about why. */
-const MAIL_GAS_V=20;
+const MAIL_GAS_V=21;
 const MAIL_GAS=[
 function doGet(e){
   var p=(e&&e.parameter)||{}, out;
@@ -32279,6 +32279,24 @@ function ledgerAddr_(from){
   if(angle&&/[<>]/.test(bare.replace(angle[0],''))) return '';
   return /^[^\s@<>(),;:"\\]+@[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(a)?a:'';
 },
+/* WHETHER GMAIL VOUCHED FOR THE SENDER (v21): 1 or 0, sent with each email. The From line is the sender's
+   own say-so, and for a domain that does not enforce DMARC Gmail delivers a forged one; the Ledger lets an
+   email act by itself (record a refund, a bill, a statement) only when this is 1. Read from Gmail's OWN
+   Authentication-Results: the first one, the one Gmail put on top when it took the message in, and only if it
+   is mx.google.com's — a sender can write a header with that name lower down. Vouched for when DMARC passed
+   for the From domain, or a DKIM signature by that domain (or its parent or a subdomain) passed. */
+function ledgerAuth_(hs,from){
+  var a=ledgerAddr_(from), dom=a.slice(a.lastIndexOf('@')+1), ar='';
+  for(var i=0;i<hs.length;i++){ if(String(hs[i].name).toLowerCase()==='authentication-results'){ ar=String(hs[i].value||''); break; } }
+  if(!a||!/^\s*mx\.google\.com\s*;/i.test(ar)) return 0;
+  var al=function(d){ d=String(d||'').toLowerCase().replace(/^.*@/,'');
+    return d.indexOf('.')>0&&(dom===d||dom.slice(-(d.length+1))==='.'+d||d.slice(-(dom.length+1))==='.'+dom); };
+  var m=/\bdmarc=pass\b[^;]*?\bheader\.from=([a-z0-9.-]+)/i.exec(ar);
+  if(m&&al(m[1])) return 1;
+  var re=/\bdkim=pass\b[^;]*?\bheader\.[id]=@?([a-z0-9.@-]+)/ig, k;
+  while((k=re.exec(ar))) if(al(k[1])) return 1;
+  return 0;
+},
 function ledgerAllowed_(from){
   var a=ledgerAddr_(from), dom=a.slice(a.lastIndexOf('@')+1);
   return !!a&&LEDGER_FROM.concat(ledgerAuto_()).some(function(f){ f=String(f).toLowerCase();
@@ -32331,6 +32349,7 @@ function ledgerFind_(query,after){
     var h={}; ((m.payload&&m.payload.headers)||[]).forEach(function(x){ h[String(x.name).toLowerCase()]=String(x.value||''); });
     if(!ledgerAllowed_(h.from)) return;
     found.push({id:id,at:at,from:h.from||'',subj:h.subject||'',mid:String(h['message-id']||'').slice(0,200),atts:ledgerAtts_(m.payload),
+      auth:ledgerAuth_((m.payload&&m.payload.headers)||[],h.from),
       text:ledgerText_(m.payload).replace(/\r/g,'').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim().slice(0,CHARS)});
   });
   found.sort(function(a,b){ return a.at-b.at; });
@@ -32451,7 +32470,7 @@ function mailScriptSource(keyB64,from){
     +'   the ones already in the inbox when asked; v17 tells you of a listing once, a part once a week;\n'
     +'   v18 trusts a price report only from a publisher’s own address; v19 reads at most 15 emails a\n'
     +'   day from one sender and says in the recap whose email each item came from; v20 takes your\n'
-    +'   "Got it" and "Not this part" on an eBay match). It sends nothing\n'
+    +'   "Got it" and "Not this part" on an eBay match; v21 says which emails Gmail vouched for). It sends nothing\n'
     +'   else, and deletes only those eBay alerts (Trash keeps them 30 days).\n'
     +'   Keep this key private: it is what signs requests and unseals answers. */\n'
     +'var LEDGER_KEY = '+JSON.stringify(String(keyB64||''))+';\n'
@@ -33210,13 +33229,21 @@ function ledgerEbayItems_(raw){
   order.forEach(function(id,i){ var x=by[id], tail=s.slice(x.end,i+1<order.length?by[order[i+1]].at:x.end+600), p=/\$\s?[\d,]+(\.\d\d)?/.exec(ledgerEbayStrip_(tail)); x.price=p?p[0].replace(/\s/g,''):''; });
   return order.map(function(id){ return by[id]; }).filter(function(x){ return x.title; });
 },
-/* A title eBay cut short ("Losi Mini-T/Desert SCT Front…"), read whole from its listing page — a few per alert. */
+/* A title eBay cut short ("Losi Mini-T/Desert SCT Front…"), read whole from its listing page — a few per alert.
+   One redirect is followed, and only one that stays on www.ebay.com (v21): followed blindly, a redirect off eBay
+   had the script fetch whatever page it named and put that page's title in the owner's mail. */
+function ledgerEbayGet_(url){
+  var r=UrlFetchApp.fetch(url,{muteHttpExceptions:true,followRedirects:false}), c=r.getResponseCode();
+  if(c<300||c>=400) return r;
+  var h=r.getHeaders()||{}, to=String(h.Location||h.location||'');
+  return /^https:\/\/www\.ebay\.com\//.test(to)?UrlFetchApp.fetch(to,{muteHttpExceptions:true,followRedirects:false}):null;
+},
 function ledgerEbayFull_(items){
   var n=0;
   items.forEach(function(x){
     if(n>=6||!/(…|\.\.\.)\s*$/.test(x.title)) return; n++;
-    try{ var r=UrlFetchApp.fetch('https://www.ebay.com/itm/'+x.id,{muteHttpExceptions:true,followRedirects:true});
-      if(r.getResponseCode()===200){ var t=/<title[^>]*>([^<]{4,300})<\/title>/i.exec(r.getContentText()||''); if(t){ t=ledgerEbayStrip_(t[1]).replace(/\s*\|\s*eBay.*$/i,''); if(t.length>x.title.replace(/(…|\.\.\.)\s*$/,'').length) x.title=t.slice(0,200); } } }catch(e){}
+    try{ var r=ledgerEbayGet_('https://www.ebay.com/itm/'+x.id);
+      if(r&&r.getResponseCode()===200){ var t=/<title[^>]*>([^<]{4,300})<\/title>/i.exec(r.getContentText()||''); if(t){ t=ledgerEbayStrip_(t[1]).replace(/\s*\|\s*eBay.*$/i,''); if(t.length>x.title.replace(/(…|\.\.\.)\s*$/,'').length) x.title=t.slice(0,200); } } }catch(e){}
   });
 },
 function ledgerEbayNorm_(s){ return String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,''); },
@@ -33677,6 +33704,7 @@ function mailMerge(list,into){
      is another message. Nothing else about it changes. */
   const filled=[], kept={};
   M.items.forEach(function(x){ kept[x.id]=x; });
+  (Array.isArray(list)?list:[]).forEach(function(m){ if(m&&m.auth===1&&typeof m.id==='string'&&kept[m.id]) kept[m.id].auth=1; });   /* Gmail's word, for one kept from before v21 (mailVouched); only raised */
   (Array.isArray(list)?list:[]).forEach(function(m){
     if(!m||typeof m.id!=='string'||!Array.isArray(m.atts)||!m.atts.length) return;
     const old=kept[m.id];
@@ -33689,6 +33717,7 @@ function mailMerge(list,into){
     /* The script checks the address too; this is the book's own word on it. */
     if(!mailSenderOk(m.from,M)) return;
     const it={id:m.id,at:m.at,from:String(m.from||'').slice(0,200),subj:String(m.subj||'').slice(0,300),text:String(m.text||'').slice(0,6000)};
+    if(m.auth===1) it.auth=1;     /* Gmail vouched for the sender (script v21, mailVouched) */
     if(typeof m.mid==='string'&&m.mid) it.mid=m.mid.slice(0,200);
     const atts=typeof mailAttsClean==='function'?mailAttsClean(m.atts):[]; if(atts.length) it.atts=atts;
     Object.assign(it,mailRead(it));
@@ -34952,10 +34981,17 @@ async function mailAssistOp(o){
   const st=mailAssistState(); if(st&&body.note) st.note=String(body.note).slice(0,120);
   return st;
 }
+/* NOR ONE GMAIL DID NOT VOUCH FOR (the security review, v28.74). Every "by itself" action keyed off the From line,
+   which is the sender's own say-so: a stranger who wrote a listed biller's address there, for a domain that does
+   not enforce DMARC, had a refund, a paid bill, a card statement or a transfer written into the book unseen. The
+   script (v21, ledgerAuth_) reads Gmail's own verdict; an email without auth:1 — an older script, a forwarded
+   copy, a forgery — comes in and waits on the Email page like the ones below. */
+function mailVouched(it){ return !!it&&it.auth===1; }
 /* A sender the Ledger reads ONLY because the inbox assistant added it (a money email it was sure of): its mail comes in
    and waits on the Email page — nothing of it is recorded, filed or opened by itself (v28.42). A stranger whose
    "your payment was received" Claude believed could otherwise have written rows into the book. */
 function mailAutoOnly(it,M){
+  if(!mailVouched(it)) return true;
   M=M||mailBook(); if(!it||!M||!Array.isArray(M.scriptAuto)||!M.scriptAuto.length) return false;
   const a=mailAddr(it.from); if(M.scriptAuto.map(function(x){ return String(x).toLowerCase(); }).indexOf(a)<0) return false;
   const own=[].concat(M.from||[],M.scriptFrom||[]);
@@ -35243,14 +35279,15 @@ function _maWho(from){ const n=typeof mailName==='function'?mailName(from):''; r
 function _maTag(t,cls){ return t?' <span class="matag'+(cls?' '+cls:'')+'">'+_maEsc(t)+'</span>':''; }
 /* In the order given (newest first), one group per sender's address. */
 function _maGroups(rows){
-  const by={}, out=[];
+  /* No prototype: a sender or a label is whatever arrived, and "__proto__" in a plain {} is not a key (v28.74). */
+  const by=Object.create(null), out=[];
   rows.forEach(function(r){ const k=(typeof mailAddr==='function'&&mailAddr(r.from))||String(r.from||'').toLowerCase();
     if(!by[k]){ by[k]={k:k,rows:[]}; out.push(by[k]); } by[k].rows.push(r); });
   return out;
 }
 /* A sender's most common label, and how many others there are. */
 function _maMost(rows,f){
-  const n={}; rows.forEach(function(r){ const l=f(r); if(l) n[l]=(n[l]||0)+1; });
+  const n=Object.create(null); rows.forEach(function(r){ const l=f(r); if(l) n[l]=(n[l]||0)+1; });
   const ks=Object.keys(n).sort(function(a,b){ return n[b]-n[a]; });
   return ks.length?ks[0]+(ks.length>1?' +'+(ks.length-1):''):'';
 }
@@ -35314,7 +35351,7 @@ function _maIds(el){ return el.dataset.ids?String(el.dataset.ids).split(',').fil
    looks right. */
 function _maPreview(a,today,off,v0){
   if(v0<MAIL_ASSIST_V12||a.mode!=='preview') return '';
-  const would=today.filter(function(r){ return r.pv&&r.sure&&r.label&&!r.filed&&!r.o; }), by={};
+  const would=today.filter(function(r){ return r.pv&&r.sure&&r.label&&!r.filed&&!r.o; }), by=Object.create(null);
   would.forEach(function(r){ (by[r.label]=by[r.label]||[]).push(r); });
   return '<div class="mapreview"><b>Trying it out — nothing is moved.</b> '
     +(would.length?'Since the recap it would have filed '+would.length+' email'+(would.length===1?'':'s')+':<ul>'
@@ -37871,6 +37908,9 @@ function pkPanel(st){
         +(k.last_used?', last used '+esc(String(k.last_used).slice(0,10)):'')+'</span></span>'
         +'<button class="btn ghost" data-act="pkdel" data-id="'+esc(String(k.id))+'" data-cred="'+esc(k.cred_id)+'">Remove</button></div>'; }).join('')
       :'<div class="mut" style="font-size:12px">None yet.</div>'):'')
+    /* Asked for again (v28.74): a passkey outlives every session, so a session alone may not add one. */
+    +'<form class="pwform" data-go="pkadd"><div class="fld"><label for="pkPw">Your Ledger Cloud password, to add a passkey</label>'
+      +'<input id="pkPw" type="password" autocomplete="current-password"></div></form>'
     +'<div class="formrow"><button class="btn ghost" data-act="pkadd">Add a passkey</button>'
     +(list?'':'<button class="btn ghost" data-act="pklist">Show passkeys</button>')+'</div></div>';
 }
@@ -48858,7 +48898,9 @@ function _imgLossOk(what){
     .catch(function(e){ toast(e.message||String(e),'warn'); }); }
   else if(act==='pkadd'){
     const label=(navigator.userAgent.match(/iPhone|iPad|Android|Mac|Windows|Linux/)||['This device'])[0];
-    pkAdd(label).then(function(r){
+    const pwEl=document.getElementById('pkPw'), pw=pwEl?pwEl.value:'';
+    pkAdd(label,pw).then(function(r){
+      if(pwEl) pwEl.value='';
       if(!r.ok) return toast('No passkey was added: '+r.why,'warn');
       toast(r.sealed?'Passkey added \u2014 it signs in and opens the book'
         :r.prf?'Passkey added. It will carry the passphrase once one is set'
@@ -52893,12 +52935,13 @@ async function _pkWrite(credId,pass,bytes,ps){
 function pkErr(e){ return typeof bioErr==='function'?bioErr(e):String((e&&e.message)||e); }
 /* Adding one to the signed-in account. PRF is asked for at creation; where a
    platform only gives it at sign-in, one more verification fetches it. */
-async function pkAdd(label){
+async function pkAdd(label,password){
   const c=cloudCfg(); if(!c) return {ok:false,why:'Sign in to Ledger Cloud first.'};
+  if(!password) return {ok:false,why:'Type your Ledger Cloud password first: adding a passkey asks for it.'};
   if(!pkSupported()) return {ok:false,why:'This browser cannot make a passkey here: it needs https.'};
   const ps=_pkPsNew(), salt=await _pkSalt2(ps);
   let o, cred;
-  try{ o=await cloudCall(c.url,'POST','/v1/passkey/register/options',{},c.token); }catch(e){ return {ok:false,why:e.message}; }
+  try{ o=await cloudCall(c.url,'POST','/v1/passkey/register/options',{password:String(password)},c.token); }catch(e){ return {ok:false,why:e.message}; }
   try{ cred=await navigator.credentials.create({publicKey:Object.assign(_pkCreateOpts(o.options),{extensions:{prf:{eval:{first:salt}}}})}); }
   catch(e){ return {ok:false,why:pkErr(e)}; }
   let got;
@@ -53041,7 +53084,8 @@ const ACT_WORDS={signup:'Account created',signin:'Signed in with the password',s
   reset_asked:'A password reset link was asked for',email_confirmed:'Email confirmed',passkey_added:'Passkey added',
   passkey_removed:'Passkey removed',recovery_saved:'Recovery key saved (made, or re-sealed for a new passphrase)',
   recovery_removed:'Recovery key removed',seals_dropped:'Passkey seals dropped (every key replaced)',
-  bank_connected:'Bank connected',bank_removed:'Bank connection removed',bank_key_replaced:'Bank key replaced — every bank disconnected'};
+  bank_connected:'Bank connected',bank_removed:'Bank connection removed',bank_key_replaced:'Bank key replaced — every bank disconnected',
+  passkeys_removed:'Passkeys removed by the password reset — add yours again'};
 /* The service's time (UTC) in this device's own clock: "was that me, at 3 a.m.?" is asked in local time. */
 function actWhen(t){
   const d=new Date(String(t||'')), p=function(n){ return String(n).padStart(2,'0'); };
@@ -53052,7 +53096,7 @@ function actWords(e){
   e=e||{};
   const n=Number(e.n)||1, base=ACT_WORDS[e.kind]||String(e.kind||'Something');
   return {text:base+(e.detail?': '+e.detail:'')+(n>1?' ('+n+' times)':''),
-    warn:e.kind==='signin_failed'||e.kind==='passkey_failed'||e.kind==='reset_asked'};
+    warn:e.kind==='signin_failed'||e.kind==='passkey_failed'||e.kind==='reset_asked'||e.kind==='passkeys_removed'};
 }
 /* ================= A BOOK A HOUSEHOLD SHARES (v27.41) =================
    Two people, each with their own Ledger Cloud account, password, passkeys,
@@ -53806,6 +53850,13 @@ async function syncPushDoc(db,docId,ct,env,opt){
    are read as-is exactly once so their contents can be moved somewhere safe. */
 async function syncFetch(db,docId,man,pass,coll){
   _syncGotN=0;
+  /* ONLY THE OLD NAME WAS EVER PLAINTEXT. The manifest's `enc` is not authenticated, so a copy that
+     merely SAID it was unencrypted was taken as the book — no key, no GCM, no copy number — under the
+     live name too: whoever could write the document (the storage, a household member, an account taken
+     over) could hand every device a book of their own (the security review, v28.74). Every push since
+     v25 writes enc:1 under a derived name; a pre-v25 copy is `pfLedger_<sha256>` and nothing else. */
+  if(!man.enc&&!/^pfLedger_[0-9a-f]{64}$/.test(String(docId)))
+    throw new Error('That cloud copy says it is not encrypted, and only a copy from before encryption ever was, so it was not taken. Nothing here changed.');
   const raw=await syncPullDoc(db,docId,man,coll);
   if(!man.enc) return raw;
   try{
@@ -54149,8 +54200,13 @@ function _mAdvice(b,m,t,path,cx){
   return out;
 }
 function _mObj(b,m,t,path,cx){
+  /* Own keys only, read as own keys: a bill or a sender called "constructor" read the base's
+     inherited function as its earlier value, and "__proto__" set the merged object's prototype
+     instead of a key (the security review, v28.74). */
+  const own=(o,k)=>o!=null&&Object.prototype.hasOwnProperty.call(o,k)?o[k]:undefined;
   const out={}, keys=Object.keys(t).concat(Object.keys(m).filter(k=>!Object.prototype.hasOwnProperty.call(t,k)));
-  for(const k of keys){ const v=_mVal(b[k],m[k],t[k],path?path+'.'+k:k,cx); if(v!==undefined) out[k]=v; }
+  for(const k of keys){ if(k==='__proto__') continue;
+    const v=_mVal(own(b,k),own(m,k),own(t,k),path?path+'.'+k:k,cx); if(v!==undefined) out[k]=v; }
   return out;
 }
 /* Matched by a key: theirs' order, then this device's new ones in its order. Gone from one side
@@ -56466,7 +56522,7 @@ function renderOnce(name,fn){
   window.__PF={S,get DB(){return DB;},set DB(v){DB=v;},setBook,chargeId,chargeIdsFill,quickAdd,isTextEntry,cellTerms,setCellTerms,setCell,gridRestore,_hasPlain,blankMonthTmpl,emptyView,bioAfterReseal,APP_V,APP_BUILD,paintChrome,parseBillAlert,billRouteFor,parseBillAlert,seriesTaken,seriesDelete,seriesFreqAll,_pdfScan,_pdfStreamEnd,pdfDiag,parseRbsInvoices,_rbsCells,rbsToRows,rbsIsInvoice,rbsIsStatement,rbsIsRbs,vendorIsGeneral,suggestDest,rbsLineOff,rbsInvoiceOff,parseRbsStatement,rbsReconcile,rbsStmtPanel,rbsTakeFiles,rbsWireDrop,rbsAlreadyIn,r4DupeRows,r4VendorKey,rbsPanel,pdfRuns,billDupe,billPastePanel,_billToken,_billDate,save,saveFlush,saveSettled,imgPut,imgGet,imgDel,imgHave,imgBytes,imgCount,imgLoadAll,imgMigrate,imgGC,imgMissing,imgMissingCount,imgAdoptFrom,imgAdoptApply,_imgKeyOf,imgPushedRead,imgMarkPushed,imgAtRisk,imgAtRiskCount,imgWouldDrop,imgReady,imgWait,imgSettled,imgUnreadable,rcpImg,rcpHasImg,rcpImgBad,_imgSrcOK,imgSealAll,imgOpenAll,imgSealedCount,imgSealStat,imgSealCatchUp,imgRekey,imgClearAll,imgShutCount,imgBrokeCount,_imgIsEnv,bookWithImages,saveWhy,SAVE_WHY,saveWhere,storageAudit,storagePanel,appInstalled,fbChosen,fbStopOwn,roomForImage,lsBytes,lsHeadroom,lsCeiling,lsRefusedAt,lsNoteRefusal,LS_CEILING,saveWarnPaint,backupMark,backupLast,backupAgeDays,backupWords,backupKindOf,cfChaseParse,bankParse,TILE_SEL,TILE_MENUS,tileMenuFor,tileMenuItems,tileMenusWire,tileMenuOpen,tileMenuClose,tileMenuRates,rwCardsAll,rwOffersAll,rwClosedIds,rwIsClosed,CF_BANK_TYPES,cfBankList,cfMainBank,cfBanks,cfBankGet,cfBankId,cfBook,cfCur,cfBankAdd,cfBankSet,cfBankDel,cfBankState,cfBankBalance,cfBankPoints,cfBankSummaryParse,cfBankInterest,CF_XFER_DAYS,cfXferKey,cfXferWords,cfTransfers,cfXferSay,cfXferNoReset,cfImportXfers,cfProjectAll,reconCards,PLAID_ACCT_K,plaidAcct,MAIL_FILE_V,mailFileReady,mailFileBook,mailFileDest,mailFileQueue,mailFileLabels,mailFilePass,mailFileSheet,mailFileList,MAIL_ASSIST_V,mailAssistReady,mailAssistState,mailAssistFiling,mailAssistOp,mailAssistCost,mailAssistSheet,mailRecapCard,mailFileOnRead,mailFileGuess,mailFileCatLabel,mailFileFind,mailFileSub,plaidAcctSet,plaidCfg,plaidCfgOnly,plaidSignIn,plaidSignOut,plaidBook,plaidTake,plaidMapSet,plaidFile,plaidInboxSettle,plaidWaiting,plaidReview,plaidRow,plaidGuess,plaidCatWord,plaidKeyNew,plaidOpen,plaidKid,plaidStatus,plaidEnsureKey,plaidConnect,plaidPull,plaidAuto,plaidRemove,plaidPanel,plaidLinkLoad,plaidOAuthOnBoot,PLAID_LINK_SRC,PLAID_SEAL_INFO,PLAID_TYPE,hhCfg,hhOn,hhBooksList,hhOpen,hhDocId,hhKeyNew,hhWrapPut,hhKeyFor,syncKeyPass,hhShare,hhInvite,hhLinkTake,hhJoin,hhMembers,hhInvites,hhRevoke,hhActivity,hhRemove,hhRekey,hhLeave,hhStop,hhGone,hhForget,bookPanel,hhInviteModal,hhJoinModal,hhLinkOnBoot,HH_WORDS,bookMerge,syncBaseSet,syncBaseGet,syncBaseForget,syncMergeWith,syncMergeDone,syncMergeAuto,syncMergeWords,syncManId,fsInit,syncBookId,syncBookOldId,syncBookV3,pfDerive3,pfSaltNew,pfSaltOk,BOOK_ID,syncEncOpt,bookSaltGet,bookSaltSet,syncBookMoved,PF_KDF_ITER3,_pkOpen,_unb64,rotatePlan,rotateState,rotateConfirmText,rotateDoneModal,pkDropSeals,_repassSecrets,syncRepass,syncNWrap,syncNUnwrap,syncSeenGet,syncSeenSet,syncIsOlder,syncNextN,cfReconWindows,cfReconDays,cfStmtBacked,mkey,monthByKey,r2v,ONCE_NAMES,ONCE_HITS,renderOnce,vpW,PDF_PARSERS,parseAnyInvoice,anyHeadRoles,anyLineOff,rbsAlreadyIn,zipStore,crc32,foldSheetLazy,zipBookText,ledgerFileText,exportAllFiles,exportAllZip,exportMint,EXPORT_EXTRA,_expGrid,aggParse,aggSniff,cfAggNear,aggToRecon,CF_AGG_DAYS,anyToInv,rbsReadRuns,rbsInvWord,aggDate,aggDateOrder,aggSuggest,cfImpStart,AGG_FORMATS,csvEsc,taxNyRules,taxStateNote,taxStatePaid,taxYearKey,taxYearEnd,taxYearEndOn,yearEndInsights,yearEndModal,YEAREND_FROM_MONTH,taxFileStateBlock,taxPlanState,cfBankGo,cfBankName,cfExpectNs,catHead,catRenamed,catRenameRcp,_cfXferLoose,catAddTo,catLineUp,catLineUpPlan,catRenameFwd,catLater,rcpOtherCats,rcpCatOk,rcpCatEnsure,rcpCatOptions,RCP_CASHBACK,RCP_CASHBACK_DAYS,rcpLooksCashback,rcpCashbackWords,rcpCashbackDest,rcpCashbackCard,rcpCashbackRedemptions,rcpCashbackFields,RW_PT_VAL,RW_PT_PILE,RW_PT_EXP_DAYS,rwPtVal,rwPoints,rwPointsAll,rwPointsLine,rwPointsNudges,rwPointsClosing,mailRedeemSubj,mailRedeemRead,mailRedeemCard,mailRedeemUse,mailRedeemDrop,mailRedeemActs,MAIL_REFUND_NEAR,mailRefundFind,mailRefundHave,mailRefundRecord,mailRefundUndo,mailRefundAuto,mailRefundChecks,mailRefundInsights,mailRefundActs,mailHandled,mailHandledText,mailHandledSheet,MAIL_SELF_DAYS,MAIL_SELF,mailIsPromo,mailSelfRun,mailSelfPass,mailSelfPreview,mailPreviewSheet,mailLessonFor,mailLessonApply,mailLessonHtml,mailSelfUndo,mailSelfChecks,mailSelfInsights,mailSelfActs,mailSelfSheet,CF_SELF_NEAR,MAIL_RCP_SEEN,mailCashBank,mailCashSureAccount,mailSelfCash,mailRcpCat,mailSelfReceipt,mailSelfUndoWhy,mailSelfMoneyUndo,MAIL_WEEK_DAYS,MAIL_WEEK_DUPE,MAIL_WEEK_KINDS,mailWeek,mailWeekSheet,cardPays,cardPayLines,cardPayWords,cardPayPoints,cardPayMissing,cardPayPanel,CARDPAY_BEFORE,CARDPAY_AFTER,cardsOpen,cfPayeeKeyV1,cfAllOn,cfAllPoints,cfAllSpan,cfAllTotal,cfAllMoves,cfXferSeries,cfComingAllPanel,cfImportCat,cfCatIndex,cfXferPanel,TAX_STATES,TAX_NO_WAGE_TAX,taxStateKey,taxStateName,taxStateTaxesWages,taxStateFor,taxIsNY,taxStateWord,taxProfileCard,_stubStateCode,BANKS,bankFrom,bankNamed,bankBody,bankTail,bankWho,bankDate,mailAttSniff,syncLegacyId,syncLegacyGone,cardClosedOn,cardIsClosed,cardClosedSet,cardCloseOpen,cardCloseSave,cardReopen,titleCase,seriesStats,seriesCycle,seriesArea,seriesTile,seriesCountUp,bankOfxParse,bankCsvParse,bankIsOfx,_cfFinish,cfAlertParse,cfAlertPanel,cfPayeeKey,cfMapGet,cfMapSet,cfGuessAccount,cfSugTokens,cfSuggestAccount,cfNewRows,cfBackfill,cfRowEntry,cfBankDays,cfBankDaysMerge,cfBankDaysNew,cfImportPlan,cfAccountAdd,cfAddDays,cfAddMonths,cfDaysBetween,cfSeriesKey,cfSeriesName,cfCadence,cfNextDate,cfNthDate,cfDatesAfter,cfAmountShape,cfCardFor,cfCardLinkGet,cfCardLinkSet,cfCardDue,cfCardDueOn,cfCardDueToggle,cfExpectGet,cfExpectSet,cfSeries,cfSeriesAll,cfSubSeries,taxPaySeries,taxPaydaysLeft,taxPerCheque,taxStubParse,taxStubDerive,taxStubGet,taxStubSave,taxDeferPace,taxWithheldPace,taxStubPanel,stubFileBtn,taxSubTabs,taxTabKey,taxYearNav,taxStamp,taxHomeData,taxHomeHtml,taxSteps,taxStepsHtml,taxDocNeeds,taxKeyDates,taxYoYWords,cfRemaining,cfForecast,cfOneStatement,cfProject,cfMovedSet,cfMovedToggle,cfIsMoved,cfSplit,cfBalancePoints,cfLatestBalance,cfStatedThrough,cfBalanceChartPts,CF_SPANS,cfSpanOk,cfSpanFrom,cfSpanPoints,cfSpanStats,CF_SECTION_ICO,cfHi,cfFresh,CF_TYPE_ICO,cfTypeIco,cfDir,cfFlowBar,SUB_KINDS,SUB_COMMON,subKind,subAvatar,subHi,subFresh,subRenew,subShareBar,BILL_KINDS,billKind,billFresh,cardMono,cardMini,cardStatus,cardFresh,RECON_SECTIONS,reconSheet,reconFresh,reconRing,NAVDEF,EMOJI,ico,ICON_STYLE,UI_WORDS,UI_ICO_DEFAULT,uiIcoFor,uiPageIco,uiPageIcoName,uiDecorate,uiEntered,macTint,macTrack,macBack,macFwd,macToolbar,macSideSet,macBadges,macPages,macGoKey,macMenuItems,macMenuShow,macMenuClose,TRIAL_WARN,TRIAL_GRACE,trialGet,trialSet,trialClear,trialState,trialsDue,trialWords,trialInsights,trialPill,trialKeep,trialCancel,trialNotify,STORE_ICO,storeLines,storePeriods,storeName,storeIco,storeTable,storeMonthly,storeCharges,storeInsights,storeDelta,WORTH_TYPES,WORTH_SPANS,worthType,worthBook,worthEnsure,worthAdd,worthSet,worthRemove,worthSources,worthAt,worthMonthly,worthInsights,worthLinkOk,rcpCardLinkGet,rcpCardLinkSet,cardTallyOpen,rcpCardOf,cardTallies,cardTally,cardTallyLostHtml,cardTallyNow,cfCardDue,cardStmtImported,cardStmtEmail,mailCardStmtSubj,mailCardStmtRead,mailCardStmtCard,mailCardStmtUse,mailCardStmtActs,cardDueGet,stmtSummary,stmtSummaryApply,cardStmtDay,cardBillWord,cardBillNote,CARDBILL_DAYS,worthLinkSet,worthDue,WORTH_MONTHLY,RET_POLICY,retPolicy,retFor,warFor,returnsDue,warrantiesEnding,retWhen,returnsInsights,returnsSheet,returnsFields,returnsRead,returnsApply,ODD_DAYS,oddId,oddCharges,oddWords,oddInsights,oddOk,oddSheet,TAXPACK_HOME,taxPackAgi,taxPackYears,taxPack,taxPackCsv,GUARD_IDLE_CHOICES,GUARD_FREE,guardIdleMinutes,guardIdleSet,guardTouch,guardDue,guardLockNow,guardWaitFor,guardUnlockWait,guardUnlockFailed,guardUnlockPassed,guardWaitWords,guardRow,MAIL_DEPS,MAIL_GAS,MAIL_GAS_V,MAIL_GAS_MANIFEST,MAIL_FROM_DEFAULT,MAIL_KINDS,MAIL_ACT,mailKeyNew,mailKeyOk,mailSigned,mailOpen,mailScriptSource,mailAddr,mailDomain,mailName,mailFromIs,mailAmounts,MAIL_TOTAL_RES,mailTotal,mailRead,mailBook,mailEnsure,mailLinked,mailUrlOk,mailStale,mailAsk,mailMerge,mailPrune,mailPull,mailWaiting,mailItem,mailMark,mailDay,mailAsText,mailQueueReceipts,mailIsPuller,mailLocal,mailLocalSet,mailSenderOk,mailRewind,mailRefusedNew,MAIL_MAX,MAIL_TEXT_SHORT,mailSays,mailAuto,mailRwMatch,mailWhen,mailCursor,mailCovers,mailNoteRefused,mailRetired,mailRetire,mailLocalReset,mailLinkKeep,mailLinkPut,mailRefundAmt,MAIL_NOTE_DAYS,MAIL_REFUND_BACK,MAIL_LOOKBACK_DAYS,MAIL_MARKS,MAIL_PAGE,MAIL_HOLD,mailShape,mailRuleKey,mailRule,mailLearn,mailAmtAs,mailMarkAs,mailResort,mailXferDir,MAIL_XFER_RE,mailCashParse,mailCashOpen,mailSubGuess,mailSubOpen,mailSubPanel,mailLegacyKey,mailTwins,mailIgnore,mailUnignore,MAIL_ATT_AUTO,mailAttIsPdf,mailAttIsImg,mailAttsClean,mailAttTexts,mailAttCan,mailAttFetch,mailAttApply,mailAttRead,mailAttAuto,mailAttIsRbs,mailAttFile,mailAttWent,mailAttOpen,mailAttRow,CLOUD_K,LEDGER_CLOUD_URL,cloudCfg,cloudOn,cloudSet,cloudUrlOk,cloudCall,cloudFs,cloudSignUp,cloudSignIn,cloudSignOut,cloudMe,cloudDeleteAccount,cloudPanel,REC_ID,recKeyNew,recNorm,recFmt,recSeal,recOpen,recHas,recMake,recRecover,recRewrap,cloudUrlKnown,readEngine,cloudForgot,cloudReset,cloudVerify,cloudVerifySend,cloudPwChange,cloudLinkTake,cloudLinkOnBoot,cloudSessions,cloudSessionEnd,cloudSessionsEndOthers,cloudActivity,ACT_WORDS,actWords,actWhen,actPanel,pkSupported,pkAdd,pkSignIn,pkList,pkRemove,pkRewrap,_pkDocId,WEL_CATS,WEL_STEPS,welDraft,welList,welPlan,welApply,welWanted,MAIL_ATT_LOOK,mailAttTargets,cfReconPoints,cfReconDays,cfStmtBacked,cfReconWindows,cfReconSummary,cfReconBlame,cfImportPanel,cfComingPanel,cfOverdue,CF_STANDIN_DAYS,cfPaidNote,cfChipWord,cfChipKey,subPayGet,subPaySet,subPayer,subPayNote,subPayModal,SUBPAY_DAYS,cfSettled,cfSettledSummary,CF_SETTLED_BACK,cfSettledPanel,CF_ASSUMED,cfIsAssumed,cfLateSkipSet,cfAssumedSpent,get saveBlock(){return saveBlock;},get saveState(){return saveState;},render,Views,healFromSeed,mviewDefault,dayListHtml,calSumHtml,money,catSums,
     undo,undo,redo,snap,snapCancel,toast,palOpen,palClose,palSearch,palIsOpen,PAL,UNDO,REDO,
     computeInsights,bookIntegrity,taxOpenMoney,taxOpenMoneyHtml,integrityHtml,_grpMonthly,chartW,chartBand,billMonths,billPerMonth,cfCadenceFromFreq,seriesMonthsPer,seriesFreqLabel,seriesPerMonth,seriesRate,seriesFreqGet,SERIES_FREQ_OPTS,SERIES_AUTO,seriesIsAuto,seriesAutoGet,seriesAutoWindow,seriesAutoDue,seriesAutoNext,seriesAutoRun,seriesRecord,seriesAutoSet,seriesAutoTick,seriesAutoAfterSync,workOverdue,workDepositKey,workReimbMatches,workPaidBy,workFollowInsights,WORK_LATE_DAYS,subsHistory,subsHistorySheet,SUBS_HIST_MONTHS,subsMerchantKey,subsDisplayName,subsFound,subsFoundAdd,subsFoundNot,subsFoundSheet,subsLineSeries,subsFromLine,subsLineUnlink,subsLineLink,subsLinePicker,seriesPriceChange,seriesPriceWatched,seriesPriceRecent,seriesCosts,RW_ALWAYS_FROM,RW_ALWAYS_TO,rwIsAlways,rwWhen,rwOfferAlways,rwCards,rwOffers,rwCard,rwOffer,rwCardAdd,rwCardSet,rwCardDel,rwOfferAdd,rwOfferDel,rwMax,rwSpent,rwStatus,rwDaysLeft,RW_TOPICS,rwTopicsOf,rwCovers,rwBest,rwEarnedYear,RW_PRESETS,rwPresetsOpen,rwCardFind,rwMerge,rwPresetApply,rwPrompt,rwRead,rwStmtCards,rwStmtGuess,rwStmtFor,rwCardForStmt,rwLineTopics,rwExcludes,rwLineCovered,rwLines,rwOfferSpend,rwRateFor,rwMissed,rwNudges,RW_NUDGE_MAX,rwIsRedemption,rwRedemptions,rwRedeemedYear,reconRewardsSettle,FOODSPLIT_WORDS,foodSplitGuess,foodSplitPlan,foodSplitApply,foodSplitOpen,closeYm,closeLabel,closeRange,closeShift,closeDefault,closeGet,closeSet,closeItems,closeSummary,closeInsights,RW_FLAT,rwStatementFees,rwCardYear,rwWorthAll,rwWorthInsights,rwWorthSheet,RW_ICO,rwIcoFor,rwFresh,rwCardColor,rwTier,rwPill,rwBar,seriesStaleAfter,seriesIsCold,computeAudit,csv,CSVSETS,focusCell,startCellEdit,catManager,CAT_SUGGEST,aliasGet,aliasSet,aliasReset,aliasWords,ALIAS_DEFAULT,grpManager,grp,gcolor,curMonth,dashPace,dashBudgetSplit,dashCatOrder,dashDaily,dashCash,budgetTotal,budgetPrevCol,budgetCached,budgetSync,catAugustColumns,catAugustAfterBook,dayDrawer,dayDrawerSave,calMonth,calendarHtml,txAll,txFiltered,txCsv,txReceiptIndex,dayCharges,dayMerchant,dayAddRow,dayRowsNow,dayAmt,dayCountHtml,dayRecount,catDropColumns,CAT_AUG_FLAG,CAT_DROP_FLAG,modal,closeModal,modalStale,get BOOKGEN(){return BOOKGEN;},
-    RCP,RCP_PROMPT,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
+    RCP,RCP_PROMPT,mailVouched,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
     bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
