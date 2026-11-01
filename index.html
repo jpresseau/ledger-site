@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-LpqvGMAft++QG+9fS5MCjfjjGH9bnS71DBPj0AH/aBc=' 'sha256-XIHGMGCCNOO8yjRD9S3C+cWSqE3ViBTSkmdiyN3CLtU=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-3166slH6sAwhd6Ky8GT/GZ3I6MvWBQmClC+tvDA/ljs=' 'sha256-XIHGMGCCNOO8yjRD9S3C+cWSqE3ViBTSkmdiyN3CLtU=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -3068,7 +3068,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.78";
+const APP_V="v28.79";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3090,7 +3090,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="13b8c51";
+const APP_BUILD="1d8306a";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -33984,6 +33984,10 @@ function mailRead(m){
     /* Anything else from a bank may be a loan's payment (a mortgage, a car):
        the bill test below reads it, and the purchase tests are skipped. */
   }
+  /* A card's statement from an issuer not known by its address (v28.79): a store card's own sender ("My Best Buy® Visa®
+     Card") is no bank in banks.js, so the test above never asked. Its subject names a card and a statement. */
+  if(!bank&&/\b(card|visa|mastercard)\b[^.\n]{0,30}\bstatement\b/i.test(subj)&&typeof mailCardStmtSubj==='function'&&mailCardStmtSubj(subj,text)){
+    out.kind='cardstmt'; out.amt=mailCardStmtRead({subj:subj,text:text}).balance; return out; }
   /* A later word about an order already had repeats its total. */
   const follow=/revision|update|delay|ready for pick ?up|picked up|feedback|review|message|question|return/i.test(subj);
   const buy=!bank&&!follow&&((paypal&&/receipt|you paid|you sent|payment to|your payment|\border\b/i.test(subj))
@@ -34811,7 +34815,8 @@ function mailCardStmtSubj(subj,text){
   const t=s+'\n'+String(text||'').slice(0,4000);
   /* A payment due names a card too (v27.62): "Your Chase Home Lending payment is due" is a loan's. */
   if(/\bpayment (is )?due\b|\bminimum payment\b|\bpayment due date\b/i.test(s)) return /\b(card|credit card|minimum payment|new balance|statement balance)\b/i.test(t);
-  if(!/\b(e-?statement|statement)\b[^.]{0,40}\b(ready|available|posted|is here|now online)\b|\bnew statement\b/i.test(s)) return false;
+  /* Or one that names itself (v28.79): "Your My Best Buy® Visa® Card Statement" says neither ready nor available. */
+  if(!/\b(e-?statement|statement)\b[^.]{0,40}\b(ready|available|posted|is here|now online)\b|\bnew statement\b|\bcard statement\b/i.test(s)) return false;
   /* "Your statement is ready" from a bank that also keeps accounts: only a card's, which says what it owes or names the card. */
   return /\b(card|credit|minimum payment|payment due|new balance|statement balance)\b/i.test(t);
 }
@@ -35925,7 +35930,8 @@ if(typeof document!=='undefined') document.addEventListener('change',function(ev
                were activated: those offers marked activated
      ship      a shipping update: nothing to do — settled
      alert     a card charge: it comes in with the statement — settled
-     other     a promotion (a sale, a digest, a survey): set aside (ignored)
+     other     a promotion (a sale, a digest, a survey): set aside (ignored); a bank's or PayPal's statement ready
+               to read, naming no money and carrying no file (v28.79): settled, nothing to record
 
    What changes money, a forecast or an offer is marked to be checked
    (`self.check`): it is listed first on the Email page and told on the
@@ -35936,6 +35942,8 @@ if(typeof document!=='undefined') document.addEventListener('change',function(ev
    it is no older than MAIL_SELF_DAYS and its kind was not set by hand. The
    Email page's settings turn it off (`selfOff`). */
 const MAIL_SELF_DAYS=60;
+/* "Your September account statement is available", "New bank statement available" (v28.79). */
+const MAIL_STMT_NOTICE_RE=/\b(e-?statement|statement)\b[^.]{0,40}\b(ready|available|posted|is here|now online)\b|\bnew (bank |account )?statement\b/i;
 const MAIL_PROMO_RE=/(\d{1,2}% off|\b(sale|deals?|new arrivals|recommended for you|picked for you|just for you|watchlist|prices? (dropped|drop)|coupons?|limited[- ]time|last chance|don.?t miss|shop now|exclusive|special offer|newsletter|digest|webinar|survey|rate your|review your|tell us|sweepstakes|black friday|cyber monday|save up to|bonus points|earn \d|\d+ (new )?match(es)?|saved search|new listings|ways to save|save (energy|money))\b)/i;
 /* Stems, not whole words (v27.62): "payments", "transactions", "deposited", "tax forms" and "a late fee" are not promotions either. */
 const MAIL_NOT_PROMO_RE=/\b(receipt|order (confirm|#|number|placed|received)|invoice|payment|you paid|refund|deposit|statement|bill|due|charge|transaction|transfer|security|password|verif|sign[- ]?in|code|redeem|redemption|activat|activity|tax|1099|w-?2|fee|fraud|alert|made a sale|sold|proceeds|payout|credit (score|report|balance|summary|limit|line)|balance (change|alert|update))\w*/i;
@@ -36007,7 +36015,18 @@ const MAIL_SELF={
   alert:function(it){
     return {what:'alert',note:'Card charge'+(it.amt!=null?' of '+money(it.amt,2):'')+(it.who?' at '+it.who:'')+' — it comes in with the card’s statement'};
   },
-  other:function(it){ return mailIsPromo(it)?{what:'promo',ignore:true,note:'A promotion — set aside by itself'}:null; }
+  other:function(it){
+    if(mailIsPromo(it)) return {what:'promo',ignore:true,note:'A promotion — set aside by itself'};
+    /* Not a card's (that is cardstmt) and not a bill's: an account that holds money (a bank's, PayPal's), no figure
+       anywhere in it, nothing due, and no file. A utility's "Your statement is ready" is a bill, often with the bill
+       attached (smoke [222]); one that names money may be a bill the Bills page does not know yet. Those wait. */
+    const s=String(it.subj||''), x=String(it.text||'');
+    const acct=!!it.bank||mailFromIs(String(it.from||''),'paypal.com');
+    if(acct&&!(Array.isArray(it.atts)&&it.atts.length)&&!/\b(attach\w*|enclosed|pdf)\b/i.test(s+'\n'+x)
+      &&MAIL_STMT_NOTICE_RE.test(s)&&!/\b(due|owe|past due|minimum|bill)\b/i.test(s)&&!mailAmounts(s+'\n'+x).length)
+      return {what:'stmtnote',note:'A statement to read, with no money in it to record — nothing to do here'};
+    return null;
+  }
 };
 /* Every waiting email of a kind above, tried once. Returns those handled. */
 function mailSelfRun(M){
@@ -36763,7 +36782,10 @@ function mailDeployTail(){ const M=typeof mailBook==='function'?mailBook():null,
 function _mailDeployStep(){ const t=mailDeployTail();
   return '<b>Deploy</b> › <b>Manage deployments</b> › '+(t?'the one whose Deployment ID ends in <b>…'+esc(t)+'</b> › ':'')+'✎ › Version: <b>New version</b> › <b>Deploy</b>'; }
 function mailOldScriptWords(v){
-  return 'The script answering is version '+(Number(v)||0)+'; this Ledger needs version '+MAIL_GAS_V+'. If the first line of <b>Code.gs</b> already says “script version '+MAIL_GAS_V+'”, Google is still running an older deployment: '
+  /* What an old script costs, said first (v28.79): below v21 no email says Gmail checked its sender (mailVouched), so
+     nothing is recorded, filed or set aside by itself, and the page looked merely out of date. */
+  return (Number(v)<21?'<b>Until the script is updated, no email is handled by itself</b>: only version 21 tells the Ledger that Gmail checked who sent each one. ':'')
+    +'The script answering is version '+(Number(v)||0)+'; this Ledger needs version '+MAIL_GAS_V+'. If the first line of <b>Code.gs</b> already says “script version '+MAIL_GAS_V+'”, Google is still running an older deployment: '
     +_mailDeployStep()+', then <b>Check now</b>. If it says an older version, show the script again, paste it over the old one, and deploy a new version.';
 }
 /* Saved but not deployed (script v12): the timer runs the saved script and says its version; the address answers with
@@ -57318,7 +57340,7 @@ function renderOnce(name,fn){
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
     bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
-    BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
+    BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,mailOldScriptWords,MAIL_STMT_NOTICE_RE,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
     historyForget,
