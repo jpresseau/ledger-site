@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-S2GdpfkzlKHBjmWICjVuI4rTtlaV1+HVT25MLfFnad8=' 'sha256-XIHGMGCCNOO8yjRD9S3C+cWSqE3ViBTSkmdiyN3CLtU=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-8VjwVxz3Iy/WUSJxhA8wLnnx9Z/p7g+LPuPJ5DVU+Mg=' 'sha256-XIHGMGCCNOO8yjRD9S3C+cWSqE3ViBTSkmdiyN3CLtU=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -3063,7 +3063,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.74";
+const APP_V="v28.75";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3085,7 +3085,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="cf8fe50";
+const APP_BUILD="53abe43";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -3407,6 +3407,7 @@ function _writeDisk(){
           localStorage.setItem(LS_ENC,JSON.stringify(env));
           localStorage.removeItem(LS_KEY);
           saveState='saved'; saveBlock='';
+          if(typeof devSealFollow==='function') devSealFollow();   /* the envelope beside the book follows its passphrase */
         }catch(e){ saveState='volatile'; saveBlock='quota'; VOLATILE=true; }
         footStat();
       },()=>{ saveState='volatile'; saveBlock='crypt'; footStat(); });
@@ -8662,7 +8663,7 @@ function cfImportPanel(){
   const head='<div class="sheet nofold"><h3>Import a bank download'+(st.source?' \u00b7 '+esc(st.source):'')+' '
     +'<span class="r">'+P.fresh+' new of '+(P.fresh+P.dupe)+'</span></h3>'
     +'<div class="mut" style="font-size:12.5px;line-height:1.6;margin-bottom:9px">'
-    +'<b>'+st.from+' to '+st.to+'.</b> '
+    +'<b>'+esc(st.from)+' to '+esc(st.to)+'.</b> '
     +(P.dupe?'<b>'+P.dupe+'</b> of these are already in Cash Flow and are not offered again — '
       +'matched on date and amount, which is all this ledger keeps. ':'None of these are already in Cash Flow. ')
     +(nbal?'<b>'+nbal+'</b> of those already-present entries have no balance recorded and this file '
@@ -30214,13 +30215,13 @@ const BETSY_REMIND_LOCAL='pfLedger_betsyRemind';
    Null when there is nothing to send to: no Gmail link, or a script before v13. */
 function betsyRemindPush(force){
   if(typeof mailAssistReady!=='function'||!mailAssistReady()||(typeof mailScriptV==='function'?mailScriptV():0)<MAIL_ASSIST_V13) return null;
-  const txt=betsyRemindText(), h=_bHash(txt); let last=null; try{ last=JSON.parse(localStorage.getItem(BETSY_REMIND_LOCAL)||'null'); }catch(e){ last=null; }
+  const txt=betsyRemindText(), h=_bHash(txt); let last=null; try{ last=JSON.parse(devRead(BETSY_REMIND_LOCAL)||'null'); }catch(e){ last=null; }
   /* Her product codes go too (v28.50, script v14), so the script can tell a price report from the rest — when they
      changed, even on a day the reminders did not. */
   const codes=typeof betsyProducts==='function'?betsyProducts().map(function(p){ return p.code; }).join('|'):'', ph=_bHash(codes), v14=(typeof mailScriptV==='function'?mailScriptV():0)>=MAIL_ASSIST_V14;
   const sendR=force||!(last&&last.h===h&&Date.now()-(last.at||0)<24*3600e3), sendP=v14&&(force||!(last&&last.ph===ph));
   if(!sendR&&!sendP) return Promise.resolve(false);
-  const keep=function(o){ try{ localStorage.setItem(BETSY_REMIND_LOCAL,JSON.stringify(o)); }catch(e){} }, at0=(last&&last.at)||0;
+  const keep=function(o){ devWrite(BETSY_REMIND_LOCAL,JSON.stringify(o)); }, at0=(last&&last.at)||0;
   return (sendR?mailAssistOp('remind:'+txt).then(function(a){ keep({h:h,at:Date.now(),ph:last&&last.ph}); return !!a; }):Promise.resolve(true)).then(function(a){
     if(!a||!sendP) return !!a;
     return mailAssistOp('products:'+codes).then(function(b){ keep({h:h,at:sendR?Date.now():at0,ph:ph}); return !!b; }); });
@@ -31969,6 +31970,7 @@ async function guardLockNow(why){
   _guardBusy=true;
   try{
     try{ await saveSettled(); }catch(e){}
+    try{ if(typeof devSettled==='function') await devSettled(); }catch(e){}
     if(saveBlock) return {ok:false,why:'Not locking: the last change has not been saved.'};
     if(typeof _syncBusy!=='undefined'&&_syncBusy) return {ok:false,why:'Not locking while a sync is running.'};
     if(document.getElementById('modalWrap')&&typeof closeModal==='function') try{ closeModal(); }catch(e){}
@@ -31976,6 +31978,7 @@ async function guardLockNow(why){
     LOCKED=true;
     _passRam='';
     _pfKey={pass:null,id:null,key:null}; _fpCache={pass:null,fp:''}; if(typeof pfForgetKeys==='function') pfForgetKeys();
+    if(typeof devForget==='function') devForget();   /* the key and sessions sealed beside the book (devseal.js) */
     Object.keys(_imgCache).forEach(function(k){ delete _imgCache[k]; });
     if(typeof RCP==='object'){ RCP.queue.forEach(function(it){ if(it&&it.rawUrl) try{ URL.revokeObjectURL(it.rawUrl); }catch(e){} }); RCP.queue=[]; }
     S.cfimp=null; S.stub=null; S.syncFp=null; S.servicer=null;   /* a servicer's paper, read (v28.00) */ S.advice=null;   /* the advisor's answer and the afford verdict (v28.11) */ S.betsy=null;   /* Betsy's draft (v28.46) */ S.ivstmt=null; S.ivtax=null; S.plaid=null; S.rcp.sel=null; S.rcp.pasteText='';
@@ -33634,9 +33637,9 @@ function mailEnsure(){
   if(!Array.isArray(M.skip)) M.skip=[];
   return M;
 }
-function mailLocal(){ try{ const o=JSON.parse(localStorage.getItem(MAIL_LOCAL)||'{}'); return o&&typeof o==='object'?o:{}; }catch(e){ return {}; } }
-function mailLocalSet(patch){ const o=Object.assign(mailLocal(),patch); try{ localStorage.setItem(MAIL_LOCAL,JSON.stringify(o)); }catch(e){} return o; }
-function mailLocalReset(o){ try{ if(o) localStorage.setItem(MAIL_LOCAL,JSON.stringify(o)); else localStorage.removeItem(MAIL_LOCAL); }catch(e){} }
+function mailLocal(){ try{ const o=JSON.parse(devRead(MAIL_LOCAL)||'{}'); return o&&typeof o==='object'?o:{}; }catch(e){ return {}; } }
+function mailLocalSet(patch){ const o=Object.assign(mailLocal(),patch); devWrite(MAIL_LOCAL,JSON.stringify(o)); return o; }
+function mailLocalReset(o){ devWrite(MAIL_LOCAL,o?JSON.stringify(o):null); }
 function mailLinked(){ const M=mailBook(); return !!(M&&mailUrlOk(M.url)&&mailKeyOk(M.key||'')); }
 /* Only a deployed Apps Script web app's address: the request carries a
    signature, and it goes nowhere else. */
@@ -34057,6 +34060,34 @@ if(typeof window!=='undefined'){
   setInterval(function(){ mailAuto(); },5*60000);
   document.addEventListener('visibilitychange',function(){ if(!document.hidden) mailAuto(); });
 }
+/* ---- THE GMAIL LINK'S KEY STAYS OFF A SHARED BOOK (v28.75; SECURITY.md V9) ----
+   The link's key (DB.mail.key, and keyNext while a new script waits to be deployed) signs every request to the
+   owner's Apps Script, which reads the listed senders' mail and files it. In a household book every member held
+   it, so every member could have the owner's script read and file the owner's mail.
+
+   Now a copy that goes to a household book leaves the key out (syncPayload), and a device taking a copy keeps
+   the key it already holds (applySynced), when the link is still the same address. The address, the senders,
+   what was read and which device reads stay in the book, so every member still sees the mail it brought in.
+   Only a device that connected the link, or held it before the book was shared, can read Gmail with it; any
+   other device says so on the Email page (mailKeyElsewhere). A personal book carries the key as it always did. */
+const MAIL_SECRET_KEYS=['key','keyNext'];
+function _mailShared(){ return typeof hhOn==='function'&&hhOn(); }
+/* `b` is a copy (bookWithImages), never DB itself. */
+function mailKeyOff(b){
+  if(!_mailShared()||!b||!b.mail||typeof b.mail!=='object') return b;
+  MAIL_SECRET_KEYS.forEach(function(f){ delete b.mail[f]; });
+  return b;
+}
+function mailKeyCarry(inc){
+  if(!_mailShared()) return inc;
+  const M=mailBook(), I=inc&&inc.mail;
+  if(!M||!M.key||!I||typeof I!=='object'||Array.isArray(I)||I.key||String(I.url||'')!==String(M.url||'')) return inc;
+  MAIL_SECRET_KEYS.forEach(function(f){ if(typeof M[f]==='string') I[f]=M[f]; });
+  return inc;
+}
+/* A shared book whose Gmail is read by a device holding the key, and this is not one. */
+function mailKeyElsewhere(){ const M=mailBook(); return !!(_mailShared()&&M&&mailUrlOk(M.url)&&!M.key); }
+
 /* ---- THE GMAIL LINK: WHAT AN EMAIL IS, SAID BY THE OWNER, AND WHERE IT GOES ----
    Asked for, from the Email page: "I need to be able to mark an email as a
    Subscription, Bill, Receipt, Bank Deposit, Bank Withdrawal, etc and link to
@@ -34908,7 +34939,7 @@ function mailAssistReady(){
    summaries went into household books and backups. Each device asks the script itself. */
 function mailAssistState(){
   const M=typeof mailBook==='function'?mailBook():null; if(!M||!M.url) return null;
-  let o=null; try{ o=JSON.parse(localStorage.getItem(MAIL_ASSIST_LOCAL)||'null'); }catch(e){ o=null; }
+  let o=null; try{ o=JSON.parse(devRead(MAIL_ASSIST_LOCAL)||'null'); }catch(e){ o=null; }   /* sealed under the lock (sync/devseal.js) */
   return o&&o.url===M.url&&o.as&&typeof o.as==='object'?o.as:null;
 }
 /* Filing the whole inbox, as far as the Ledger can tell (v28.42): on, with a key, heard from in the last day, and its
@@ -34953,7 +34984,7 @@ function _mailAssistTake(as){
       id:/^[A-Za-z0-9]{6,40}$/.test(String(r.id||''))?String(r.id):'',at:Number(r.at)||0,subj:str(r.subj,120),n:Number(r.n)||0,did:/^(kept|trashed|back)$/.test(r.did)?r.did:'kept',why:str(r.why,160),mailErr:str(r.mailErr,160),told:Number(r.told)||0,
       hits:(Array.isArray(r.hits)?r.hits:[]).slice(0,12).map(function(x){ return {item:String(x.item||'').replace(/\D/g,'').slice(0,15),title:str(x.title,200),price:str(x.price,20),what:str(x.what,80),car:str(x.car,50),num:str(x.num,30),why:x.why==='needed'?'needed':'missing',sure:!!x.sure,pk:str(x.pk,120)}; })}; })
       .filter(function(r){ return r.id; })}:null};
-  try{ localStorage.setItem(MAIL_ASSIST_LOCAL,JSON.stringify({url:M.url,as:st})); }catch(e){}
+  devWrite(MAIL_ASSIST_LOCAL,JSON.stringify({url:M.url,as:st}));
   let moved=false;
   if(M.as){ delete M.as; moved=true; }   /* v28.34–41 kept it in the book */
   if(Array.isArray(a.auto)) M.scriptAuto=st.auto;
@@ -36314,6 +36345,7 @@ function mailSecuritySheet(M){
       +'. A wrong key, a clock more than five minutes out, or a request copied and sent again. If it was not the Ledger after a new key, make a new key. '+_mailBtn('mailrefok',null,'OK')+'</div>'
       :'<div class="mut" style="font-size:12.5px">'+(R?'No signed request has been refused'+(R.n?' since you last looked':'')+'.':mine?'No signed request has been refused.':'The script’s record has not reached this book yet.')+'</div>')
     +(mine?(log.length?'<ul class="maillog">'+log.map(function(t){ return '<li>'+esc(mailWhen(t))+'</li>'; }).join('')+'</ul>':'')
+      :typeof mailKeyElsewhere==='function'&&mailKeyElsewhere()?'<div class="mut" style="font-size:12.5px;margin-top:6px">The list of uses comes with each check, made by the device that holds the key.</div>'
       :'<div class="mut" style="font-size:12.5px;margin-top:6px">The list of uses comes with each check, and this device has not checked since the link was made. '+_mailBtn('mailcheck',null,'Check now')+'</div>')
     +'</div></div>';
 }
@@ -36335,15 +36367,18 @@ function mailSettingsSheet(M){
     +'<div class="formrow" style="gap:6px;margin-top:12px">'+_mailBtn('mailscript',null,'Show the script again')+_mailBtn('mailrekey',null,'Make a new key')+_mailBtn('mailoff',null,'Disconnect','ghost danger')+'</div></div>';
 }
 Views.mail=function(){
-  const M=mailBook(), on=mailLinked();
-  if(!on||S.mailSetup) return head('Email','Chase, PayPal, eBay and Amazon emails, read into the Ledger.',on?'LINKED':'NOT LINKED')
+  const M=mailBook(), on=mailLinked(), away=!on&&typeof mailKeyElsewhere==='function'&&mailKeyElsewhere();
+  if((!on&&!away)||S.mailSetup) return head('Email','Chase, PayPal, eBay and Amazon emails, read into the Ledger.',on?'LINKED':'NOT LINKED')
     +(on?'<div class="formrow" style="margin-bottom:8px">'+_mailBtn('mailsetupclose',null,'‹ Back to Email')+'</div>':'')
     +mailSetupSheet(M||{})+(mailLocal().err?'<div class="mailwarn">'+esc(mailLocal().err)+'</div>':'');
   const items=(M.items||[]).slice().sort(function(a,b){ return b.at-a.at; }), L=mailLocal();
   const wait=mailWaiting(), q=items.filter(function(x){ return x.kind==='receipt'&&x.state==='new'; }).length;
   const plate=function(k,v,s,alert){ return '<div class="plate'+(alert?' alert':'')+'"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="s">'+s+'</div></div>'; };
   let html=head('Email','Read from Gmail every time the Ledger opens, and every fifteen minutes while it is open.','')
-    +'<div class="formrow" style="gap:8px;margin-bottom:10px">'+_mailBtn('mailcheck',null,'📬 Check now','')
+    /* A shared book's Gmail is read by a device holding its key (mail/shared-link.js), and this one is not. */
+    +(away?'<div class="mailwarn" id="mailAway">This book is shared, so the Gmail link’s key stays on the device that connected it, and that device reads the mail; '
+      +'what it reads arrives here with the book. Connecting Gmail here makes a new key, and the other device stops reading. '+_mailBtn('mailscript',null,'Connect Gmail here','ghost')+'</div>':'')
+    +'<div class="formrow" style="gap:8px;margin-bottom:10px">'+(away?'':_mailBtn('mailcheck',null,'📬 Check now',''))
     +(wait.length?_mailBtn('mailpreview',null,'🔍 What would they do?','ghost'):'')
     +(q?_mailBtn('mailgo',null,'🧾 '+q+' receipt'+(q===1?'':'s')+' to file ›','',' data-view="receipts"'):'')+'</div>'
     +(L.err?'<div class="mailwarn">Last check: '+esc(L.err)+'</div>':'')
@@ -36855,8 +36890,9 @@ Views.locked=function(){
    /* A passkey (sync/passkey.js) needs only the service's address. */
    +(typeof pkSupported==='function'&&pkSupported()&&!(typeof cloudOn==='function'&&cloudOn())&&cloudUrlKnown()
      ?'<div class="formrow" style="margin-top:11px"><button class="btn" data-act="pkin">Sign in with a passkey</button></div>':'')
-   /* The recovery key (sync/recovery.js) needs the account, so it is offered only when signed in. */
-   +(typeof cloudOn==='function'&&cloudOn()
+   /* The recovery key (sync/recovery.js) needs the account, so it is offered only when signed in, or when the
+      session is sealed with the book (sync/devseal.js), when it asks for the account's password as well. */
+   +(typeof cloudOn==='function'&&(cloudOn()||(typeof devCloudSealed==='function'&&devCloudSealed()))
      ?'<div class="formrow" style="margin-top:11px"><button class="btn ghost" data-act="recuse">Forgot it? Use the recovery key</button></div>':'')
    +st
    +'</div>'
@@ -37864,7 +37900,7 @@ function cloudPanel(){
         +'<div class="formrow"><button class="btn ghost" data-act="cloudverifysend">Send the link</button></div></div></div>':'');
     body+=(typeof billPanel==='function'?billPanel():'')+sessPanel(st)+actPanel(st)+pkPanel(st)+recPanel(c)+bookPanel(c,st)+(typeof plaidPanel==='function'?plaidPanel():'');
   } else {
-    let prev={}; try{ prev=JSON.parse(localStorage.getItem(CLOUD_K)||'null')||{}; }catch(e){}
+    let prev={}; try{ prev=JSON.parse(devRead(CLOUD_K)||'null')||{}; }catch(e){}
     body='<div class="mut" style="font-size:12px;margin-bottom:8px">An account keeps the book’s encrypted copy where your other devices can reach it. '
       +'Your passphrase still encrypts it here first — the account is what stops anyone else writing to it.</div>'
       /* A form, so a password manager can save and fill it, and Enter signs in (events/click.js routes it). */
@@ -39172,12 +39208,14 @@ function setLocalOnly(on){ try{ on?localStorage.setItem(LOCAL_ONLY,'1'):localSto
    their key cannot be used here would be a second untruth. What it cannot do is
    outlive the tab, and that is what the caller now says. */
 let _keyMem='';
-function _keyOnDisk(){ try{ return (localStorage.getItem(RKEY)||'').trim(); }catch(e){ return ''; } }
-function getKey(){ return _keyOnDisk()||_keyMem; }
+/* Under the device lock, sealed with the book (sync/devseal.js, v28.75). */
+function _keyOnDisk(){ try{ return (devRead(RKEY)||'').trim(); }catch(e){ return ''; } }
+/* Under the lock the memory copy is devseal's, which a lock forgets; this one would outlive it. */
+function getKey(){ return lockOn()?_keyOnDisk():(_keyOnDisk()||_keyMem); }
 function setKey(k){
   k=String(k||'').trim();
   _keyMem=k;
-  try{ k?localStorage.setItem(RKEY,k):localStorage.removeItem(RKEY); }catch(e){}
+  devWrite(RKEY,k||null);
   return _keyOnDisk()===k;
 }
 /* A stored key is masked, so a truncated paste looks identical to a good one.
@@ -41362,11 +41400,26 @@ function reconHeldPanel(){
    uncompressed object headers, content streams behind a chain of the filters
    below, simple text operators, standard fonts. Anything it cannot read falls through to Claude, which reads
    the extracted text rather than a picture of it. */
+/* AT MOST SO MUCH OUT (v28.75). A few kilobytes of deflate can say it unpacks to gigabytes, and reading it all
+   took the tab with it: a PDF attachment is read by itself. So a stream stops at INFLATE_CAP, and one document
+   (pdfRuns, zipEntries reset it) at INFLATE_DOC in all; past either it reads as a stream that would not open. */
+const INFLATE_CAP=48*1048576, INFLATE_DOC=160*1048576;
+let _inflateLeft=INFLATE_DOC;
+function inflateBudget(){ _inflateLeft=INFLATE_DOC; }
 async function _inflate(bytes){
   for(const fmt of ['deflate','deflate-raw']){
     try{
-      const s=new Blob([bytes]).stream().pipeThrough(new DecompressionStream(fmt));
-      return new Uint8Array(await new Response(s).arrayBuffer());
+      const rd=new Blob([bytes]).stream().pipeThrough(new DecompressionStream(fmt)).getReader();
+      const parts=[]; let n=0;
+      for(;;){
+        const {done,value}=await rd.read(); if(done) break;
+        n+=value.length;
+        if(n>INFLATE_CAP||n>_inflateLeft){ try{ rd.cancel(); }catch(e){} _inflateLeft=0; return null; }
+        parts.push(value);
+      }
+      _inflateLeft-=n;
+      const out=new Uint8Array(n); let o=0; parts.forEach(function(p){ out.set(p,o); o+=p.length; });
+      return out;
     }catch(e){}
   }
   return null;
@@ -41732,6 +41785,7 @@ async function _pdfWalk(bytes,hay,at,runs){
 }
 /* Every run of text in the file, with the position it was drawn at. */
 async function pdfRuns(buf){
+  inflateBudget();
   const bytes=new Uint8Array(buf);
   const hay=_latin(bytes);
   if(hay.slice(0,5)!=='%PDF-') throw new Error('That does not look like a PDF.');
@@ -43634,6 +43688,7 @@ function _u32(b,o){ return (b[o]|(b[o+1]<<8)|(b[o+2]<<16)|(b[o+3]<<24))>>>0; }
 /* The central directory is at the end, behind a comment of unknown length, so
    it is found by scanning back for its signature rather than assumed. */
 async function zipEntries(buf,want){
+  if(typeof inflateBudget==='function') inflateBudget();   /* pdf/reader.js: a bounded unpack */
   const b=new Uint8Array(buf);
   let eo=-1;
   for(let i=b.length-22;i>=0&&i>b.length-66000;i--) if(_u32(b,i)===0x06054b50){ eo=i; break; }
@@ -48873,16 +48928,25 @@ function _imgLossOk(what){
     document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },400);
   }
   else if(act==='recuse'){
+    /* A session sealed with the book (sync/devseal.js) cannot be used without the passphrase this replaces, so
+       the account's password signs in afresh first, as on any other device. */
+    let who=''; if(!cloudOn()){ try{ who=(JSON.parse(devRead(CLOUD_K)||'null')||{}).email||''; }catch(e){} }
     modal('Use the recovery key',
       '<div class="mut" style="font-size:12.5px;line-height:1.55;margin-bottom:10px">Type the key you saved. '
       +'It gives back the passphrase, which then opens the book on this device.</div>'
       +'<form class="pwform" data-go="recusego"><div class="fld"><label for="recIn">Recovery key</label>'
-      +'<input id="recIn" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-…"></div></form>',
+      +'<input id="recIn" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-…"></div>'
+      +(cloudOn()?'':'<input type="email" id="recEmail" autocomplete="username" value="'+esc(who)+'" hidden>'
+        +'<div class="fld"><label for="recPw">Ledger Cloud password'+(who?' for '+esc(who):'')+'</label>'
+        +'<input id="recPw" type="password" autocomplete="current-password"></div>')+'</form>',
       '<button class="btn ghost" data-act="mclose">Cancel</button><button class="btn" data-act="recusego">Recover the passphrase</button>');
   }
   else if(act==='recusego'){
-    const e=document.getElementById('recIn'), typed=e?e.value:'';
-    recRecover(typed).then(function(pass){
+    const e=document.getElementById('recIn'), typed=e?e.value:'', pwEl=document.getElementById('recPw');
+    const em=((document.getElementById('recEmail')||{}).value||'').trim();
+    const signIn=cloudOn()||!pwEl?Promise.resolve():pwEl.value?cloudSignIn(cloudUrlKnown(),em,pwEl.value)
+      :Promise.reject(new Error('Your Ledger Cloud password, please'));
+    signIn.then(function(){ if(pwEl) pwEl.value=''; return recRecover(typed); }).then(function(pass){
       closeModal();
       /* On the lock screen, through the unlock door itself, so the book opens
          the way it always does (the device's copy first, then the cloud's). */
@@ -48934,7 +48998,7 @@ function _imgLossOk(what){
   /* ---- Ledger Cloud by email (sync/cloud-mail.js) ----
      Its own `if` chain, like every part of this handler — see click.js. */
   if(act==='cloudforgot'){
-    let prev={}; try{ prev=JSON.parse(localStorage.getItem(CLOUD_K)||'null')||{}; }catch(e){}
+    let prev={}; try{ prev=JSON.parse(devRead(CLOUD_K)||'null')||{}; }catch(e){}
     const e0=(document.getElementById('cloudEmail')||{}).value||prev.email||'';
     modal('Forgot the password?',
       '<div class="mut" style="font-size:12.5px;line-height:1.55;margin-bottom:10px">Ledger Cloud will email a link to set a new one. '
@@ -48956,8 +49020,7 @@ function _imgLossOk(what){
     const pw=(document.getElementById('cloudNewPw')||{}).value||'', R=S.cloudReset||{};
     if(!R.token) return closeModal();
     cloudReset(R.url,R.token,pw).then(function(r){ S.cloudReset=null; closeModal();
-      const c=cloudCfg(); if(c) cloudSet(Object.assign({},c,{token:''}));
-      try{ localStorage.setItem(CLOUD_K,JSON.stringify({url:R.url,email:r.email,token:''})); }catch(e){}
+      cloudSet({url:R.url,email:r.email,token:''});
       S.cloud={}; render(); toast('Password set. Sign in with it on the Data page; every other device will ask too.','ok'); })
       .catch(function(e){ toast(e.message||String(e),'warn'); });
   }
@@ -51973,6 +52036,8 @@ async function lockOpen(pass){
       +'Do not sync from here — restore from a backup file, or open the cloud copy instead.'};
   setBook(healFromSeed(inc));
   LOCKED=false;
+  /* The key and the sessions sealed with the book (sync/devseal.js): this passphrase opened the book, so it is the device's. */
+  if(typeof devOpen==='function') await devOpen(pass,true);
   /* WRITTEN BACK UNDER THE PASSPHRASE THAT JUST WORKED — the same sentence
      lockCloudOpen carries, and this door did not. Two consequences, and the
      second is the one that got reported.
@@ -52015,6 +52080,12 @@ async function lockCloudOpen(pass){
      the old default would open somebody else's. See fbChosen. */
   if(typeof fbChosen==='function'&&!fbChosen())
     return {ok:false,why:'This device has no project to sync with, so there is no cloud copy to open. Restore from a backup file.'};
+  /* A Ledger Cloud session sealed with the book (sync/devseal.js) is needed to reach the copy: opened with this
+     passphrase if it opens the envelope, or this door says why not and points at the two that sign in afresh. */
+  if(typeof devOpen==='function'){ await devOpen(pass);
+    if(devCloudSealed()) return {ok:false,bad:true,why:'This device\u2019s Ledger Cloud sign-in is sealed under the passphrase it was locked with, '
+      +'and that one does not open it. Type that passphrase (the earlier one, if it was changed on another device), '
+      +'sign in with a passkey, or use the recovery key with your Ledger Cloud password.'}; }
   let db;
   try{ db=await fsInit(); }
   catch(e){ return {ok:false,why:'Could not reach the cloud copy — check the connection, or restore from a backup file.'}; }
@@ -52053,6 +52124,7 @@ async function lockCloudOpen(pass){
       return {ok:false,empty:true,why:'The cloud copy for that passphrase is empty. Restore from a backup file.'};
     setBook(healFromSeed(inc));
     LOCKED=false;
+    if(typeof devOpen==='function') await devOpen(pass,true);
     /* Written back under the passphrase that just worked, so this device is not
        stranded a second time. */
     save(); saveFlush();
@@ -52122,7 +52194,9 @@ async function lockSet(on,pass){
        live in memory only, so closing the tab really does close the book. */
     syncSetRemember(false);
     syncSetPass(p);
-    return {ok:true,bytes:JSON.stringify(env).length};
+    /* And the key and the sessions beside it (sync/devseal.js, v28.75), sealed before their plaintext goes. */
+    const dev=typeof devSealOn==='function'?await devSealOn(p):true;
+    return {ok:true,bytes:JSON.stringify(env).length,dev};
   }
   /* THE PLAIN COPY IS WRITTEN BEFORE THE ENCRYPTED ONE IS DROPPED, and read
      back before anything is dropped at all.
@@ -52142,6 +52216,8 @@ async function lockSet(on,pass){
      later — a device that unlocked its book and left its photographs sealed
      would have thrown them away without saying so. Refusing changes nothing:
      the device stays locked and both copies are where they were. */
+  /* The envelope beside the book opened first, so what it holds can go back in the clear below. */
+  if(typeof devOpen==='function') await devOpen((pass||syncPass()||'').trim());
   if(typeof imgOpenAll==='function'&&imgHave()){
     const up=(pass||syncPass()||'').trim();
     const opened=await imgOpenAll(up);
@@ -52163,6 +52239,7 @@ async function lockSet(on,pass){
     localStorage.removeItem(LOCK_K);
     localStorage.removeItem(LS_ENC);
   }catch(e){ return {ok:false,why:'Could not write the plain copy, so the encrypted one has been left where it is.'}; }
+  if(typeof devSealOff==='function') devSealOff();
   /* Nothing left for a sealed passphrase to open — the book is plain text now,
      and an enrolment that outlives its lock is only a stale secret on the disk. */
   bioForget();
@@ -52249,6 +52326,8 @@ function bookReset(){
     localStorage.removeItem(LOCK_K);
     localStorage.removeItem(LS_KEY);
   }catch(e){}
+  /* The device is no longer locked, so the key and the sessions sealed beside the book go back in the clear. */
+  if(wasLocked&&typeof devSealOff==='function') devSealOff();
   if(typeof worthAheadMarkForget==='function') worthAheadMarkForget();   /* the last ten-year figure was the old book's */
   /* AND THE PHOTOGRAPHS, which are not in the book and so survived every reset
      before this. imgGC cannot collect them afterwards — on a device that was
@@ -52602,7 +52681,8 @@ async function authSignOut(){
 
    On this device only (pfLedger_cloud): the service's address, the email, and
    the session token. Never in the book — a book that carried a token would
-   sync it to every device and into every backup file. */
+   sync it to every device and into every backup file. Under the device lock the
+   token is sealed with the book (sync/devseal.js), so it is read through devRead. */
 const CLOUD_K='pfLedger_cloud';
 /* The service this page belongs to. Served BY Ledger Cloud (server/cloud/web.py),
    the page carries a ledger-cloud meta tag saying same-origin, and the
@@ -52613,14 +52693,14 @@ const LEDGER_CLOUD_URL=(function(){
     return m&&m.getAttribute('content')==='same-origin'&&cloudUrlOk(location.origin)?location.origin:''; }catch(e){ return ''; }
 })();
 function cloudCfg(){
-  try{ const c=JSON.parse(localStorage.getItem(CLOUD_K)||'null');
+  try{ const c=JSON.parse(devRead(CLOUD_K)||'null');
     return c&&typeof c==='object'&&cloudUrlOk(c.url)&&typeof c.token==='string'&&c.token?c:null; }catch(e){ return null; }
 }
 function cloudOn(){ return !!cloudCfg(); }
 /* The address this device last used, signed in or not: what the lock screen's passkey door needs. */
 function cloudUrlKnown(){ if(LEDGER_CLOUD_URL) return LEDGER_CLOUD_URL;
-  try{ const c=JSON.parse(localStorage.getItem(CLOUD_K)||'null'); return c&&cloudUrlOk(c.url)?c.url:''; }catch(e){ return ''; } }
-function cloudSet(c){ try{ c?localStorage.setItem(CLOUD_K,JSON.stringify(c)):localStorage.removeItem(CLOUD_K); }catch(e){} }
+  try{ const c=JSON.parse(devRead(CLOUD_K)||'null'); return c&&cloudUrlOk(c.url)?c.url:''; }catch(e){ return ''; } }
+function cloudSet(c){ devWrite(CLOUD_K,c?JSON.stringify(c):null); }
 /* HTTPS, or a machine of one's own while developing. A token sent in the clear is a token given away. */
 function cloudUrlOk(u){ return /^https:\/\/[a-z0-9.-]+(:\d+)?(\/[\w./-]*)?$/i.test(String(u||''))
   ||/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/[\w./-]*)?$/i.test(String(u||'')); }
@@ -52700,6 +52780,124 @@ async function cloudDeleteAccount(password){
   await cloudCall(c.url,'DELETE','/v1/me',{password},c.token);
   cloudSet(null); fbSwitched();
 }
+/* ---- WHAT THE LOCK SEALS BESIDES THE BOOK (v28.75; SECURITY.md F13, V10) ----
+   The device lock encrypts the book and its photographs and keeps the passphrase in memory only. Beside them it
+   left, in the clear: the Anthropic key, the Ledger Cloud session, the bank-connection account's session, the inbox
+   assistant's recap, the Gmail link's last log, and Betsy's reminder stamp. Whoever could read this browser's storage
+   could spend on the key, write over or delete the cloud copy, and read what the mail said, all without the
+   passphrase the lock is supposed to be the whole of.
+
+   While the lock is on, each of those (devSlots) lives in memory and in ONE envelope, pfLedger_devSeal, under the
+   passphrase the book is under (_writeDisk calls devSealFollow, so the passphrase that opens the book opens this).
+   The unlock opens it; turning the lock on writes it and only then takes the plaintext away; turning it off puts
+   the plaintext back and only then drops the envelope. In the clear stays only what the lock screen reads before
+   anything is open: Ledger Cloud's address and email, and `sealed` when a session is inside, so the passkey and
+   recovery-key doors are still offered.
+
+   Before the envelope is opened (the lock screen), a slot written there (a sign-in) is held in memory and wins over
+   the envelope's at the unlock. A slot not written there reads whatever the disk holds: nothing, on a device locked
+   since v28.75, or the plaintext of one locked before, which the first unlock then seals. */
+const DEVSEAL_K='pfLedger_devSeal';
+function devSlots(){ return [RKEY,CLOUD_K,PLAID_ACCT_K,MAIL_ASSIST_LOCAL,MAIL_LOCAL,BETSY_REMIND_LOCAL]; }
+let _devMem=Object.create(null), _devTouched=Object.create(null), _devOpen=false, _devUnder='';
+let _devChain=Promise.resolve(), _devQueued=false;
+function _devLs(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function _devLsSet(k,v){ try{ v==null?localStorage.removeItem(k):localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+/* What a slot leaves in the clear while sealed: Ledger Cloud's address and email, and nothing of anything else. */
+function _devPlainOf(k,v){
+  if(v==null||k!==CLOUD_K) return null;
+  let c=null; try{ c=JSON.parse(v); }catch(e){}
+  if(!c||typeof c!=='object') return null;
+  const p={}; if(typeof c.url==='string') p.url=c.url; if(typeof c.email==='string') p.email=c.email;
+  if(typeof c.token==='string'&&c.token) p.sealed=1;
+  return JSON.stringify(p);
+}
+/* In place of localStorage.getItem / setItem for a slot. */
+function devRead(k){
+  if(lockOn()&&(_devOpen||_devTouched[k])) return k in _devMem?_devMem[k]:null;
+  return _devLs(k);
+}
+function devWrite(k,v){
+  v=v==null?null:String(v);
+  if(!lockOn()) return _devLsSet(k,v);
+  _devMem[k]=v; if(!_devOpen) _devTouched[k]=1;
+  _devLsSet(k,_devPlainOf(k,v));
+  _devSealSoon();
+  return true;
+}
+/* The lock screen's question: is a Ledger Cloud session in the envelope, not yet opened? */
+function devCloudSealed(){
+  if(!lockOn()||_devOpen||_devTouched[CLOUD_K]) return false;
+  try{ const c=JSON.parse(_devLs(CLOUD_K)||'null'); return !!(c&&c.sealed===1&&cloudUrlOk(c.url)); }catch(e){ return false; }
+}
+/* One write at a time, each of memory as it stands when its turn comes, so the last to land is the newest. */
+function _devSeal(pass){ const p=_devChain.then(function(){ return _devSealWrite(pass); },function(){ return _devSealWrite(pass); });
+  _devChain=p.catch(function(){}); return p; }
+function _devSealSoon(){ if(_devOpen&&!_devQueued){ _devQueued=true; _devSeal(); } }
+async function _devSealWrite(pass){
+  _devQueued=false;
+  pass=String(pass||syncPass()||'').trim();
+  if(!_devOpen||!pass||!lockOn()) return false;
+  let env; try{ env=await pfEncrypt(JSON.stringify(_devMem),pass); }catch(e){ return false; }
+  /* Locked again, or unlocked for good, while that ran: what it holds is no longer this device's to write. */
+  if(!_devOpen||!lockOn()) return false;
+  if(!_devLsSet(DEVSEAL_K,JSON.stringify(env))) return false;
+  _devUnder=pass; return true;
+}
+function devSettled(){ return _devChain; }
+/* Called by _writeDisk after the book's envelope lands: a passphrase changed on this device moves this one too. */
+function devSealFollow(){ const p=syncPass(); if(_devOpen&&p&&p!==_devUnder) _devSeal(p); }
+/* THE UNLOCK. Taken only when `pass` opens the envelope, so a mistyped passphrase changes nothing. `force` is for a
+   book that has just opened under `pass`: an envelope that will not open is then under a passphrase replaced
+   elsewhere, its contents are gone, and the disk is sealed afresh under this one (`lost` says so). */
+async function devOpen(pass,force){
+  if(_devOpen) return {ok:true};
+  pass=String(pass||'').trim();
+  if(!lockOn()||!pass) return {ok:false};
+  const raw=_devLs(DEVSEAL_K);
+  let got=null;
+  if(raw){ try{ const o=JSON.parse(await pfDecrypt(JSON.parse(raw),pass)); if(o&&typeof o==='object'&&!Array.isArray(o)) got=o; }catch(e){} }
+  if(raw&&!got&&!force) return {ok:false,bad:true};
+  if(_devOpen) return {ok:true};
+  const mem=Object.create(null);
+  devSlots().forEach(function(k){
+    if(_devTouched[k]) mem[k]=k in _devMem?_devMem[k]:null;
+    else if(got&&Object.prototype.hasOwnProperty.call(got,k)) mem[k]=typeof got[k]==='string'?got[k]:null;
+    else mem[k]=_devLs(k);   /* not in the envelope: what this device held in the clear, locked before v28.75 */
+  });
+  _devMem=mem; _devTouched=Object.create(null); _devOpen=true;
+  /* Sealed first, and the plaintext taken away only once that has landed. */
+  if(await _devSeal(pass)) devSlots().forEach(function(k){ _devLsSet(k,_devPlainOf(k,_devMem[k])); });
+  /* A handle made while the session was sealed went to Firebase; the session is here now. */
+  try{ if(cloudCfg()&&_fsDb&&!_fsDb.cloud){ _fsDb=null; _fs=null; } }catch(e){}
+  return {ok:true,lost:!!(raw&&!got)};
+}
+/* TURNING THE LOCK ON (lockSet): the slots' plaintext into the envelope, and only then off the disk. A write that
+   is refused leaves the plaintext where it was and the envelope unopened, which is a device locked before v28.75:
+   the next unlock seals it. */
+async function devSealOn(pass){
+  const mem=Object.create(null);
+  devSlots().forEach(function(k){ mem[k]=_devTouched[k]&&k in _devMem?_devMem[k]:_devLs(k); });
+  _devMem=mem; _devTouched=Object.create(null); _devOpen=true;
+  if(await _devSeal(pass)){ devSlots().forEach(function(k){ _devLsSet(k,_devPlainOf(k,_devMem[k])); }); return true; }
+  _devOpen=false; return false;
+}
+/* TURNING IT OFF (lockSet, bookReset), once the lock flag is gone: back in the clear, then the envelope dropped. */
+function devSealOff(){
+  if(_devOpen) devSlots().forEach(function(k){ _devLsSet(k,_devMem[k]); });
+  _devLsSet(DEVSEAL_K,null);
+  devForget();
+}
+/* Locking an open book again (guard.js): memory forgets, the envelope stays. */
+function devForget(){ _devMem=Object.create(null); _devTouched=Object.create(null); _devOpen=false; _devUnder=''; _devQueued=false; }
+/* Another tab of this device wrote the envelope: what it holds is the newest. */
+try{ window.addEventListener('storage',function(e){
+  if(e.key!==DEVSEAL_K||!_devOpen||!e.newValue) return;
+  const p=syncPass(); if(!p) return;
+  pfDecrypt(JSON.parse(e.newValue),p).then(function(t){ const o=JSON.parse(t);
+    if(_devOpen&&o&&typeof o==='object'&&!Array.isArray(o)) devSlots().forEach(function(k){ _devMem[k]=typeof o[k]==='string'?o[k]:null; }); },function(){});
+}); }catch(e){}
+
 /* ---- MEMBERSHIP (v28.59; the service's half is ledger/server/cloud/billing.py) ----
    A Ledger Cloud account has a free trial, then $5 a month through Stripe. The plan is asked of the service when the
    Ledger Cloud panel shows (S.bill, kept apart from S.cloud, which a sign-in replaces whole), and the panel says where
@@ -53419,10 +53617,10 @@ function plaidReview(bankId){
    account is used and this one is not needed. */
 const PLAID_ACCT_K='pfLedger_plaidAcct';
 function plaidAcct(){
-  let c=null; try{ c=JSON.parse(localStorage.getItem(PLAID_ACCT_K)||'null'); }catch(e){}
+  let c=null; try{ c=JSON.parse(devRead(PLAID_ACCT_K)||'null'); }catch(e){}   /* sealed under the lock (sync/devseal.js) */
   return c&&c.token&&typeof cloudUrlOk==='function'&&cloudUrlOk(c.url)?c:null;
 }
-function plaidAcctSet(c){ try{ c?localStorage.setItem(PLAID_ACCT_K,JSON.stringify(c)):localStorage.removeItem(PLAID_ACCT_K); }catch(e){} }
+function plaidAcctSet(c){ devWrite(PLAID_ACCT_K,c?JSON.stringify(c):null); }
 /* The account the bank calls go through: Ledger Cloud's own when the book syncs there, else this one. */
 function plaidCfg(){ return (typeof cloudCfg==='function'&&cloudCfg())||plaidAcct(); }
 function plaidCfgOnly(){ return !(typeof cloudCfg==='function'&&cloudCfg())&&!!plaidAcct(); }
@@ -53704,7 +53902,8 @@ function syncPayload(){
   /* With the photographs — the cloud copy is how another device gets the book,
      and an id pointing into an object store that device has never seen is not
      a picture. See imgstore.js; applySynced takes them back out again. */
-  return JSON.stringify(bookWithImages());
+  /* And without the Gmail link's key when the book is shared (mail/shared-link.js). */
+  return JSON.stringify(typeof mailKeyOff==='function'?mailKeyOff(bookWithImages()):bookWithImages());
 }
 
 /* The manifest carries what is needed to decrypt and nothing else. In
@@ -54541,6 +54740,7 @@ async function syncMergeAuto(c){
 function applySynced(txt){
   const inc=JSON.parse(txt);
   if(!inc||!Array.isArray(inc.months)) throw new Error('The cloud copy is not a Ledger book.');
+  if(typeof mailKeyCarry==='function') mailKeyCarry(inc);   /* a shared book's copy carries no Gmail key; this device keeps its own */
   /* AND THE PULL SIDE GETS THE RULE THE PUSH SIDE ALREADY HAS. _writeDisk has
      refused to write an empty book over a saved one since a failed unlock
      nearly did it; syncNow refuses to PUSH an empty book over a cloud copy that
@@ -56526,7 +56726,7 @@ function renderOnce(name,fn){
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
     bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
-    BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,xlsxBoldMarks,zipEntries,
+    BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
     historyForget,
