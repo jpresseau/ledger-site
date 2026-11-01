@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-EiQuw0iBKIgmaqFOgY3sEBGQsrOalujhJ+TVhXQqmJw=' 'sha256-tS5HOynmLFoNp/P4jmrrARW2O/tj1Th9zrxTL7kyFdI=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Y4brZbm+xpNBRmHdSEhdskS1zqhnjBoT68N28FCAbfY=' 'sha256-tS5HOynmLFoNp/P4jmrrARW2O/tj1Th9zrxTL7kyFdI=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -3068,7 +3068,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.82";
+const APP_V="v28.83";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3090,7 +3090,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="2cf3b47";
+const APP_BUILD="de788a3";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -32738,7 +32738,7 @@ async function mailOpen(env,keyB64){
         key. A request with no signature at all (the owner opening the
         address, a crawler) is not counted: it proves nothing.
    A refusal says only "refused" — a stranger learns nothing about why. */
-const MAIL_GAS_V=21;
+const MAIL_GAS_V=22;   /* v22 (v28.83): the assistant never files a money email the Ledger does not read; read:<address> */
 const MAIL_GAS=[
 function doGet(e){
   var p=(e&&e.parameter)||{}, out;
@@ -33135,7 +33135,7 @@ function ledgerAsState_(){
 },
 /* What the Ledger may ask. Under the lock, so two devices (or a device and the timer) cannot interleave. */
 function ledgerOp_(o){
-  var pr=PropertiesService.getScriptProperties(), m=/^(mode|model|scope):([a-z0-9-]+)$/.exec(o), x=/^(move|keep|unauto|back|done):([\s\S]{1,300})$/.exec(o);
+  var pr=PropertiesService.getScriptProperties(), m=/^(mode|model|scope):([a-z0-9-]+)$/.exec(o), x=/^(move|keep|unauto|back|done|read):([\s\S]{1,300})$/.exec(o);
   /* Betsy's reminders for the fortnight (v13, script-remind.js): a short list, replaced whole. */
   var rm=/^remind:([\s\S]{0,1600})$/.exec(o), pd=/^products:([\s\S]{0,400})$/.exec(o);
   /* RC Garage's wanted list in pieces, and an eBay alert put back from Trash (v15, script-ebay.js). */
@@ -33159,6 +33159,10 @@ function ledgerOp_(o){
     else if(wd) note=ledgerWantedPiece_(wd[1],Number(wd[2]),Number(wd[3]),wd[4]);
     else if(ebk) said=ledgerEbayBack_(ebk[1]);
     else if(ebm) said=ledgerEbayMute_(ebm[1],ebm[2]);
+    /* The owner asks for a sender to be read (v22): one address, whatever its domain, past the day's limit, to 200. */
+    else if(x&&x[1]==='read'){ var ra=String(x[2]).toLowerCase().trim();
+      if(!/^[a-z0-9._%+-]{1,64}@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/.test(ra)) return {err:'That is not an email address.'};
+      var al=ledgerAuto_(); if(al.indexOf(ra)<0&&!ledgerAllowed_('<'+ra+'>')){ if(al.length>=200) return {err:'The Ledger already reads 200 senders the assistant added; take one off first.'}; al.push(ra); ledgerBigSet_('ledger_as_auto',JSON.stringify(al)); } }
     else if(x&&x[1]==='unauto') ledgerBigSet_('ledger_as_auto',JSON.stringify(ledgerAuto_().filter(function(a){ return a!==String(x[2]).toLowerCase(); })));
     /* Timers Google dropped (removing the script's access does that), or one of the two, or two of one, put right
        whenever the Ledger asks — every ten minutes while it is open — and the assistant is on or in preview. */
@@ -33279,11 +33283,17 @@ function ledgerTick(manual){
         var label=kept?'':rl&&byName[rl]?rl:(byName[out.label]?out.label:''), sure=!kept&&(!!(rl&&byName[rl])||(!!out.sure&&!!label)), did=false;
         /* Within what it may file (v11): money, or a sender the owner put under a label; or everything, when set to. */
         var mine=scope==='all'||String(out.kind)==='money'||!!(rl&&byName[rl]);
-        if(mode==='on'&&sure&&label&&mine){
+        if(ledgerAutoOk_(out,addr,me,mode,sure)&&auto.indexOf(addr)<0&&!ledgerAllowed_(h.from)&&auto.length<200&&(addCap.n.all||0)<LEDGER_AUTO_DAY){ auto.push(addr); addCap.n.all=(addCap.n.all||0)+1; }
+        /* NEVER FILED WHERE THE LEDGER CANNOT FOLLOW (v22, v28.83). Asked, of two PayPal receipts and a shop's payment
+           email moved under a label: "these were auto filed yet i dont see them in the app". A money email whose sender
+           the Ledger does not read (a shop writing from a Gmail address, which is never added; the sixth new sender of
+           a day) left the inbox and reached the Ledger never. Now it stays in the inbox, marked `nl`, and the Ledger
+           lists it with "Read this sender" (read:, below). */
+        var reads=ledgerAllowed_(h.from)||auto.indexOf(addr)>=0, nl=String(out.kind)==='money'&&!reads;
+        if(mode==='on'&&sure&&label&&mine&&!nl){
           try{ Gmail.Users.Messages.modify({addLabelIds:[byName[label].id],removeLabelIds:['INBOX']},'me',id); did=true; filed.push([id,label,at,addr]); }catch(e){ did=false; }
         }
-        if(ledgerAutoOk_(out,addr,me,mode,sure)&&auto.indexOf(addr)<0&&!ledgerAllowed_(h.from)&&auto.length<200&&(addCap.n.all||0)<LEDGER_AUTO_DAY){ auto.push(addr); addCap.n.all=(addCap.n.all||0)+1; }
-        recs.push({id:id,at:at,pt:Date.now(),a:addr,from:String(h.from||'').slice(0,100),subj:subj.slice(0,140),label:label,sure:sure,filed:did,
+        recs.push({id:id,at:at,pt:Date.now(),a:addr,nl:nl&&sure&&!!label&&mine?1:0,from:String(h.from||'').slice(0,100),subj:subj.slice(0,140),label:label,sure:sure,filed:did,
           pv:mode==='preview'?1:0,k:kept?1:0,o:mine?0:1,rl:rl&&byName[rl]?1:0,kind:String(out.kind||''),sum:String(out.summary||'').slice(0,160),act:String(out.action||'').slice(0,120),
           due:String(out.due||'').slice(0,20),amt:String(out.amount||'').slice(0,30)});
       }
@@ -35478,7 +35488,7 @@ function mailFileSub(label,it,g){
    minutes while it is open. (Since v28.42 each device keeps its own copy and asks for itself: see mailAssistState.) A script older than v9 is never asked: it would count the request as a forgery. While
    the assistant files the whole inbox, the Ledger's own Gmail filing (mail/gfile.js) stands aside, so no email is
    given two labels. */
-const MAIL_ASSIST_V=9, MAIL_ASSIST_V10=10, MAIL_ASSIST_V11=11, MAIL_ASSIST_V12=12, MAIL_ASSIST_V13=13, MAIL_ASSIST_V14=14, MAIL_ASSIST_V15=15, MAIL_ASSIST_V16=16, MAIL_ASSIST_V17=17, MAIL_ASSIST_V18=18, MAIL_ASSIST_V19=19, MAIL_ASSIST_V20=20, MAIL_ASSIST_LOCAL='pfLedger_mailAs';
+const MAIL_ASSIST_V=9, MAIL_ASSIST_V10=10, MAIL_ASSIST_V11=11, MAIL_ASSIST_V12=12, MAIL_ASSIST_V13=13, MAIL_ASSIST_V14=14, MAIL_ASSIST_V15=15, MAIL_ASSIST_V16=16, MAIL_ASSIST_V17=17, MAIL_ASSIST_V18=18, MAIL_ASSIST_V19=19, MAIL_ASSIST_V20=20, MAIL_ASSIST_V22=22, MAIL_ASSIST_LOCAL='pfLedger_mailAs';
 /* Per million tokens: input, output, cache read, cache write — for the month's cost shown on the page. */
 const MAIL_ASSIST_PRICE={'claude-haiku-5-5':[0.10,0.50,0.01,0.125],'claude-sonnet-5-5':[2,10,0.20,2.5],'claude-opus-5-5':[4,20,0.20,5]};
 const MAIL_ASSIST_MODELS=[['claude-haiku-5-5','Claude Haiku 5.5 — fast, about $1–2 a month'],['claude-sonnet-5-5','Claude Sonnet 5.5 — between the two, about $15–20 a month'],
@@ -35516,7 +35526,7 @@ function _mailAssistTake(as){
     v:Number(a.v)||0,auto:Array.isArray(a.auto)?a.auto.map(String).slice(0,200):[],
     today:(Array.isArray(a.today)?a.today:[]).slice(-80).map(function(r){ return {id:/^[A-Za-z0-9]{6,40}$/.test(String(r.id||''))?String(r.id):'',
       at:Number(r.at)||0,pt:Number(r.pt)||0,from:str(r.from,120),subj:str(r.subj,160),label:str(r.label,100),
-      sure:!!r.sure,filed:!!r.filed,pv:!!r.pv,k:!!r.k,o:!!r.o,kind:str(r.kind,12),sum:str(r.sum),act:str(r.act),due:str(r.due,20),amt:str(r.amt,30)}; }),heard:Date.now(),
+      sure:!!r.sure,filed:!!r.filed,pv:!!r.pv,k:!!r.k,o:!!r.o,nl:!!r.nl,kind:str(r.kind,12),sum:str(r.sum),act:str(r.act),due:str(r.due,20),amt:str(r.amt,30)}; }),heard:Date.now(),
     /* Script v12 (v28.44): the owner's labels, what it filed in the last three days (to put back), the to-do and dates
        kept across recaps, when it last ran in preview, and the version its timer runs (the saved script). */
     labels:Array.isArray(a.labels)?a.labels.map(String).filter(function(x){ return x&&x.length<=100; }).slice(0,300):null,
@@ -35690,7 +35700,8 @@ function mailAssistSheet(){
   if(a.err) h+='<div class="neg" style="font-size:12px;margin-bottom:6px">'+_maEsc(a.err)+'</div>'+(_maPerm(a.err)&&!_maPerm(st.err)?_maPermFix():'');
   /* Preview's check-in, then each email it was not sure of and each it filed, with what can be done about it (v28.44,
      mail/assist-lists.js). */
-  h+=_maPreview(a,today,off,v0)+_maUnsure(unsure,a,off,v0)+_maFiled(a,off,v0);
+  h+=_maPreview(a,today,off,v0)+_maUnsure(unsure,a,off,v0)+_maFiled(a,off,v0)
+    +(typeof _maUnread==='function'?_maUnread(a,off,v0):'');   /* money mail the Ledger does not read (mail/assist-unread.js) */
   /* eBay alerts weighed against RC Garage's wanted list (v28.51, mail/wanted.js). */
   if(v0>0) h+=_maEbay(a,off,v0);
   /* The senders it added for the Ledger to read (money emails it was sure of), each one the owner can take off (v10). */
@@ -35948,6 +35959,63 @@ function _maPreview(a,today,off,v0){
 }
 /* A day of preview in the last week: On is then on; without one, On starts with preview (v12). */
 function _maTried(a){ return !!(a&&a.pvAt&&Date.now()-a.pvAt<7*864e5); }
+
+/* ---- MONEY EMAILS THE LEDGER DOES NOT READ (v28.83) ----
+   Asked, of two PayPal receipts and a shop's payment email under a label in Gmail: "these were auto filed yet i dont
+   see them in the app". The inbox assistant reads the whole inbox; the Ledger reads only its senders (pull.js
+   mailSenderOk: the book's list and the senders the assistant added). The assistant adds a sender it is sure sends
+   money, but never a personal address (a shop writing from Gmail) and no more than five a day, and until script v22
+   it filed the email all the same: out of the inbox, and never in the Ledger.
+
+   Script v22 leaves such an email in the inbox (`nl`); this lists those, and any money email the assistant filed in
+   the last three days that the Ledger has not got and will not get, each with what can be done: Read this sender
+   (read:<address>, v22), after which the next check brings it in, from wherever it was filed; or Put back (back:<id>)
+   into the inbox. A sender the owner left out ("Not from this sender", M.skip) is not read either, whatever the list
+   says: the check's query excludes it, so PayPal's receipts, once one PayPal email was left out, were filed and never
+   came; that one is read again from here (mailskipdel). And a money email the assistant filed from a sender the
+   Ledger does read, which a check has passed (M.since) without finding, is listed too: it should not happen, and a
+   miss nobody can see is the complaint this answers. One the next check will bring is not listed. */
+function mailAssistUnread(a,M){
+  M=M||(typeof mailBook==='function'?mailBook():null);
+  if(!a||!M) return [];
+  const have=Object.create(null), seen=Object.create(null), out=[];
+  (M.items||[]).forEach(function(it){ if(it&&it.id) have[it.id]=1; });
+  const skip=(M.skip||[]).map(function(x){ return String(x).toLowerCase(); }), since=Number(M.since)||0;
+  const take=function(r,filed){
+    if(!r||!r.id||seen[r.id]||have[r.id]||String(r.kind)!=='money') return;
+    if(!(filed||r.filed||r.nl)) return;
+    const addr=typeof mailAddr==='function'?mailAddr(r.from):'';
+    if(addr.indexOf('@')<1) return;
+    const left=skip.indexOf(addr)>=0, reads=!left&&typeof mailSenderOk==='function'&&mailSenderOk(r.from,M);
+    /* Read, and the checks have not yet reached it: the next one brings it. */
+    const miss=reads&&(Number(r.at)||0)<since-5*60e3;
+    if(reads&&!miss) return;
+    seen[r.id]=1;
+    out.push({id:r.id,at:Number(r.at)||0,from:String(r.from||''),subj:String(r.subj||''),label:String(r.label||''),filed:!!(filed||r.filed),addr:addr,
+      why:left?'left':miss?'miss':'unread'});
+  };
+  (a.today||[]).forEach(function(r){ take(r,false); });
+  (a.filed||[]).forEach(function(r){ take(r,true); });
+  return out.sort(function(x,y){ return y.at-x.at; });
+}
+function _maUnread(a,off,v0){
+  const L=mailAssistUnread(a);
+  if(!L.length) return '';
+  const n=L.length, filed=L.filter(function(r){ return r.filed; }).length, has=function(w){ return L.some(function(r){ return r.why===w; }); };
+  const can=v0>=MAIL_ASSIST_V22;
+  const why=[has('unread')?'from senders the Ledger never asks Gmail about'+(can?' (<b>Read this sender</b> and they come in)':' (update the script, above, to read one from here)'):'',
+    has('left')?'from a sender you left out with Not from this sender (<b>Read this sender again</b>)':'',
+    has('miss')?'that a check passed without finding (press Check now; one that stays after that is a fault in the check)':''].filter(Boolean);
+  return '<div class="mailwarn maunread"><div><b>'+n+' money email'+(n===1?'':'s')+' not in the Ledger</b>'
+    +(filed?', '+(filed===n?'filed out of your inbox':filed+' of them filed out of your inbox')+' by the assistant':'')+': '+why.join('; ')+'.</div>'
+    +'<ul class="malist">'+L.slice(0,20).map(function(r){
+      return '<li class="marow"><div class="matx"><div class="masubj" title="'+_maEsc(r.subj)+'">'+(r.subj?_maEsc(r.subj):'<span class="mut">(no subject)</span>')+'</div>'
+        +'<div class="mafrom" title="'+_maEsc(r.from)+'">'+_maEsc(r.addr)+(r.filed?_maTag(r.label?'filed under '+r.label:'filed'):_maTag('in your inbox'))
+        +(r.why==='left'?_maTag('you chose Not from this sender'):r.why==='miss'?_maTag('a check passed it'):'')+'</div></div><div class="maact">'
+        +(r.why==='left'?'<button class="btn sm" data-act="mailskipdel" data-f="'+_maEsc(r.addr)+'"'+off+'>Read this sender again</button>'
+          :r.why==='unread'&&can?'<button class="btn sm" data-act="assistread" data-addr="'+_maEsc(r.addr)+'"'+off+'>Read this sender</button>':'')
+        +(r.filed&&v0>=MAIL_ASSIST_V12?_maBtn('assistback',[r.id],'Put back',off):'')+'</div></li>'; }).join('')+'</ul></div>';
+}
 
 /* ---- GMAIL FILING: the sheet on the Email page (the filing itself is mail/gfile.js) ----
    Three states (and since v28.42 a fourth: this device has not heard the script's version): the script is older than v8 (what changes, and the button to the script to paste); the
@@ -50347,17 +50415,22 @@ function _imgLossOk(what){
       function(e){ S.assist=Object.assign({},S.assist,{busy:false,err:e.message||String(e)}); render(); });
     return;
   }
-  if(act==='assistrun'||act==='assistrecap'||act==='assiststate'||act==='assistunauto'||act==='assistback'||act==='assistbackall'||act==='assistkeep'||act==='assistdone'||act==='assistturnon'){
+  if(act==='assistrun'||act==='assistrecap'||act==='assiststate'||act==='assistunauto'||act==='assistback'||act==='assistbackall'||act==='assistkeep'||act==='assistdone'||act==='assistturnon'||act==='assistread'){
     if(S.assist&&S.assist.busy) return;
     /* v28.44: put back one (back:) or every one that is not money (backall), keep one in the inbox, tick a need off, and
        preview's "Turn it on". */
     /* A sender's several (data-ids, v28.45): put back or keep each, one request each. */
     const ids=_maIds(b), many=(act==='assistback'||act==='assistkeep')&&ids.length>1, id=ids[0], ops={assistrun:'run',assistrecap:'recap',assistunauto:'unauto:'+String(b.dataset.addr||''),assistback:'back:'+id,
-      assistbackall:'backall',assistkeep:'keep:'+id,assistdone:'done:'+String(b.dataset.k||''),assistturnon:'mode:on'}, op=ops[act]||'state';
+      assistbackall:'backall',assistkeep:'keep:'+id,assistread:'read:'+String(b.dataset.addr||''),assistdone:'done:'+String(b.dataset.k||''),assistturnon:'mode:on'}, op=ops[act]||'state';
     S.assist=Object.assign({},S.assist,{busy:true,err:null}); render();
     (many?_maSeq(ids.map(function(x){ return (act==='assistback'?'back:':'keep:')+x; })):mailAssistOp(op))
       .then(function(a){ S.assist=Object.assign({},S.assist,{busy:false}); render(); if(!a) return;
+        /* A sender read from now on (v28.83): its last week read back, at once on the device that checks — the email the
+           assistant filed came in before the check's cursor (pull.js mailRewind). */
+        if(act==='assistread'&&typeof mailRewind==='function'){ mailRewind(7); save();
+          if(typeof mailIsPuller==='function'&&mailIsPuller()&&typeof mailPull==='function') mailPull().then(function(){ render(); },function(){}); }
         toast(many?(act==='assistback'?'Put '+ids.length+' emails back in your inbox':'Kept '+ids.length+' emails in your inbox; it will not ask about them again'):a.note?a.note:act==='assistrun'?((a.today||[]).length+' email'+((a.today||[]).length===1?'':'s')+' read since the recap'):act==='assistrecap'?'Recap sent to your inbox'
+          :act==='assistread'?'The Ledger reads '+String(b.dataset.addr||'that sender')+' now: its last week of email is coming in'
           :act==='assistunauto'?'Taken off: the Ledger no longer reads that sender':act==='assistback'?'Put back in your inbox':act==='assistkeep'?'Kept in your inbox; it will not ask about it again'
           :act==='assistdone'?'Ticked off':act==='assistturnon'?'Inbox assistant on: it files what it is sure of':'Up to date','ok'); },
         function(e){ S.assist=Object.assign({},S.assist,{busy:false,err:e.message||String(e)}); render(); });
@@ -57476,7 +57549,7 @@ function renderOnce(name,fn){
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
     bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
-    BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,mailOldScriptWords,MAIL_STMT_NOTICE_RE,MAIL_FX_AMT,mailHasFx,mailRbsStmtSettle,mailRbsSelf,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,NY_TUITION_CAP,nyCareCredit,nyTuitionCredit,nyCareFedRate,nyCareRate,nyCareApplicable,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
+    BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,mailOldScriptWords,MAIL_STMT_NOTICE_RE,mailAssistUnread,_maUnread,MAIL_ASSIST_V22,MAIL_FX_AMT,mailHasFx,mailRbsStmtSettle,mailRbsSelf,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,NY_TUITION_CAP,nyCareCredit,nyTuitionCredit,nyCareFedRate,nyCareRate,nyCareApplicable,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
     historyForget,
