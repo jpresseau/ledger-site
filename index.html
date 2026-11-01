@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-8VjwVxz3Iy/WUSJxhA8wLnnx9Z/p7g+LPuPJ5DVU+Mg=' 'sha256-XIHGMGCCNOO8yjRD9S3C+cWSqE3ViBTSkmdiyN3CLtU=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-q8VYbiwExI+PYw7m04UCH2FS6pVvZ3dI5JI/qmBHp8M=' 'sha256-XIHGMGCCNOO8yjRD9S3C+cWSqE3ViBTSkmdiyN3CLtU=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -3063,7 +3063,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.75";
+const APP_V="v28.76";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3085,7 +3085,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="53abe43";
+const APP_BUILD="efa816b";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -48936,16 +48936,18 @@ function _imgLossOk(what){
       +'It gives back the passphrase, which then opens the book on this device.</div>'
       +'<form class="pwform" data-go="recusego"><div class="fld"><label for="recIn">Recovery key</label>'
       +'<input id="recIn" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-…"></div>'
-      +(cloudOn()?'':'<input type="email" id="recEmail" autocomplete="username" value="'+esc(who)+'" hidden>'
-        +'<div class="fld"><label for="recPw">Ledger Cloud password'+(who?' for '+esc(who):'')+'</label>'
+      /* The email too: a locked device keeps it sealed with the session (sync/devseal.js), so it is typed. */
+      +(cloudOn()?'':'<div class="fld"><label for="recEmail">Ledger Cloud email</label>'
+        +'<input type="email" id="recEmail" autocomplete="username" value="'+esc(who)+'"></div>'
+        +'<div class="fld"><label for="recPw">Ledger Cloud password</label>'
         +'<input id="recPw" type="password" autocomplete="current-password"></div>')+'</form>',
       '<button class="btn ghost" data-act="mclose">Cancel</button><button class="btn" data-act="recusego">Recover the passphrase</button>');
   }
   else if(act==='recusego'){
     const e=document.getElementById('recIn'), typed=e?e.value:'', pwEl=document.getElementById('recPw');
     const em=((document.getElementById('recEmail')||{}).value||'').trim();
-    const signIn=cloudOn()||!pwEl?Promise.resolve():pwEl.value?cloudSignIn(cloudUrlKnown(),em,pwEl.value)
-      :Promise.reject(new Error('Your Ledger Cloud password, please'));
+    const signIn=cloudOn()||!pwEl?Promise.resolve():!em?Promise.reject(new Error('Your Ledger Cloud email, please'))
+      :pwEl.value?cloudSignIn(cloudUrlKnown(),em,pwEl.value):Promise.reject(new Error('Your Ledger Cloud password, please'));
     signIn.then(function(){ if(pwEl) pwEl.value=''; return recRecover(typed); }).then(function(pass){
       closeModal();
       /* On the lock screen, through the unlock door itself, so the book opens
@@ -52791,8 +52793,9 @@ async function cloudDeleteAccount(password){
    passphrase the book is under (_writeDisk calls devSealFollow, so the passphrase that opens the book opens this).
    The unlock opens it; turning the lock on writes it and only then takes the plaintext away; turning it off puts
    the plaintext back and only then drops the envelope. In the clear stays only what the lock screen reads before
-   anything is open: Ledger Cloud's address and email, and `sealed` when a session is inside, so the passkey and
-   recovery-key doors are still offered.
+   anything is open: Ledger Cloud's address (the service's, not a secret), and `sealed` when a session is inside,
+   so the passkey and recovery-key doors are still offered. Not the account's email (v28.76): the recovery-key
+   door asks for it.
 
    Before the envelope is opened (the lock screen), a slot written there (a sign-in) is held in memory and wins over
    the envelope's at the unlock. A slot not written there reads whatever the disk holds: nothing, on a device locked
@@ -52803,12 +52806,12 @@ let _devMem=Object.create(null), _devTouched=Object.create(null), _devOpen=false
 let _devChain=Promise.resolve(), _devQueued=false;
 function _devLs(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 function _devLsSet(k,v){ try{ v==null?localStorage.removeItem(k):localStorage.setItem(k,v); return true; }catch(e){ return false; } }
-/* What a slot leaves in the clear while sealed: Ledger Cloud's address and email, and nothing of anything else. */
+/* What a slot leaves in the clear while sealed: Ledger Cloud's address, and nothing of anything else. */
 function _devPlainOf(k,v){
   if(v==null||k!==CLOUD_K) return null;
   let c=null; try{ c=JSON.parse(v); }catch(e){}
   if(!c||typeof c!=='object') return null;
-  const p={}; if(typeof c.url==='string') p.url=c.url; if(typeof c.email==='string') p.email=c.email;
+  const p={}; if(typeof c.url==='string') p.url=c.url;
   if(typeof c.token==='string'&&c.token) p.sealed=1;
   return JSON.stringify(p);
 }
