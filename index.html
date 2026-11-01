@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-3ygWI47Pr1wB2av9a38teqNb1niO+pteanzVr3Q6Yns=' 'sha256-XIHGMGCCNOO8yjRD9S3C+cWSqE3ViBTSkmdiyN3CLtU=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-LpqvGMAft++QG+9fS5MCjfjjGH9bnS71DBPj0AH/aBc=' 'sha256-XIHGMGCCNOO8yjRD9S3C+cWSqE3ViBTSkmdiyN3CLtU=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2885,6 +2885,11 @@ main.gridview{padding-top:8px;padding-bottom:calc(12px + var(--sab))}
   border-radius:10px;padding:10px 14px;margin:0 0 10px}
 .catoffer-t{font-size:12.5px;line-height:1.5;flex:1;min-width:260px}
 .catoffer-b{display:flex;gap:7px;flex:0 0 auto}
+/* A renovation purchase also on the month (renotwins.js): amber, a charge counted twice. */
+.catoffer.renotwin{border-left-color:var(--amber)}
+.renotwin-r{margin-top:6px}
+.renotwin-r .btn{margin-left:6px}
+.renotwin-d{color:var(--amber);font-weight:600}
 
 /* Something that was never set up, not an error in a read. */
 .keywall{border-left:3px solid var(--amber)}
@@ -3063,7 +3068,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.77";
+const APP_V="v28.78";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3085,7 +3090,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="af5f1a1";
+const APP_BUILD="13b8c51";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -11521,6 +11526,7 @@ Views.months=function(){
    +'<button class="chip deskonly" data-act="mcsv">Export CSV</button></div>'
    +'<div class="stamp">SHEET '+(idx+1)+' OF '+DB.months.length+'</div></div>'
    +catOfferBar(mo)
+   +(typeof renoTwinBar==='function'?renoTwinBar(mo):'')   /* a renovation purchase also here (renotwins.js) */
    +monthPastePanel(mo)
    +(S.mview==='list'?dayListHtml(mo):S.mview==='cal'?calendarHtml(mo):
     '<div class="sheet gridsheet"><div class="tblwrap gridpane" data-mk="'+k+'"><table class="mgrid"><thead>'+thead+'</thead><tbody>'+body+'</tbody><tfoot>'+foot+'</tfoot></table></div>'
@@ -23687,9 +23693,11 @@ Views.taxes=function(){
   return top+(chips?'<div class="plates fitplates">'+chips+'</div>':'')+body;
 };
 /* ---- Renovations ---- */
+/* The four campaigns' tabs, and their names wherever a renovation is named (renotwins.js reads them). */
+const RENO_TABS=[['r1','Reno 1 · 2021'],['r2','Reno 2 · 2022'],['r3','Bathroom · 2025'],['r4','Basement · 2025–26']];
 Views.renos=function(){
   const t=S.reno.tab;
-  const tabs=[['r1','Reno 1 · 2021'],['r2','Reno 2 · 2022'],['r3','Bathroom · 2025'],['r4','Basement · 2025–26']];
+  const tabs=RENO_TABS;
   let body='';
   if(t==='r4') body=renoR4(); else if(t==='r3') body=renoR3(); else body=renoR12(t);
   return head('Renovations','Four campaigns on the house, receipts and labor to the penny.','')
@@ -25725,7 +25733,16 @@ function bookIntegrity(){
     'Same date, same merchant, same total. Filing twice is silent afterwards — the copy looks '
     +'exactly like the original — and the only tell is a total that has quietly doubled. Read the '
     +'two destinations: the same place twice is a double count; two different places may be one '
-    +'purchase landing in a project AND in its month, which may be what was meant.',dupes);
+    +'purchase landing in a project AND in its month, which counts it twice for a renovation (the check below).',dupes);
+
+  /* ---- 11. a renovation purchase also on a month sheet (renotwins.js, v28.78) ----
+     Not a receipt filed twice: the month's copy was typed, so it carries no receipt and check 10 cannot see it. */
+  const rt=typeof renoTwinsAll==='function'?renoTwinsAll():[];
+  add('renotwin','A renovation purchase also on a month sheet',
+    'The same money in a renovation and in a month’s spending, so both totals carry it. A renovation’s purchases stay '
+    +'in the renovation; the Months page offers to take each of these off the month.',
+    rt.map(x=>({text:MA[Number(x.mk.slice(5,7))-1]+' '+x.mk.slice(0,4)+' · day '+x.d+' · '+x.cat+' · '+money(x.amt)
+      +' — '+renoTwinWords(x)})));
 
   return out;
 }
@@ -25741,7 +25758,7 @@ function bookIntegrity(){
    Audit is where you come to ask "is anything wrong".
 
    ITS OWN SHEET, NOT A THIRTEENTH CHECK, and that distinction is the whole
-   design. The twelve above are STRUCTURAL DAMAGE — a charge in a column that is
+   design. The thirteen above are STRUCTURAL DAMAGE — a charge in a column that is
    not there, a tick on an empty cell — and their heading promises "Nothing here
    changes anything". Money you have not claimed is neither damage nor nothing to
    change. Folded in, it fired on every book including the undamaged one, and
@@ -46737,7 +46754,7 @@ function dayRowHtml(mo,c,i){
        charge was. The drawer is wider now and this cell takes the slack. */
     +'<td class="mut" style="font-size:11.5px;min-width:200px;max-width:340px;overflow:hidden;'
       +'text-overflow:ellipsis;white-space:nowrap"'
-      +(c.who?' title="'+esc(c.who)+'"':'')+'>'+esc(c.who||'')+'</td>'
+      +(c.who||c.twin?' title="'+esc(c.who||c.twin)+'"':'')+'>'+(c.who?esc(c.who):c.twin?'<span class="renotwin-d">'+esc(c.twin)+'</span>':'')+'</td>'
     +'<td style="text-align:center">'
       +(c.recBy==='statement'
         ? '<span class="ok" title="matched on a statement — reconcile there">\u2713</span>'
@@ -46749,7 +46766,10 @@ function dayRowHtml(mo,c,i){
 
 function dayDrawer(d){
   const mo=curMonth(); if(!mo) return;
-  const rows=dayCharges(mo,d).map(c=>Object.assign({},c,{who:dayMerchant(mo,d,c.ci,c.amt)}));
+  /* A charge a renovation already holds says so where the merchant would be (renotwins.js, v28.78). */
+  const tw=typeof renoTwinsIn==='function'?renoTwinsIn(mo):[];
+  const rows=dayCharges(mo,d).map(c=>{ const x=tw.find(t=>t.ix===c.ix);
+    return Object.assign({},c,{who:dayMerchant(mo,d,c.ci,c.amt),twin:x?'Also in '+x.trip.name+' ('+renoTwinWhat(x)+'): counted twice':''}); });
   const dow=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(mo.y,mo.m-1,d).getDay()];
   const body='<div class="mut" id="dayCount" style="font-size:12.5px;margin-bottom:9px">'
     +dayCountHtml(rows,null)+'</div>'
@@ -46934,6 +46954,127 @@ function dayDrawerSave(d){
   toast(out.length?out.length+' charge'+(out.length===1?'':'s')+' on '+d+' '+MA[mo.m-1]
     +' · '+money(tot(out.map(r=>r.amt)))+' · ⌘Z to undo'
     :'Cleared '+d+' '+MA[mo.m-1]+' · ⌘Z to undo','ok');
+}
+
+/* ---- A RENOVATION PURCHASE ALSO ON A MONTH SHEET (v28.78) ----
+   "these 2 are in Home Renovation but also show in the Monthly tab."
+
+   A renovation's purchases are kept in the renovation and not on the month sheets: the test book's 103 trips to a
+   supplier have no twin on any of its 212 months. One that is in both is counted twice, in the month's spending and
+   in the project, and nothing said so; on the sheet it is a bare figure under Home with no receipt beside it.
+
+   No path that files by itself puts it in both. A receipt goes to the month OR to a renovation, a statement line
+   matches one OR the other, an email's receipt is one receipt. So it was typed onto the sheet (a cell, quick-add,
+   the day), before or after the receipt went to the project, and this finds it afterwards and says so where it is
+   seen: above the month (renoTwinBar), beside the charge in the day, and on Audit; one tap takes it off the month,
+   one undo puts it back.
+
+   A twin is a month charge of exactly a trip's total (one renovation, one supplier, one day) or of one of its lines,
+   on the same day; or, at RENO_TWIN_FAR or more, up to RENO_TWIN_DAYS apart, the gap between a purchase and the day
+   a card posts it. A small figure a few days off is somebody else's $12.00. Each renovation figure answers for one
+   month charge at most, and a trip claimed whole is not claimed again line by line. */
+const RENO_TWIN_DAYS=3, RENO_TWIN_FAR=100;
+/* "Basement renovation", from the Renovations page's own tab (views/renos.js). */
+function renoProjectName(src){
+  const t=(typeof RENO_TABS!=='undefined'?RENO_TABS:[]).find(function(x){ return x[0]===src; });
+  return (t?String(t[1]).split(' · ')[0]:String(src))+' renovation';
+}
+function _rtNv(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+function _rtIso(y,m,d){ return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0'); }
+function _rtShift(iso,n){
+  const d=new Date(Date.UTC(Number(iso.slice(0,4)),Number(iso.slice(5,7))-1,Number(iso.slice(8,10))+n));
+  return d.toISOString().slice(0,10);
+}
+/* The renovations' purchases, a supplier and a day at a time: the materials ledger's rows and the bathroom's
+   purchases, the two lists a receipt files into (receipts/commit.js). */
+function renoTrips(){
+  const R=DB.renos||{}, by={}, out=[];
+  const put=function(src,date,who,amt,item){
+    const d=String(date||''), a=r2v(Number(amt));
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||!(a>0)) return;
+    const k=src+'|'+d+'|'+_rtNv(who);
+    if(!by[k]){ by[k]={key:k,src:src,name:renoProjectName(src),date:d,who:String(who||'').trim(),amt:0,lines:[]}; out.push(by[k]); }
+    by[k].amt=r2v(by[k].amt+a); by[k].lines.push({amt:a,item:String(item||'').trim()});
+  };
+  ((R.r4||{}).rows||[]).forEach(function(r){ if(r) put('r4',r.date,r.vendor,r.total,r.item); });
+  ((R.r3||{}).purchases||[]).forEach(function(r){ if(r) put('r3',r.date,r.store,r.cost,r.item); });
+  return out;
+}
+/* The charges on one month sheet that a renovation already holds. `trips` and `used` are shared when every month
+   is asked in turn (renoTwinsAll), so one renovation figure is never the twin of two charges. */
+function renoTwinsIn(mo,trips,used){
+  if(!mo||!Array.isArray(mo.entries)) return [];
+  trips=trips||renoTrips(); used=used||{};
+  const byDay={}; trips.forEach(function(t){ (byDay[t.date]=byDay[t.date]||[]).push(t); });
+  const out=[], mk=mkey(mo.y,mo.m), done={};
+  /* By distance, nearest first over the whole sheet, so a charge on the trip's own day is its twin before one a day
+     or two off is even asked. */
+  for(let off=0;off<=RENO_TWIN_DAYS;off++) mo.entries.forEach(function(e,ix){
+    const amt=r2v(Number(e&&e[2]));
+    if(done[ix]||!e||!(amt>0)||!(e[0]>=1&&e[0]<=31)||(off>0&&amt<RENO_TWIN_FAR)) return;
+    const iso=_rtIso(mo.y,mo.m,e[0]);
+    const days=off===0?[iso]:[_rtShift(iso,-off),_rtShift(iso,off)];
+    for(const day of days) for(const t of (byDay[day]||[])){
+      const u=used[t.key];
+      let hit=null;
+      if(!u&&Math.abs(t.amt-amt)<0.005) hit={whole:true};
+      else if(u!=='whole'){ const li=t.lines.findIndex(function(l,i){ return !(u&&u[i])&&Math.abs(l.amt-amt)<0.005; });
+        if(li>=0) hit={whole:false,li:li}; }
+      if(!hit) continue;
+      if(hit.whole) used[t.key]='whole'; else { used[t.key]=used[t.key]||{}; used[t.key][hit.li]=1; }
+      done[ix]=1;
+      out.push({mk:mk,ix:ix,d:e[0],ci:e[1],cat:(mo.cats||[])[e[1]]||'?',amt:amt,eid:e[4]||'',days:off,
+        trip:t,whole:hit.whole,line:hit.whole?null:t.lines[hit.li]});
+      return;
+    }
+  });
+  return out.sort(function(a,b){ return a.ix-b.ix; });
+}
+function renoTwinsAll(){
+  const trips=renoTrips(), used={}, out=[];
+  if(!trips.length) return out;
+  (DB.months||[]).forEach(function(mo){ renoTwinsIn(mo,trips,used).forEach(function(x){ out.push(x); }); });
+  return out;
+}
+/* What the renovation holds, in words: "Zorb Audio, 2 lines", or one line "“Shelf” from Zorb Audio"; and with its day
+   and project, "Zorb Audio, 2 lines on 11 Oct, in Basement renovation". */
+function renoTwinWhat(x){
+  const t=x.trip;
+  return x.whole?(t.who||'a supplier')+(t.lines.length>1?', '+t.lines.length+' lines':'')
+    :'“'+(x.line.item||'a line')+'” from '+(t.who||'a supplier');
+}
+function renoTwinWords(x){
+  const t=x.trip;
+  return renoTwinWhat(x)+' on '+Number(t.date.slice(8,10))+' '+MA[Number(t.date.slice(5,7))-1]+', in '+t.name;
+}
+/* Off the month, with the reconcile ticks that named the charges after it by their place (as mail/self-money.js
+   takes one). Found by its id where it has one, else by its place and amount, so a stale button takes nothing. */
+function renoTwinOff(mk,ix,eid,amt){
+  const mo=monthByKey(mk);
+  if(!mo) return {ok:false,why:'That month is not in the book.'};
+  let i=eid?mo.entries.findIndex(function(e){ return e&&e[4]===eid; }):-1;
+  if(i<0&&!eid&&mo.entries[ix]&&Math.abs(r2v(Number(mo.entries[ix][2]))-r2v(Number(amt)))<0.005) i=ix;
+  if(i<0) return {ok:false,why:'That charge has changed since; open the day to see it.'};
+  const x=renoTwinsIn(mo).find(function(t){ return t.ix===i; });
+  if(!x) return {ok:false,why:'No renovation holds that charge any more.'};
+  const e=mo.entries[i], n=typeof entryOrdinal==='function'?entryOrdinal(mo,i):-1;
+  mo.entries.splice(i,1);
+  if(n>=0&&typeof cellRefsRemove==='function') cellRefsRemove(mo,e[0],e[1],n);
+  return {ok:true,amt:x.amt,cat:x.cat,day:e[0]+' '+MA[mo.m-1],name:x.trip.name};
+}
+/* Above the month, whichever way it is drawn. */
+function renoTwinBar(mo){
+  const tw=renoTwinsIn(mo);
+  if(!tw.length) return '';
+  const n=tw.length;
+  return '<div class="catoffer renotwin"><div class="catoffer-t"><b>'+(n===1?'A charge':n+' charges')+' on this sheet '
+    +(n===1?'is':'are')+' also in a renovation</b>, so '+(n===1?'it is':'they are')+' counted twice: in '
+    +esc(monthLabel(mo))+'’s spending and in the project. A renovation’s purchases stay in the renovation.'
+    +tw.map(function(x){
+      return '<div class="renotwin-r">'+x.d+' '+MA[mo.m-1]+' · '+esc(x.cat)+' · <b>'+money(x.amt)+'</b> — '+esc(renoTwinWords(x))
+        +' <button class="btn sm" data-act="renotwinoff" data-mk="'+esc(x.mk)+'" data-ix="'+x.ix+'" data-eid="'+esc(x.eid)
+        +'" data-amt="'+x.amt+'">Take it off the month</button></div>'; }).join('')
+    +'</div></div>';
 }
 
 /* ================= EVENTS ================= */
@@ -49965,6 +50106,15 @@ function _imgLossOk(what){
     snap('charge looks right'); oddOk(b.dataset.id); save(); render();
     toast('Noted — it will not be raised again · ⌘Z to undo','ok');
   }
+  /* ---- a renovation purchase also on a month sheet (renotwins.js, v28.78) ----
+     Its own `if` chain, like every part of this handler — see click.js. */
+  if(act==='renotwinoff'){
+    snap('a renovation purchase off the month');
+    const r=renoTwinOff(b.dataset.mk,Number(b.dataset.ix),b.dataset.eid||'',Number(b.dataset.amt));
+    if(!r.ok){ snapCancel(); toast(r.why,'warn'); render(); }
+    else { save(); render(); toast('Took '+money(r.amt)+' off '+r.cat+', '+r.day+'; it stays in '+r.name+' · ⌘Z to undo','ok'); }
+  }
+
   /* ---- the year-end tax pack (taxpack.js) ----
      Its own `if` chain, like every part of this handler — see click.js. */
   if(act==='packyear'){ S.taxpack={y:Number(b.dataset.y)}; render(); }
@@ -57168,7 +57318,7 @@ function renderOnce(name,fn){
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
     bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
-    BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
+    BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
     historyForget,
