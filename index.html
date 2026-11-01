@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-q8VYbiwExI+PYw7m04UCH2FS6pVvZ3dI5JI/qmBHp8M=' 'sha256-XIHGMGCCNOO8yjRD9S3C+cWSqE3ViBTSkmdiyN3CLtU=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-3ygWI47Pr1wB2av9a38teqNb1niO+pteanzVr3Q6Yns=' 'sha256-XIHGMGCCNOO8yjRD9S3C+cWSqE3ViBTSkmdiyN3CLtU=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -3063,7 +3063,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.76";
+const APP_V="v28.77";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3085,7 +3085,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="efa816b";
+const APP_BUILD="af5f1a1";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -17634,15 +17634,18 @@ function taxFilePack(year){
   ].filter(Boolean).concat(nyFig?jurRows('New York State',nys).concat(jurRows('New York City',nyc)):[]);
   if(nyLines.length) forms.push(isNY?{form:'IT-201 · New York',
     note:'Keyed as the sheet keys it — the IT-201’s own boxes renumber often enough that the '
-      +'labels are the safer key. Direct File hands New York off automatically.'
+      +'labels are the safer key.'
       +(nys&&nyc?' This year is TWO New York returns: the City resident tax is computed on the '
         +'IT-201 as well, and both balances are due.':''),lines:nyLines}
     :{form:'New York figures on this sheet',
       note:'This year’s state is set to '+taxStateWord(year)+'. These are the sheet’s New York figures: they go on a '
         +'New York return only if you also owe New York for this year (as a nonresident, on the IT-203).',lines:nyLines});
+  /* No New York figures on the sheet: the return worked out from New York's own tables (tax/ny-view.js, v28.77). */
+  else if(isNY&&typeof nyPackBlock==='function'){ const nb=nyPackBlock(year); if(nb) forms.push(nb); }
   if(!isNY) forms.push(taxFileStateBlock(R,year));
   /* The disagreements a filer would hit, said before they hit them. */
   const flags=flagsSchA;
+  if(isNY&&nyLines.length&&typeof nyPackCheck==='function'){ const nc=nyPackCheck(year); if(nc) flags.push(nc); }
   const l15=L('1040','15');
   if(total!=null&&l15!=null&&Math.abs(total-l15)>0.02)
     flags.push({what:'The sheet’s own total disagrees with the form’s arithmetic',
@@ -17715,10 +17718,9 @@ function taxFileHtml(){
    +'There is no File button here, and honestly there never can be: e-filing goes through the IRS’s '
    +'MeF gateway, which admits only certified software carrying an EFIN — a credential, not an API. '
    +'That credential is the one thing TurboTax sells that a page in your browser cannot be.<br><br>'
-   +'What the IRS does run is two free doors with no income limit: <b>Direct File</b> '
-   +'(directfile.irs.gov — in a state that takes part, it hands the state return off) and '
-   +'<b>Free File Fillable Forms</b> (the blank official forms, online). This pack is every box either '
-   +'one asks for, computed from the sheet — the filing becomes typing. Or print it beside the paper '
+   +'What the IRS does run, free and with no income limit, is <b>Free File Fillable Forms</b> (the blank official '
+   +'forms, online). This pack is every box it asks for, computed from the sheet — the filing becomes typing. New York '
+   +'takes a paper IT-201 by mail, and its own free e-file where your income qualifies. Or print it beside the paper '
    +'forms; a mailed 1040 is as filed as an e-filed one.<br><br>'
    +'The sheet keeps the old form’s line numbers; these are the official ones. Line numbers drift a '
    +'little year to year — match the label if a number moved. Amounts are exact; the forms accept '
@@ -17794,7 +17796,8 @@ function taxFileStateBlock(R,year){
         household rarely moves, and the year being lived has no return yet;
      5. nothing: the pages say "State" and assume no state's rules.
 
-   What it does NOT do is compute a state's tax from tables. Fifty states'
+   What it does NOT do is compute a state's tax from tables, New York apart (tax/ny-return.js, v28.77, from New
+   York's own figures as PolicyEngine keeps them, each with its source). Fifty states'
    brackets, deductions and credits, year by year, typed by hand, would be the
    kind of list this app has learned not to keep without a source for every
    figure. What is certain is kept: which states tax wages at all. The nine
@@ -18327,6 +18330,7 @@ function taxAdvisorHtml(year){
     +(typeof taxReviewHtml==='function'?taxReviewHtml(year):'')
     +(typeof taxDocsHtml==='function'?taxDocsHtml(year):'')
     +(typeof taxSecondOpinionHtml==='function'?taxSecondOpinionHtml(year):'')
+    +(typeof nyReturnHtml==='function'?nyReturnHtml(year):'')   /* New York, worked out (tax/ny-view.js) */
     +taxYoYHtml(year)
     +dedHtml+cHtml
     +(typeof taxDepCareHtml==='function'?taxDepCareHtml(year):'')
@@ -18570,8 +18574,8 @@ function taxDocsHtml(year){
    like, updating as documents arrive.
 
    WHAT IT DELIBERATELY DOES NOT DO: itemise on its own initiative (the
-   deduction is an input, priced by the Advisor's own comparison), read state
-   tax (the sheets' NYS/NYC tables are the authority there), or handle AMT,
+   deduction is an input, priced by the Advisor's own comparison), work out state
+   tax (New York's is its own second opinion, tax/ny-return.js), or handle AMT,
    which none of the eighteen filed years ever met. Every simplification is
    printed, not silently absorbed. */
 
@@ -18775,7 +18779,7 @@ function taxSecondOpinionHtml(year){
   return '<div class="sheet"><h3>The second opinion</h3>'
     +mut('A federal return computed from first principles — IRS tables kept in the app, income from '
       +'the photographed documents where they exist, the sheet’s inputs where they do not — and laid '
-      +'beside the hand-worked answer. State tax stays the sheet’s; AMT is not attempted, and '
+      +'beside the hand-worked answer. New York’s return is worked out below it; AMT is not attempted, and '
       +'no sheet in this book computes one either — so nothing here can tell you whether a year '
       +'met it. Schedule 2 line 1 on a prepared return is where that answer lives.')
     +'<div class="tblwrap"><table class="tbl tight"><tbody>'+rows+out
@@ -18786,6 +18790,436 @@ function taxSecondOpinionHtml(year){
     +(est.held!=null?'<tr><td>'+(est.owed>0?'Would still owe':'Refund position')+'</td>'
       +'<td class="n num"><b>'+money(Math.abs(est.owed))+'</b></td></tr>':'')
     +'</tbody></table></div></div>';
+}
+
+/* ---- NEW YORK'S OWN FIGURES, YEAR BY YEAR (generated: python3 tools/ny-tables.py; do not edit) ----
+   From PolicyEngine-US f7db273e9110a3d5312dd2cf42d85bd8ef6808b7 (github.com/PolicyEngine/policyengine-us, its published parameters,
+   each citing the IT-201 instructions or the Tax Law: docs/ny-sources.md). Read by tax/ny-return.js
+   through nyP(path, year).
+   A threshold of null is the open top of a schedule; -1e308 its open bottom. */
+const NY_TABLES={"2021":{"local/ny/nyc/tax/income/credits/household/flat_amount":{"b":[],"k":"s"},"local/ny/nyc/tax/income/credits/household/other_per_dependent":{"b":[],"k":"s"},"local/ny/nyc/tax/income/credits/household/separate_per_dependent":{"b":[],"k":"s"},"local/ny/nyc/tax/income/credits/school/fixed/amount":{"hoh":null,"mfj":null,"mfs":null,"qss":null,"single":null},"local/ny/nyc/tax/income/credits/school/fixed/income_limit":null,"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/head_of_household":{"b":[],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/joint":{"b":[],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/separate":{"b":[],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/single":{"b":[],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/surviving_spouse":{"b":[],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/income_limit":null,"local/ny/nyc/tax/income/credits/school/rate_reduction/taxable_income_limit":null,"local/ny/nyc/tax/income/rates/head_of_household":{"b":[[0,0.03078],[14400,0.03762],[30000,0.03819],[60000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/joint":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/separate":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/single":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/surviving_spouse":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"states/ny/tax/income/credits/ctc/amount/minimum":100,"states/ny/tax/income/credits/ctc/amount/percent":0.33,"states/ny/tax/income/credits/ctc/minimum_age":4,"states/ny/tax/income/credits/ctc/post_2024/amount":{"b":[[0,0],[4,0],[17,0]],"k":"s"},"states/ny/tax/income/credits/ctc/post_2024/in_effect":false,"states/ny/tax/income/credits/ctc/post_2024/phase_out/increment":1,"states/ny/tax/income/credits/ctc/post_2024/phase_out/rate":0,"states/ny/tax/income/credits/ctc/post_2024/phase_out/threshold":{"hoh":0,"mfj":0,"mfs":0,"qss":0,"single":0},"states/ny/tax/income/credits/eitc/match":0.3,"states/ny/tax/income/credits/household_credit/non_single/additional":{"b":[[-1e+308,15],[20000,10],[25000,5],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/non_single/base":{"b":[[-1e+308,90],[5000,75],[6000,65],[7000,60],[22000,50],[25000,40],[28000,20],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/single":{"b":[[-1e+308,75],[5000,60],[6000,50],[7000,45],[20000,40],[25000,20],[28000,0]],"k":"s"},"states/ny/tax/income/deductions/itemized/medical/floor":0.1,"states/ny/tax/income/deductions/itemized/phase_out/agi_excess_rate":0.03,"states/ny/tax/income/deductions/itemized/phase_out/deduction_limited_rate":0.8,"states/ny/tax/income/deductions/itemized/phase_out/start":{"hoh":310600,"mfj":338850,"mfs":169400,"qss":338850,"single":282400},"states/ny/tax/income/deductions/itemized/reduction/charitable_deduction_rate":{"b":[[0,0],[1000000,0.5],[10000000,0.25]],"k":"s"},"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/income_threshold":475000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/rate":0.25,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/income_threshold":{"hoh":150000,"mfj":200000,"mfs":100000,"qss":200000,"single":100000},"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/rate":0.25,"states/ny/tax/income/deductions/standard/amount":{"hoh":11200,"mfj":16050,"mfs":8000,"qss":16050,"single":8000},"states/ny/tax/income/exemptions/dependent":1000,"states/ny/tax/income/main/head_of_household":{"b":[[0,0.04],[12800,0.045],[17650,0.0525],[20900,0.059],[32200,0.0597],[107650,0.0633],[269300,0.0685],[1616450,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/joint":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.059],[43000,0.0597],[161550,0.0633],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/separate":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.059],[21400,0.0597],[80650,0.0633],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/single":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.059],[21400,0.0597],[80650,0.0633],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/surviving_spouse":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.059],[43000,0.0597],[161550,0.0633],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/supplemental/in_effect":true,"states/ny/tax/income/supplemental/min_agi":107650,"states/ny/tax/income/supplemental/phase_in_length":50000,"states/ny/tax/income/supplemental/recapture_base/head_of_household":{"b":[[0,0],[269300,742],[1616450,2143],[5000000,47403]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/joint":{"b":[[0,0],[161550,474],[323200,1056],[2155350,2736],[5000000,63086]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/separate":{"b":[[0,0],[215400,526],[1077550,1646],[5000000,31817]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/single":{"b":[[0,0],[215400,526],[1077550,1646],[5000000,31817]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/surviving_spouse":{"b":[[0,0],[161550,474],[323200,1056],[2155350,2736],[5000000,63086]],"k":"s"}},"2022":{"local/ny/nyc/tax/income/credits/household/flat_amount":{"b":[[-1,15],[10000,10],[12500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/other_per_dependent":{"b":[[-1,30],[15000,25],[17500,15],[20000,10],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/separate_per_dependent":{"b":[[-1,15],[15000,13],[17500,8],[20000,5],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/school/fixed/amount":{"hoh":63,"mfj":125,"mfs":63,"qss":125,"single":63},"local/ny/nyc/tax/income/credits/school/fixed/income_limit":250000,"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/head_of_household":{"b":[[0,0.00171],[14400,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/joint":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/separate":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/single":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/surviving_spouse":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/income_limit":500000,"local/ny/nyc/tax/income/credits/school/rate_reduction/taxable_income_limit":500000,"local/ny/nyc/tax/income/rates/head_of_household":{"b":[[0,0.03078],[14400,0.03762],[30000,0.03819],[60000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/joint":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/separate":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/single":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/surviving_spouse":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"states/ny/tax/income/credits/ctc/amount/minimum":100,"states/ny/tax/income/credits/ctc/amount/percent":0.33,"states/ny/tax/income/credits/ctc/minimum_age":4,"states/ny/tax/income/credits/ctc/post_2024/amount":{"b":[[0,0],[4,0],[17,0]],"k":"s"},"states/ny/tax/income/credits/ctc/post_2024/in_effect":false,"states/ny/tax/income/credits/ctc/post_2024/phase_out/increment":1,"states/ny/tax/income/credits/ctc/post_2024/phase_out/rate":0,"states/ny/tax/income/credits/ctc/post_2024/phase_out/threshold":{"hoh":0,"mfj":0,"mfs":0,"qss":0,"single":0},"states/ny/tax/income/credits/eitc/match":0.3,"states/ny/tax/income/credits/household_credit/non_single/additional":{"b":[[-1e+308,15],[20000,10],[25000,5],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/non_single/base":{"b":[[-1e+308,90],[5000,75],[6000,65],[7000,60],[22000,50],[25000,40],[28000,20],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/single":{"b":[[-1e+308,75],[5000,60],[6000,50],[7000,45],[20000,40],[25000,20],[28000,0]],"k":"s"},"states/ny/tax/income/deductions/itemized/medical/floor":0.1,"states/ny/tax/income/deductions/itemized/phase_out/agi_excess_rate":0.03,"states/ny/tax/income/deductions/itemized/phase_out/deduction_limited_rate":0.8,"states/ny/tax/income/deductions/itemized/phase_out/start":{"hoh":319950,"mfj":349000,"mfs":174500,"qss":349000,"single":290850},"states/ny/tax/income/deductions/itemized/reduction/charitable_deduction_rate":{"b":[[0,0],[1000000,0.5],[10000000,0.25]],"k":"s"},"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/income_threshold":475000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/rate":0.25,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/income_threshold":{"hoh":150000,"mfj":200000,"mfs":100000,"qss":200000,"single":100000},"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/rate":0.25,"states/ny/tax/income/deductions/standard/amount":{"hoh":11200,"mfj":16050,"mfs":8000,"qss":16050,"single":8000},"states/ny/tax/income/exemptions/dependent":1000,"states/ny/tax/income/main/head_of_household":{"b":[[0,0.04],[12800,0.045],[17650,0.0525],[20900,0.0585],[107650,0.0625],[269300,0.0685],[1616450,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/joint":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.0585],[161550,0.0625],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/separate":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.0585],[80650,0.0625],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/single":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.0585],[80650,0.0625],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/surviving_spouse":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.0585],[161550,0.0625],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/supplemental/in_effect":true,"states/ny/tax/income/supplemental/min_agi":107650,"states/ny/tax/income/supplemental/phase_in_length":50000,"states/ny/tax/income/supplemental/recapture_base/head_of_household":{"b":[[0,0],[269300,752],[1616450,2368],[5000000,47629]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/joint":{"b":[[0,0],[161550,430],[323200,1076],[2155350,3016],[5000000,63365]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/separate":{"b":[[0,0],[215400,536],[1077550,1829],[5000000,32000]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/single":{"b":[[0,0],[215400,536],[1077550,1829],[5000000,32000]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/surviving_spouse":{"b":[[0,0],[161550,430],[323200,1076],[2155350,3016],[5000000,63365]],"k":"s"}},"2023":{"local/ny/nyc/tax/income/credits/household/flat_amount":{"b":[[-1,15],[10000,10],[12500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/other_per_dependent":{"b":[[-1,30],[15000,25],[17500,15],[20000,10],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/separate_per_dependent":{"b":[[-1,15],[15000,13],[17500,8],[20000,5],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/school/fixed/amount":{"hoh":63,"mfj":125,"mfs":63,"qss":125,"single":63},"local/ny/nyc/tax/income/credits/school/fixed/income_limit":250000,"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/head_of_household":{"b":[[0,0.00171],[14400,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/joint":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/separate":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/single":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/surviving_spouse":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/income_limit":500000,"local/ny/nyc/tax/income/credits/school/rate_reduction/taxable_income_limit":500000,"local/ny/nyc/tax/income/rates/head_of_household":{"b":[[0,0.03078],[14400,0.03762],[30000,0.03819],[60000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/joint":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/separate":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/single":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/surviving_spouse":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"states/ny/tax/income/credits/ctc/amount/minimum":100,"states/ny/tax/income/credits/ctc/amount/percent":0.33,"states/ny/tax/income/credits/ctc/minimum_age":0,"states/ny/tax/income/credits/ctc/post_2024/amount":{"b":[[0,0],[4,0],[17,0]],"k":"s"},"states/ny/tax/income/credits/ctc/post_2024/in_effect":false,"states/ny/tax/income/credits/ctc/post_2024/phase_out/increment":1,"states/ny/tax/income/credits/ctc/post_2024/phase_out/rate":0,"states/ny/tax/income/credits/ctc/post_2024/phase_out/threshold":{"hoh":0,"mfj":0,"mfs":0,"qss":0,"single":0},"states/ny/tax/income/credits/eitc/match":0.3,"states/ny/tax/income/credits/household_credit/non_single/additional":{"b":[[-1e+308,15],[20000,10],[25000,5],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/non_single/base":{"b":[[-1e+308,90],[5000,75],[6000,65],[7000,60],[22000,50],[25000,40],[28000,20],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/single":{"b":[[-1e+308,75],[5000,60],[6000,50],[7000,45],[20000,40],[25000,20],[28000,0]],"k":"s"},"states/ny/tax/income/deductions/itemized/medical/floor":0.1,"states/ny/tax/income/deductions/itemized/phase_out/agi_excess_rate":0.03,"states/ny/tax/income/deductions/itemized/phase_out/deduction_limited_rate":0.8,"states/ny/tax/income/deductions/itemized/phase_out/start":{"hoh":344500,"mfj":375850,"mfs":187900,"qss":375850,"single":313200},"states/ny/tax/income/deductions/itemized/reduction/charitable_deduction_rate":{"b":[[0,0],[1000000,0.5],[10000000,0.25]],"k":"s"},"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/income_threshold":475000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/rate":0.25,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/income_threshold":{"hoh":150000,"mfj":200000,"mfs":100000,"qss":200000,"single":100000},"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/rate":0.25,"states/ny/tax/income/deductions/standard/amount":{"hoh":11200,"mfj":16050,"mfs":8000,"qss":16050,"single":8000},"states/ny/tax/income/exemptions/dependent":1000,"states/ny/tax/income/main/head_of_household":{"b":[[0,0.04],[12800,0.045],[17650,0.0525],[20900,0.055],[107650,0.06],[269300,0.0685],[1616450,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/joint":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.055],[161550,0.06],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/separate":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.055],[80650,0.06],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/single":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.055],[80650,0.06],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/surviving_spouse":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.055],[161550,0.06],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/supplemental/in_effect":true,"states/ny/tax/income/supplemental/min_agi":107650,"states/ny/tax/income/supplemental/phase_in_length":50000,"states/ny/tax/income/supplemental/recapture_base/head_of_household":{"b":[[0,0],[269300,787],[1616450,3076],[5000000,48337]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/joint":{"b":[[0,0],[161550,333],[323200,1140],[2155350,3887],[5000000,64237]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/separate":{"b":[[0,0],[215400,568],[1077550,2399],[5000000,32571]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/single":{"b":[[0,0],[215400,568],[1077550,2399],[5000000,32571]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/surviving_spouse":{"b":[[0,0],[161550,333],[323200,1140],[2155350,3887],[5000000,64237]],"k":"s"}},"2024":{"local/ny/nyc/tax/income/credits/household/flat_amount":{"b":[[-1,15],[10000,10],[12500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/other_per_dependent":{"b":[[-1,30],[15000,25],[17500,15],[20000,10],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/separate_per_dependent":{"b":[[-1,15],[15000,13],[17500,8],[20000,5],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/school/fixed/amount":{"hoh":63,"mfj":125,"mfs":63,"qss":125,"single":63},"local/ny/nyc/tax/income/credits/school/fixed/income_limit":250000,"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/head_of_household":{"b":[[0,0.00171],[14400,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/joint":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/separate":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/single":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/surviving_spouse":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/income_limit":500000,"local/ny/nyc/tax/income/credits/school/rate_reduction/taxable_income_limit":500000,"local/ny/nyc/tax/income/rates/head_of_household":{"b":[[0,0.03078],[14400,0.03762],[30000,0.03819],[60000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/joint":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/separate":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/single":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/surviving_spouse":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"states/ny/tax/income/credits/ctc/amount/minimum":100,"states/ny/tax/income/credits/ctc/amount/percent":0.33,"states/ny/tax/income/credits/ctc/minimum_age":0,"states/ny/tax/income/credits/ctc/post_2024/amount":{"b":[[0,0],[4,0],[17,0]],"k":"s"},"states/ny/tax/income/credits/ctc/post_2024/in_effect":false,"states/ny/tax/income/credits/ctc/post_2024/phase_out/increment":1,"states/ny/tax/income/credits/ctc/post_2024/phase_out/rate":0,"states/ny/tax/income/credits/ctc/post_2024/phase_out/threshold":{"hoh":0,"mfj":0,"mfs":0,"qss":0,"single":0},"states/ny/tax/income/credits/eitc/match":0.3,"states/ny/tax/income/credits/household_credit/non_single/additional":{"b":[[-1e+308,15],[20000,10],[25000,5],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/non_single/base":{"b":[[-1e+308,90],[5000,75],[6000,65],[7000,60],[22000,50],[25000,40],[28000,20],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/single":{"b":[[-1e+308,75],[5000,60],[6000,50],[7000,45],[20000,40],[25000,20],[28000,0]],"k":"s"},"states/ny/tax/income/deductions/itemized/medical/floor":0.1,"states/ny/tax/income/deductions/itemized/phase_out/agi_excess_rate":0.03,"states/ny/tax/income/deductions/itemized/phase_out/deduction_limited_rate":0.8,"states/ny/tax/income/deductions/itemized/phase_out/start":{"hoh":363250,"mfj":396250,"mfs":198100,"qss":396250,"single":330200},"states/ny/tax/income/deductions/itemized/reduction/charitable_deduction_rate":{"b":[[0,0],[1000000,0.5],[10000000,0.25]],"k":"s"},"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/income_threshold":475000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/rate":0.25,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/income_threshold":{"hoh":150000,"mfj":200000,"mfs":100000,"qss":200000,"single":100000},"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/rate":0.25,"states/ny/tax/income/deductions/standard/amount":{"hoh":11200,"mfj":16050,"mfs":8000,"qss":16050,"single":8000},"states/ny/tax/income/exemptions/dependent":1000,"states/ny/tax/income/main/head_of_household":{"b":[[0,0.04],[12800,0.045],[17650,0.0525],[20900,0.055],[107650,0.06],[269300,0.0685],[1616450,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/joint":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.055],[161550,0.06],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/separate":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.055],[80650,0.06],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/single":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.055],[80650,0.06],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/surviving_spouse":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.055],[161550,0.06],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/supplemental/in_effect":true,"states/ny/tax/income/supplemental/min_agi":107650,"states/ny/tax/income/supplemental/phase_in_length":50000,"states/ny/tax/income/supplemental/recapture_base/head_of_household":{"b":[[0,0],[269300,787],[1616450,3076],[5000000,48337]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/joint":{"b":[[0,0],[161550,333],[323200,1140],[2155350,3887],[5000000,64237]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/separate":{"b":[[0,0],[215400,568],[1077550,2399],[5000000,32571]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/single":{"b":[[0,0],[215400,568],[1077550,2399],[5000000,32571]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/surviving_spouse":{"b":[[0,0],[161550,333],[323200,1140],[2155350,3887],[5000000,64237]],"k":"s"}},"2025":{"local/ny/nyc/tax/income/credits/household/flat_amount":{"b":[[-1,15],[10000,10],[12500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/other_per_dependent":{"b":[[-1,30],[15000,25],[17500,15],[20000,10],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/separate_per_dependent":{"b":[[-1,15],[15000,13],[17500,8],[20000,5],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/school/fixed/amount":{"hoh":63,"mfj":125,"mfs":63,"qss":125,"single":63},"local/ny/nyc/tax/income/credits/school/fixed/income_limit":250000,"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/head_of_household":{"b":[[0,0.00171],[14400,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/joint":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/separate":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/single":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/surviving_spouse":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/income_limit":500000,"local/ny/nyc/tax/income/credits/school/rate_reduction/taxable_income_limit":500000,"local/ny/nyc/tax/income/rates/head_of_household":{"b":[[0,0.03078],[14400,0.03762],[30000,0.03819],[60000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/joint":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/separate":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/single":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/surviving_spouse":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"states/ny/tax/income/credits/ctc/amount/minimum":100,"states/ny/tax/income/credits/ctc/amount/percent":0.33,"states/ny/tax/income/credits/ctc/minimum_age":0,"states/ny/tax/income/credits/ctc/post_2024/amount":{"b":[[0,1000],[4,330],[17,0]],"k":"s"},"states/ny/tax/income/credits/ctc/post_2024/in_effect":true,"states/ny/tax/income/credits/ctc/post_2024/phase_out/increment":1000,"states/ny/tax/income/credits/ctc/post_2024/phase_out/rate":16.5,"states/ny/tax/income/credits/ctc/post_2024/phase_out/threshold":{"hoh":75000,"mfj":110000,"mfs":55000,"qss":75000,"single":75000},"states/ny/tax/income/credits/eitc/match":0.3,"states/ny/tax/income/credits/household_credit/non_single/additional":{"b":[[-1e+308,15],[20000,10],[25000,5],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/non_single/base":{"b":[[-1e+308,90],[5000,75],[6000,65],[7000,60],[22000,50],[25000,40],[28000,20],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/single":{"b":[[-1e+308,75],[5000,60],[6000,50],[7000,45],[20000,40],[25000,20],[28000,0]],"k":"s"},"states/ny/tax/income/deductions/itemized/medical/floor":0.1,"states/ny/tax/income/deductions/itemized/phase_out/agi_excess_rate":0.03,"states/ny/tax/income/deductions/itemized/phase_out/deduction_limited_rate":0.8,"states/ny/tax/income/deductions/itemized/phase_out/start":{"hoh":374800,"mfj":408850,"mfs":204400,"qss":408850,"single":340700},"states/ny/tax/income/deductions/itemized/reduction/charitable_deduction_rate":{"b":[[0,0],[1000000,0.5],[10000000,0.25]],"k":"s"},"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/income_threshold":475000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/rate":0.25,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/income_threshold":{"hoh":150000,"mfj":200000,"mfs":100000,"qss":200000,"single":100000},"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/rate":0.25,"states/ny/tax/income/deductions/standard/amount":{"hoh":11200,"mfj":16050,"mfs":8000,"qss":16050,"single":8000},"states/ny/tax/income/exemptions/dependent":1000,"states/ny/tax/income/main/head_of_household":{"b":[[0,0.04],[12800,0.045],[17650,0.0525],[20900,0.055],[107650,0.06],[269300,0.0685],[1616450,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/joint":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.055],[161550,0.06],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/separate":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.055],[80650,0.06],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/single":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.055],[80650,0.06],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/surviving_spouse":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.055],[161550,0.06],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/supplemental/in_effect":true,"states/ny/tax/income/supplemental/min_agi":107650,"states/ny/tax/income/supplemental/phase_in_length":50000,"states/ny/tax/income/supplemental/recapture_base/head_of_household":{"b":[[0,0],[269300,787],[1616450,3076],[5000000,48337]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/joint":{"b":[[0,0],[161550,333],[323200,1140],[2155350,3887],[5000000,64237]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/separate":{"b":[[0,0],[215400,568],[1077550,2399],[5000000,32571]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/single":{"b":[[0,0],[215400,568],[1077550,2399],[5000000,32571]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/surviving_spouse":{"b":[[0,0],[161550,333],[323200,1140],[2155350,3887],[5000000,64237]],"k":"s"}},"2026":{"local/ny/nyc/tax/income/credits/household/flat_amount":{"b":[[-1,15],[10000,10],[12500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/other_per_dependent":{"b":[[-1,30],[15000,25],[17500,15],[20000,10],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/separate_per_dependent":{"b":[[-1,15],[15000,13],[17500,8],[20000,5],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/school/fixed/amount":{"hoh":63,"mfj":125,"mfs":63,"qss":125,"single":63},"local/ny/nyc/tax/income/credits/school/fixed/income_limit":250000,"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/head_of_household":{"b":[[0,0.00171],[14400,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/joint":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/separate":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/single":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/surviving_spouse":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/income_limit":500000,"local/ny/nyc/tax/income/credits/school/rate_reduction/taxable_income_limit":500000,"local/ny/nyc/tax/income/rates/head_of_household":{"b":[[0,0.03078],[14400,0.03762],[30000,0.03819],[60000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/joint":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/separate":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/single":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/surviving_spouse":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"states/ny/tax/income/credits/ctc/amount/minimum":100,"states/ny/tax/income/credits/ctc/amount/percent":0.33,"states/ny/tax/income/credits/ctc/minimum_age":0,"states/ny/tax/income/credits/ctc/post_2024/amount":{"b":[[0,1000],[4,500],[17,0]],"k":"s"},"states/ny/tax/income/credits/ctc/post_2024/in_effect":true,"states/ny/tax/income/credits/ctc/post_2024/phase_out/increment":1000,"states/ny/tax/income/credits/ctc/post_2024/phase_out/rate":16.5,"states/ny/tax/income/credits/ctc/post_2024/phase_out/threshold":{"hoh":75000,"mfj":110000,"mfs":55000,"qss":75000,"single":75000},"states/ny/tax/income/credits/eitc/match":0.3,"states/ny/tax/income/credits/household_credit/non_single/additional":{"b":[[-1e+308,15],[20000,10],[25000,5],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/non_single/base":{"b":[[-1e+308,90],[5000,75],[6000,65],[7000,60],[22000,50],[25000,40],[28000,20],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/single":{"b":[[-1e+308,75],[5000,60],[6000,50],[7000,45],[20000,40],[25000,20],[28000,0]],"k":"s"},"states/ny/tax/income/deductions/itemized/medical/floor":0.1,"states/ny/tax/income/deductions/itemized/phase_out/agi_excess_rate":0.03,"states/ny/tax/income/deductions/itemized/phase_out/deduction_limited_rate":0.8,"states/ny/tax/income/deductions/itemized/phase_out/start":{"hoh":374800,"mfj":408850,"mfs":204400,"qss":408850,"single":340700},"states/ny/tax/income/deductions/itemized/reduction/charitable_deduction_rate":{"b":[[0,0],[1000000,0.5],[10000000,0.25]],"k":"s"},"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/income_threshold":475000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/rate":0.25,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/income_threshold":{"hoh":150000,"mfj":200000,"mfs":100000,"qss":200000,"single":100000},"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/rate":0.25,"states/ny/tax/income/deductions/standard/amount":{"hoh":11200,"mfj":16050,"mfs":8000,"qss":16050,"single":8000},"states/ny/tax/income/exemptions/dependent":1000,"states/ny/tax/income/main/head_of_household":{"b":[[0,0.039],[12800,0.044],[17650,0.0515],[20900,0.054],[107650,0.059],[269300,0.0685],[1616450,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/joint":{"b":[[0,0.039],[17150,0.044],[23600,0.0515],[27900,0.054],[161550,0.059],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/separate":{"b":[[0,0.039],[8500,0.044],[11700,0.0515],[13900,0.054],[80650,0.059],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/single":{"b":[[0,0.039],[8500,0.044],[11700,0.0515],[13900,0.054],[80650,0.059],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/surviving_spouse":{"b":[[0,0.039],[17150,0.044],[23600,0.0515],[27900,0.054],[161550,0.059],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/supplemental/in_effect":true,"states/ny/tax/income/supplemental/min_agi":107650,"states/ny/tax/income/supplemental/phase_in_length":50000,"states/ny/tax/income/supplemental/recapture_base/head_of_household":{"b":[[0,0],[269300,787],[1616450,3346],[5000000,48606]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/joint":{"b":[[0,0],[161550,333],[323200,1140],[2155350,4211],[5000000,64561]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/separate":{"b":[[0,0],[215400,567],[1077550,2614],[5000000,32786]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/single":{"b":[[0,0],[215400,567],[1077550,2614],[5000000,32786]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/surviving_spouse":{"b":[[0,0],[161550,333],[323200,1140],[2155350,4211],[5000000,64561]],"k":"s"}}};
+const NY_TABLE_SOURCE={sha:"f7db273e9110a3d5312dd2cf42d85bd8ef6808b7",years:[2021, 2022, 2023, 2024, 2025, 2026]};
+/* ---- THE NEW YORK RETURN, WORKED OUT (v28.77) ----
+
+   Until now New York was read, never computed: every year's IT-201 figures came off the household's own hand-worked
+   sheet, and a year without them had no New York return at all ("this app does not work out a state's tax"). This
+   works the resident return (Form IT-201) from New York's own figures, year by year (tax/ny-tables.js, generated by
+   tools/ny-tables.py from PolicyEngine-US's published parameters, each citing the IT-201 instructions or the Tax Law):
+
+     19-33  federal AGI, New York's additions and subtractions, New York AGI
+     34-37  the standard deduction or New York's itemized deduction (IT-196, pre-2018 federal rules, no SALT cap, no
+            income tax, medical over 10%, and New York's own limits on high incomes), $1,000 a dependent
+     39     the rate schedule, and the tax computation worksheets that take back the lower brackets' benefit once New
+            York AGI passes $107,650 (for this household, what made it 6.85% of everything)
+     40-46  the household credit
+     47-54  New York City's resident tax and its household credit, for a city resident
+     63-70  the Empire State child credit (both its pre-2025 and its 2025 forms), New York's EIC where the federal one
+            is known, the NYC school tax credit (fixed and rate-reduction amounts)
+     72-80  withholding, estimated payments, refund or balance due
+
+   Pure functions over plain inputs; tax/ny-inputs.js gathers the inputs from the book and tax/ny-view.js shows the
+   result. WHAT IT DOES NOT DO is said where it applies (nyReturn's `open`), never absorbed: a part-year or nonresident
+   return (IT-203), Yonkers, the MCTMT, the child and dependent care credit, the college tuition credit, other credits.
+   Below $65,000 of taxable income the instructions use a printed table of $50 bands, which can differ from the
+   schedule worked here by a few dollars. */
+const NY_STATUS={single:'single',mfj:'joint',mfs:'separate',hoh:'head_of_household',qss:'surviving_spouse'};
+/* Tax Law §612(c)(32): contributions to New York's own 529 plan, up to $10,000 on a joint return, $5,000 otherwise
+   (the same figure the ny-529 play prices). */
+const NY_529_CAP={mfj:10000,qss:5000,single:5000,hoh:5000,mfs:5000};
+/* The federal child credit New York's Empire State child credit matched before 2025: IRC §24 as it stood before
+   P.L. 115-97 — $1,000 a child under 17, less $50 for each $1,000 (or part) of AGI over $110,000 on a joint return,
+   $55,000 married separately, $75,000 otherwise. Fixed by statute, not indexed. */
+const NY_PRE_TCJA_CTC={per:1000,step:50,thr:{mfj:110000,mfs:55000,single:75000,hoh:75000,qss:75000}};
+function nyYearOf(y){ const n=Number(String(y).slice(0,4)); return NY_TABLES[String(n)]?n:null; }
+function nyP(path,year){
+  const T=NY_TABLES[String(year)];
+  if(!T||!Object.prototype.hasOwnProperty.call(T,path)) throw new Error('No New York figure '+path+' for '+year+'.');
+  return T[path];
+}
+function nyStatus(f){ return NY_STATUS[f]?f:'single'; }
+/* A marginal schedule: each band's rate on the part of x inside it. Full precision; rounded by the caller. */
+function nyMarg(scale,x){
+  const b=scale.b; let tax=0;
+  for(let i=0;i<b.length;i++){
+    const lo=b[i][0], hi=i+1<b.length?b[i+1][0]:Infinity;
+    if(x<=lo) break;
+    tax+=(Math.min(x,hi)-lo)*b[i][1];
+  }
+  return tax;
+}
+/* A single-amount schedule: the amount of the band x falls in. `right`: "over … but not over" (the band's top is in it). */
+function nySingle(scale,x,right){
+  let out=0;
+  scale.b.forEach(function(r){ if(right?x>r[0]:x>=r[0]) out=r[1]; });
+  return out;
+}
+function nyMainTax(ti,y,f){ return nyMarg(nyP('states/ny/tax/income/main/'+NY_STATUS[nyStatus(f)],y),Math.max(0,ti)); }
+/* THE TAX COMPUTATION WORKSHEETS (IT-201 instructions, "New York AGI of more than $107,650"). Past that, the benefit of
+   the lower brackets is taken back. Taxable income falls in a tier (the recapture base's own thresholds: $161,550,
+   $323,200, $2,155,350 and $5,000,000 on a joint return); the tier has a flat rate, the schedule's rate at its top.
+   Once New York AGI is $50,000 past the tier's floor (or past $107,650 for the first) the tax is simply taxable income
+   times that rate, which is what this household's sheet works ("02. x 6.85%"). Between, the worksheet's own
+   arithmetic: the schedule, plus the tier's recapture base, plus a share (the AGI over the floor / $50,000, rounded to
+   four places) of what is left of the flat amount, worked exactly. Above the schedule's last threshold ($25,000,000)
+   all of it is at the top rate. PolicyEngine rounds that last part to a whole-dollar constant, so its figures can sit
+   a few dimes off these; the worksheet's is the one on the form. */
+function nyRecaptureTax(ti,agi,y,f){
+  const s=NY_STATUS[nyStatus(f)], P='states/ny/tax/income/';
+  const sched=nyP(P+'main/'+s,y).b, S=nyMainTax(ti,y,f), last=sched[sched.length-1];
+  if(!nyP(P+'supplemental/in_effect',y)||!(agi>nyP(P+'supplemental/min_agi',y))) return S;
+  if(agi>last[0]) return ti*last[1];
+  const tiers=nyP(P+'supplemental/recapture_base/'+s,y).b;
+  let k=0; tiers.forEach(function(r,i){ if(ti>r[0]&&r[0]>0) k=i; });
+  const lower=tiers[k][0], upper=k+1<tiers.length?tiers[k+1][0]:null;
+  const at=upper!=null?upper-0.01:ti; let rate=sched[0][1];
+  sched.forEach(function(r){ if(at>=r[0]) rate=r[1]; });
+  const flat=ti*rate, over=agi-Math.max(lower,nyP(P+'supplemental/min_agi',y)), len=nyP(P+'supplemental/phase_in_length',y);
+  if(over>=len) return flat;
+  const base=tiers[k][1], frac=Math.round(Math.max(0,over)/len*10000)/10000;
+  return S+base+(flat-S-base)*frac;
+}
+/* PolicyEngine's ny_supplemental_tax: the worksheets' tax less the schedule's (`main`, as its tests give it). */
+function nySupplemental(ti,agi,y,f,main){ return nyRecaptureTax(ti,agi,y,f)-(main==null?nyMainTax(ti,y,f):main); }
+/* IT-201 line 39: the tax on line 38. */
+function nyStateTax(ti,agi,y,f){ return r2v(nyRecaptureTax(Math.max(0,ti),agi,y,f)); }
+function nycTax(ti,y,f){ return r2v(nyMarg(nyP('local/ny/nyc/tax/income/rates/'+NY_STATUS[nyStatus(f)],y),Math.max(0,ti))); }
+function nyStdDeduction(y,f){ return nyP('states/ny/tax/income/deductions/standard/amount',y)[nyStatus(f)]; }
+/* IT-196: the federal itemized deductions as they stood before 2018 (no SALT cap and no income tax; medical over 10% of
+   AGI), then New York's own limits: the 80%/3% limitation over the federal AGI threshold, the 25% + 25% reduction as New
+   York AGI passes the lower and the $475,000 thresholds, and over $1,000,000 a deduction that is only a share of the
+   charitable gifts. `it`: {interest, propertyTax, charity, medical (expenses), investmentInterest}. */
+function nyItemized(it,fagi,nyagi,y,f){
+  const P='states/ny/tax/income/deductions/itemized/', s=nyStatus(f), n=function(v){ return Number(v)||0; };
+  const medical=Math.max(0,n(it.medical)-nyP(P+'medical/floor',y)*Math.max(0,fagi));
+  const max=n(it.interest)+n(it.propertyTax)+n(it.charity)+medical+n(it.investmentInterest);
+  const charRate=nySingle(nyP(P+'reduction/charitable_deduction_rate',y),nyagi);
+  if(nyagi>nyP(P+'reduction/charitable_deduction_rate',y).b[1][0])
+    return {max:r2v(max),medical:r2v(medical),phaseOut:0,reduction:0,total:r2v(n(it.charity)*charRate),rule:'charity'};
+  const phaseOut=nyItemizedPhaseOut(max,medical+n(it.investmentInterest),fagi,y,f);
+  const lowT=nyP(P+'reduction/incremental/lower/income_threshold',y)[s];
+  const reduction=nyagi>lowT?nyItemizedStep('lower',max,nyagi,y,f)+nyItemizedStep('higher',max,nyagi,y,f):0;
+  return {max:r2v(max),medical:r2v(medical),phaseOut:r2v(phaseOut),reduction:r2v(reduction),
+    total:r2v(Math.max(0,max-phaseOut-reduction)),rule:reduction>0?'reduced':phaseOut>0?'limited':'full'};
+}
+/* IT-196 line 40's worksheet: over the federal AGI threshold, less the smaller of 80% of what is limited (all but
+   medical, investment interest and casualty) and 3% of the AGI over it. */
+function nyItemizedPhaseOut(max,notLimited,fagi,y,f){
+  const P='states/ny/tax/income/deductions/itemized/phase_out/', start=nyP(P+'start',y)[nyStatus(f)];
+  if(!(fagi>start)) return 0;
+  return Math.min(Math.max(0,max-notLimited)*nyP(P+'deduction_limited_rate',y),(fagi-start)*nyP(P+'agi_excess_rate',y));
+}
+/* IT-196's reductions as New York AGI rises: 25% of the deduction phased in over $50,000 past the lower threshold
+   (`w`='lower', by filing status), and another 25% past $475,000 (`w`='higher'). */
+function nyItemizedStep(w,max,nyagi,y,f){
+  const P='states/ny/tax/income/deductions/itemized/reduction/incremental/'+w+'/';
+  const thrV=nyP(P+'income_threshold',y), thr=typeof thrV==='object'?thrV[nyStatus(f)]:thrV;
+  return max*nyP(P+'rate',y)*Math.min(nyP(P+'numerator',y),Math.max(0,nyagi-thr))/nyP(P+'denominator',y);
+}
+/* IT-201 line 40 (and 48 for the city): small amounts for small incomes, by federal AGI and household size. */
+function nyHouseholdCredit(fagi,f,size,y){
+  const P='states/ny/tax/income/credits/household_credit/', s=nyStatus(f);
+  if(s==='single') return nySingle(nyP(P+'single',y),fagi,true);
+  const tot=nySingle(nyP(P+'non_single/base',y),fagi,true)+nySingle(nyP(P+'non_single/additional',y),fagi,true)*Math.max(0,size-1);
+  return s==='mfs'?Math.ceil(tot/2):tot;
+}
+function nycHouseholdCredit(fagi,f,size,y){
+  const P='local/ny/nyc/tax/income/credits/household/', s=nyStatus(f);
+  if(s==='single') return nySingle(nyP(P+'flat_amount',y),fagi,true);
+  return nySingle(nyP(P+(s==='mfs'?'separate_per_dependent':'other_per_dependent'),y),fagi,true)*size;
+}
+/* IT-213, the Empire State child credit. From 2025 a credit of its own: so much a child by age, less $16.50 for each whole
+   $1,000 of federal AGI over the threshold. Before, 33% of the federal credit worked under the pre-2018 law, or $100 a
+   child below that law's threshold, whichever is more. `ages`: each dependent's age at the end of the year. */
+function nyEmpireChildCredit(fagi,f,ages,y){
+  const P='states/ny/tax/income/credits/ctc/', s=nyStatus(f), minAge=nyP(P+'minimum_age',y);
+  if(nyP(P+'post_2024/in_effect',y)){
+    const sc=nyP(P+'post_2024/amount',y), cap=sc.b[sc.b.length-1][0];
+    const base=ages.filter(function(a){ return a>=minAge&&a<cap; }).reduce(function(t,a){ return t+nySingle(sc,a); },0);
+    if(!base) return {amount:0,base:0,phaseOut:0,kids:0,post:true};
+    const over=Math.max(0,fagi-nyP(P+'post_2024/phase_out/threshold',y)[s]);
+    const po=Math.floor(over/nyP(P+'post_2024/phase_out/increment',y))*nyP(P+'post_2024/phase_out/rate',y);
+    return {amount:r2v(Math.max(0,base-po)),base:base,phaseOut:r2v(po),kids:ages.filter(function(a){ return a>=minAge&&a<cap; }).length,post:true};
+  }
+  const fedKids=ages.filter(function(a){ return a<17; }).length, nyKids=ages.filter(function(a){ return a<17&&a>=minAge; }).length;
+  if(!nyKids) return {amount:0,base:0,phaseOut:0,kids:0};
+  const thr=NY_PRE_TCJA_CTC.thr[s], over=Math.max(0,fagi-thr);
+  const fed=Math.max(0,NY_PRE_TCJA_CTC.per*fedKids-NY_PRE_TCJA_CTC.step*Math.ceil(over/1000));
+  const match=fed*(nyKids/fedKids)*nyP(P+'amount/percent',y);
+  const min=fagi<thr?nyP(P+'amount/minimum',y)*nyKids:0;
+  return {amount:r2v(Math.max(match,min)),base:r2v(fed),phaseOut:0,kids:nyKids};
+}
+/* IT-201 lines 69 and 69a: the NYC school tax credit, a fixed amount up to $250,000 of income and a rate-reduction amount
+   on city taxable income up to $500,000. `income`: federal AGI less IRA distributions in it. */
+function nycSchoolCredit(income,nycTi,f,y){
+  const P='local/ny/nyc/tax/income/credits/school/', s=nyStatus(f);
+  const fixed=income<=nyP(P+'fixed/income_limit',y)?nyP(P+'fixed/amount',y)[s]:0;
+  const rr=income<=nyP(P+'rate_reduction/income_limit',y)&&nycTi<=nyP(P+'rate_reduction/taxable_income_limit',y)
+    ?r2v(nyMarg(nyP(P+'rate_reduction/amount/'+NY_STATUS[s],y),Math.max(0,nycTi))):0;
+  return {fixed:fixed,rateReduction:rr};
+}
+/* THE RETURN, LINE BY LINE (IT-201, the 2024-2025 line numbers; they drift a little year to year). `inp`:
+     year, filing, resident:true (a full-year resident; anything else is IT-203 and refused), nyc (a city resident),
+     fagi (line 19), adds:{muniOther,other}, subs:{refunds,ss,usGovt,pension,c529,other},
+     itemized:{interest,propertyTax,charity,medical,investmentInterest} or null, deps:[ages], size (people on the return),
+     schoolIncome (federal AGI less IRA distributions, for the school credit; fagi when unknown),
+     fedEic (the federal EIC, when known), salesTax, withheld:{nys,nyc}, estimated (state and city together, as one
+     IT-2105 pays both). Returns {lines:{no:value}, label, open:[what is not worked out, and why], parts}. */
+function nyReturn(inp){
+  const y=nyYearOf(inp.year), f=nyStatus(inp.filing);
+  if(!y) return {none:'New York’s figures run '+NY_TABLE_SOURCE.years[0]+' to '+NY_TABLE_SOURCE.years[NY_TABLE_SOURCE.years.length-1]+'; '+inp.year+' is outside them.'};
+  if(inp.resident===false) return {none:'A part-year or nonresident return is Form IT-203, which this does not work out.'};
+  const n=function(v){ return Number(v)||0; }, L={}, open=[], A=inp.adds||{}, S=inp.subs||{};
+  L['19']=r2v(n(inp.fagi)); L['19a']=L['19'];
+  L['20']=r2v(n(A.muniOther)); L['23']=r2v(n(A.other));
+  L['24']=r2v(L['19a']+L['20']+L['23']);
+  L['25']=r2v(n(S.refunds)); L['27']=r2v(n(S.ss)); L['28']=r2v(n(S.usGovt)); L['29']=r2v(n(S.pension));
+  L['30']=r2v(Math.min(n(S.c529),NY_529_CAP[f])); L['31']=r2v(n(S.other));
+  L['32']=r2v(L['25']+L['27']+L['28']+L['29']+L['30']+L['31']);
+  L['33']=r2v(L['24']-L['32']);
+  const std=nyStdDeduction(y,f), it=inp.itemized?nyItemized(inp.itemized,L['19a'],L['33'],y,f):null;
+  const itemize=!!(it&&it.total>std);
+  L['34']=itemize?it.total:std;
+  L['35']=r2v(L['33']-L['34']);
+  const deps=(inp.deps||[]).length;
+  L['36']=r2v(deps*nyP('states/ny/tax/income/exemptions/dependent',y));
+  L['37']=r2v(Math.max(0,L['35']-L['36'])); L['38']=L['37'];
+  L['39']=nyStateTax(L['38'],L['33'],y,f);
+  const size=inp.size||((f==='mfj'||f==='qss'?2:1)+deps);
+  L['40']=r2v(Math.min(L['39'],nyHouseholdCredit(L['19a'],f,size,y)));
+  L['43']=L['40']; L['44']=r2v(Math.max(0,L['39']-L['43'])); L['46']=L['44'];
+  if(inp.nyc){
+    L['47a']=L['38']; L['47']=nycTax(L['47a'],y,f);
+    L['48']=r2v(Math.min(L['47'],nycHouseholdCredit(L['19a'],f,size,y)));
+    L['49']=r2v(Math.max(0,L['47']-L['48'])); L['52']=L['49']; L['54']=L['52'];
+  }
+  L['58']=inp.nyc?L['54']:0;
+  L['59']=r2v(n(inp.salesTax));
+  L['61']=r2v(L['46']+L['58']+L['59']); L['62']=L['61'];
+  const ages=inp.deps||[], ec=nyEmpireChildCredit(L['19a'],f,ages,y);
+  L['63']=ec.amount;
+  if(inp.fedEic!=null) L['65']=r2v(Math.max(0,n(inp.fedEic)*nyP('states/ny/tax/income/credits/eitc/match',y)-L['40']));
+  else if(L['19a']<75000) open.push({line:'65',what:'New York’s earned income credit',why:'It is 30% of the federal credit, which this book does not work out; on an income this size there may be one.'});
+  if(inp.nyc){
+    const sc=nycSchoolCredit(inp.schoolIncome!=null?n(inp.schoolIncome):L['19a'],L['47a'],f,y);
+    L['69']=sc.fixed; L['69a']=sc.rateReduction;
+    if(L['19a']<75000) open.push({line:'70',what:'New York City’s earned income credit',why:'A share of the federal credit, which this book does not work out.'});
+  }
+  L['72']=r2v(n(inp.withheld&&inp.withheld.nys)); L['73']=inp.nyc?r2v(n(inp.withheld&&inp.withheld.nyc)):0;
+  L['75']=r2v(n(inp.estimated));
+  L['76']=r2v(['63','65','69','69a','72','73','75'].reduce(function(t,k){ return t+n(L[k]); },0));
+  const diff=r2v(L['76']-L['61']);
+  if(diff>=0) L['77']=diff; else L['80']=r2v(-diff);
+  if(ages.some(function(a){ return a<13; })) open.push({line:'64',what:'The child and dependent care credit (IT-216)',
+    why:'For childcare paid so you could work, New York’s share of the credit, worked out on its own form.'});
+  return {year:y,filing:f,lines:L,open:open,
+    parts:{std:std,itemized:it,itemize:itemize,escc:ec,
+      recapture:r2v(L['39']-r2v(nyMainTax(L['38'],y,f))),schedule:r2v(nyMainTax(L['38'],y,f))}};
+}
+/* What each line is called, for the pack and the page. */
+const NY_LINE_LABEL={'19':'Federal adjusted gross income','19a':'Recomputed federal adjusted gross income',
+  '20':'Interest on other states’ and their localities’ bonds','23':'Other additions (IT-225)','24':'New York total',
+  '25':'Taxable refunds of state and local income taxes','27':'Taxable Social Security','28':'Interest on U.S. government bonds',
+  '29':'Pension and annuity income exclusion','30':'New York 529 college savings deduction','31':'Other subtractions (IT-225)',
+  '32':'Total subtractions','33':'New York adjusted gross income','34':'Standard or itemized deduction','35':'Line 33 less line 34',
+  '36':'Dependent exemptions','37':'Taxable income','38':'Taxable income (line 37)','39':'New York State tax on line 38',
+  '40':'New York State household credit','43':'Total credits','44':'Line 39 less line 43','46':'Total New York State taxes',
+  '47a':'New York City taxable income','47':'New York City resident tax','48':'New York City household credit',
+  '49':'Line 47 less line 48','52':'New York City taxes','54':'New York City taxes after credits','58':'Total New York City taxes',
+  '59':'Sales or use tax','61':'Total taxes','62':'Total taxes (line 61)','63':'Empire State child credit',
+  '65':'New York State earned income credit','69':'NYC school tax credit (fixed amount)','69a':'NYC school tax credit (rate reduction amount)',
+  '72':'New York State tax withheld','73':'New York City tax withheld','75':'Estimated tax payments','76':'Total payments',
+  '77':'Overpayment','80':'Amount you owe'};
+
+/* ---- WHAT THE NEW YORK RETURN IS WORKED FROM (v28.77) ----
+   nyReturn (tax/ny-return.js) takes plain inputs; this finds them in the book, each saying where it came from, and
+   keeps the few answers only the household can give (DB.taxny[year], in the book, so every device has them):
+   whether they lived in New York City, what went into New York's 529 plan, how much of the year's tax-free interest
+   was another state's bonds, use tax owed on untaxed purchases, other additions and subtractions, and the federal
+   earned income credit where there was one. Everything else is the book's own: federal AGI from the year's sheet (or,
+   for a year with no sheet yet, the federal return this app works out itself), U.S. Treasury interest from the
+   1099-INTs' box 3, the itemized amounts the deduction plays already gather (mortgage interest, property tax,
+   charity, medical), the dependents from the profile, withholding from the W-2s and estimated payments from the log. */
+const NY_ANSWERS={
+  nyc:{kind:'bool',label:'Lived in New York City all year'},
+  c529:{kind:'money',label:'Put into New York’s 529 college savings plan'},
+  muniOther:{kind:'money',label:'Tax-free interest that came from other states’ bonds'},
+  salesTax:{kind:'money',label:'Use tax owed on purchases nobody charged New York sales tax on'},
+  otherAdds:{kind:'money',label:'Other New York additions (IT-225)'},
+  otherSubs:{kind:'money',label:'Other New York subtractions (IT-225)'},
+  fedEic:{kind:'money',label:'Federal earned income credit, if any'}};
+function nyAnswers(year){
+  const T=DB.taxny&&typeof DB.taxny==='object'&&!Array.isArray(DB.taxny)?DB.taxny:{};
+  const a=T[String(Number(String(year).slice(0,4)))];
+  return a&&typeof a==='object'&&!Array.isArray(a)?a:{};
+}
+function nyAnswerSet(year,field,raw){
+  const q=NY_ANSWERS[field], y=Number(String(year).slice(0,4));
+  if(!q||!Object.prototype.hasOwnProperty.call(NY_ANSWERS,field)) return {ok:false,why:'No such answer.'};
+  if(!nyYearOf(y)) return {ok:false,why:'New York’s figures do not cover '+y+'.'};
+  const t=String(raw==null?'':raw).trim().replace(/[$,\s]/g,'');
+  let v;
+  if(q.kind==='bool') v=t===''?undefined:(t==='yes'||t==='true'||t==='on');
+  else if(t==='') v=undefined;
+  else { v=Number(t); if(!isFinite(v)||v<0||v>1e9) return {ok:false,why:'An amount in dollars, please.'}; v=r2v(v); }
+  const T=DB.taxny&&typeof DB.taxny==='object'&&!Array.isArray(DB.taxny)?DB.taxny:(DB.taxny={});
+  const a=Object.assign({},T[String(y)]||{});
+  if(v===undefined) delete a[field]; else a[field]=v;
+  if(Object.keys(a).length) T[String(y)]=a; else delete T[String(y)];
+  if(!Object.keys(T).length) delete DB.taxny;
+  return {ok:true,v:v};
+}
+/* Whether the household lived in the city that year: their answer; else the year's sheet (an NYC Due) or its W-2s
+   (a box 20 locality that is the city); else no. */
+function nyCityFor(year){
+  const a=nyAnswers(year);
+  if(typeof a.nyc==='boolean') return {nyc:a.nyc,src:'your answer'};
+  const R=taxReturn(year), P=function(k){ return R.pairs[k]==null?null:R.pairs[k]; };
+  if(P('NYC Due')!=null&&P('NYC Owed')!=null) return {nyc:true,src:'the sheet'};
+  const y=Number(String(year).slice(0,4));
+  const w2=(typeof taxDocsFor==='function'?taxDocsFor(y):[]).filter(function(d){ return d&&d.kind==='W-2'; });
+  if(w2.some(function(d){ return /\b(NYC|N\.?Y\.?C\.?|NEW YORK CITY|CITY OF N)/i.test(String(d.locality||'')); }))
+    return {nyc:true,src:'a W-2’s locality'};
+  return {nyc:false,src:'nothing says so'};
+}
+function nyInputs(year){
+  const y=Number(String(year).slice(0,4)), R=taxReturn(year), a=nyAnswers(y), src={};
+  const docs=typeof taxDocsFor==='function'?taxDocsFor(y):[];
+  const sum=function(ds,k){ return r2v(ds.reduce(function(s,d){ return s+(Number(d.boxes&&d.boxes[k])||0); },0)); };
+  const fil=taxFilingFor(year).filing;
+  /* Federal AGI: the sheet's own line, else the federal return worked out here (tax/estimate.js). */
+  let fagi=R.sum.agi; src.fagi='the sheet';
+  if(fagi==null&&typeof taxFedEstimate==='function'){
+    const e=taxFedEstimate(taxEstimateInputs(year)); if(e){ fagi=e.agi; src.fagi='the federal return worked out here'; } }
+  if(fagi==null){ fagi=0; src.fagi='nothing found'; }
+  const ints=docs.filter(function(d){ return d.kind==='1099-INT'; });
+  const usGovt=ints.length?sum(ints,'3'):0; src.usGovt=ints.length?'1099-INT box 3':'no 1099-INT';
+  const exempt=ints.length?sum(ints,'8'):0;
+  /* Itemized amounts: what the deduction plays already gather (tax/facts.js). */
+  let F=null; try{ F=taxFacts(year); }catch(e){ F=null; }
+  /* Nothing recorded is no itemized deduction to weigh, not one of $0. */
+  const itemized=F&&[F.mort,F.prop,F.charity,F.medical].some(function(v){ return Number(v)>0; })
+    ?{interest:F.mort||0,propertyTax:F.prop||0,charity:F.charity||0,medical:F.medical||0,investmentInterest:0}:null;
+  src.itemized=itemized?'the sheet, the loan and the logs':'none recorded';
+  const prof=taxProfile();
+  const ages=(prof.deps||[]).filter(function(d){ return Number(d.born)<=y; }).map(function(d){ return y-Number(d.born); });
+  /* Withholding: W-2 box 17 for New York (box 15 NY or blank), box 19 for a city locality; the sheet's own figures
+     where no W-2 is in. */
+  const w2=docs.filter(function(d){ return d&&d.kind==='W-2'; });
+  const nyW2=w2.filter(function(d){ const s=String(d.state||(d.boxes||{})['15']||'').trim().toUpperCase().slice(0,2); return !s||s==='NY'; });
+  const P=function(k){ return R.pairs[k]==null?null:R.pairs[k]; };
+  const held={nys:nyW2.length?sum(nyW2,'17'):(P('NYS Withheld')||0),
+    nyc:nyW2.length?sum(nyW2.filter(function(d){ return /NYC|NEW YORK CITY|CITY OF N/i.test(String(d.locality||'')); }),'19'):(P('NYC Withheld')||0)};
+  src.withheld=nyW2.length?'the W-2s':'the sheet';
+  const est=typeof taxEstPaySummary==='function'?taxEstPaySummary(y):{state:0,city:0};
+  const city=nyCityFor(y);
+  const inp={year:y,filing:fil,resident:true,nyc:city.nyc,fagi:fagi,
+    adds:{muniOther:a.muniOther||0,other:a.otherAdds||0},
+    subs:{usGovt:usGovt,c529:a.c529||0,other:a.otherSubs||0},
+    itemized:itemized,deps:ages,schoolIncome:fagi,fedEic:a.fedEic!=null?a.fedEic:null,salesTax:a.salesTax||0,
+    withheld:held,estimated:r2v((est.state||0)+(est.city||0))};
+  return {inp:inp,src:src,city:city,exempt:exempt,answers:a};
+}
+/* The computed return beside the sheet's own figures, for a year the sheet worked: the tables on the sheet's own
+   taxable income (a check on the arithmetic alone), and the whole return from AGI down (a check on the deduction too). */
+function nySecondOpinion(year){
+  const g=nyInputs(year), out=nyReturn(g.inp);
+  if(out.none) return {none:out.none,g:g};
+  const R=taxReturn(year), L=R.L, P=function(k){ return R.pairs[k]==null?null:R.pairs[k]; };
+  const sheetTi=L('IT-201','37')!=null?L('IT-201','37'):L('IT-201 Tax Computation','02');
+  const sheetAgi=L('IT-201 Tax Computation','01')!=null?L('IT-201 Tax Computation','01'):R.sum.agi;
+  const sheetTax=L('IT-201 Tax Computation','11')!=null?L('IT-201 Tax Computation','11'):L('IT-201 Tax Computation','03');
+  const onSheet=sheetTi!=null&&sheetAgi!=null?nyStateTax(sheetTi,sheetAgi,out.year,out.filing):null;
+  const tol=function(a,b){ return a!=null&&b!=null&&Math.abs(a-b)<=Math.max(2,Math.abs(b)*0.0005); };
+  return {g:g,ret:out,sheet:{ti:sheetTi,agi:sheetAgi,tax:sheetTax,due:P('NYS Due'),nycDue:P('NYC Due')},
+    onSheet:onSheet,tablesAgree:onSheet!=null&&sheetTax!=null?tol(onSheet,sheetTax):null,
+    tiAgree:sheetTi!=null?tol(out.lines['37'],sheetTi):null};
+}
+
+/* ---- THE NEW YORK RETURN ON THE PAGE (v28.77) ----
+   The Check-up's "New York, worked out" (beside the federal second opinion), the answers it needs, and the filing
+   pack's IT-201 block for a year the sheet has no New York figures for. tax/ny-return.js does the arithmetic and
+   tax/ny-inputs.js finds what it is worked from. */
+/* The lines worth printing: every one with a figure, and the totals whatever they are. */
+const NY_PRINT=['19','20','23','24','25','27','28','29','30','31','32','33','34','36','37','39','40','46','47a','47','48','54',
+  '59','61','63','65','69','69a','72','73','75','76','77','80'];
+const NY_ALWAYS={'19':1,'33':1,'34':1,'37':1,'39':1,'46':1,'61':1,'76':1};
+function nyLinesShown(L){ return NY_PRINT.filter(function(k){ return L[k]!=null&&(NY_ALWAYS[k]||Math.abs(L[k])>0.004); }); }
+/* What this does not work out, said for the year in front of it. */
+function nyOpenList(ret,g){
+  const out=(ret.open||[]).slice();
+  out.push({what:'A part-year or nonresident return (IT-203)',why:'Worked out here only as a full-year resident.'});
+  out.push({what:'Yonkers, and the MCTMT',why:'The Yonkers surcharge, and the commuter tax on self-employment earned in the MTA region over $50,000.'});
+  out.push({what:'Other credits',why:'The college tuition credit, the real property tax credit, and the credits on IT-201-ATT, each on a form of its own.'});
+  if(g&&g.exempt>0) out.push({what:'Tax-free interest from other states’ bonds',why:'Your 1099-INTs show '+money(g.exempt)+' of tax-free interest; New York taxes the part from other states’ bonds. Say how much below.'});
+  if(ret.lines&&ret.lines['37']<65000) out.push({what:'The printed tax table',why:'Under $65,000 of taxable income the instructions use a table of $50 bands, which can differ from the schedule here by a few dollars.'});
+  return out;
+}
+function nyAnswersForm(year,a){
+  const yn=function(v){ return v===true?'yes':v===false?'no':''; };
+  return '<div class="secgrid" style="margin-top:8px">'+Object.keys(NY_ANSWERS).map(function(k){
+    const q=NY_ANSWERS[k];
+    const ctl=q.kind==='bool'
+      ?'<select data-act="nyset" data-field="'+k+'" aria-label="'+esc(q.label)+'"><option value=""'+(yn(a[k])===''?' selected':'')+'>—</option>'
+        +'<option value="yes"'+(a[k]===true?' selected':'')+'>Yes</option><option value="no"'+(a[k]===false?' selected':'')+'>No</option></select>'
+      :'<input data-act="nyset" data-field="'+k+'" aria-label="'+esc(q.label)+'" inputmode="decimal" size="10" value="'+(a[k]!=null?esc(String(a[k])):'')+'" placeholder="$0">';
+    return '<div class="secrow"><div><b>'+esc(q.label)+'</b></div><div>'+ctl+'</div></div>';
+  }).join('')+'</div>';
+}
+function nyReturnHtml(year){
+  if(typeof taxIsNY==='function'&&!taxIsNY(year)) return '';
+  const so=nySecondOpinion(year), mut=function(t){ return '<div class="mut" style="font-size:12px;margin-bottom:8px">'+t+'</div>'; };
+  if(so.none) return '<div class="sheet"><h3>New York, worked out</h3>'+mut(esc(so.none))+'</div>';
+  const ret=so.ret, L=ret.lines, g=so.g, P=ret.parts, y=ret.year;
+  const pending=y>=new Date().getFullYear();
+  const row=function(k,note){ return '<tr><td>'+esc(k)+'</td><td>'+esc(NY_LINE_LABEL[k]||'')+(note?'<div class="mut" style="font-size:11px">'+note+'</div>':'')
+    +'</td><td class="n num">'+money(L[k])+'</td></tr>'; };
+  const dedNote=P.itemize?'New York’s itemized deduction ('+(P.itemized.rule==='charity'?'over $1,000,000 of New York AGI, a share of the gifts to charity'
+      :P.itemized.rule==='reduced'?'reduced as New York AGI rises':P.itemized.rule==='limited'?'limited over the federal AGI threshold':'in full')+'), more than the '+money(P.std)+' standard deduction'
+    :'The standard deduction'+(P.itemized?', more than the '+money(P.itemized.total)+' New York would allow itemized':' (no mortgage interest, property tax, charity or medical recorded for this year)');
+  /* Past the recapture the tax is one of the schedule's rates on all of it: said, as the sheet says it. */
+  const flatR=nyP('states/ny/tax/income/main/'+NY_STATUS[ret.filing],y).b.map(function(r){ return r[1]; })
+    .find(function(r){ return L['38']>0&&Math.abs(L['38']*r-L['39'])<0.6; });
+  const taxNote=P.recapture>0.004?'The schedule, '+money(P.schedule)+', and '+money(P.recapture)+' of the lower brackets’ benefit taken back'
+    +(flatR?': '+(flatR*100).toFixed(2)+'% of all of it':''):'';
+  const notes={'19':esc(g.src.fagi),'28':esc(g.src.usGovt),'34':dedNote,'36':g.inp.deps.length+' dependent'+(g.inp.deps.length===1?'':'s'),'39':taxNote,
+    '47':'New York City resident ('+esc(g.city.src)+')','63':P.escc.kids?P.escc.kids+' child'+(P.escc.kids===1?'':'ren')+(P.escc.phaseOut?', less '+money(P.escc.phaseOut)+' for income':''):'',
+    '72':esc(g.src.withheld),'75':'Your payments log'};
+  const rows=nyLinesShown(L).map(function(k){ return row(k,notes[k]); }).join('');
+  const S=so.sheet;
+  const beside=S.tax!=null||S.ti!=null
+    ?'<tr><td colspan="3" style="padding-top:10px"><b>Beside the sheet</b></td></tr>'
+      +(so.onSheet!=null&&S.tax!=null?'<tr><td></td><td>Tax on the sheet’s own taxable income, by New York’s tables'
+        +'<div class="mut" style="font-size:11px">The sheet says '+money(S.tax)+'</div></td><td class="n num">'+money(so.onSheet)
+        +(so.tablesAgree?' <span class="ok">agree</span>':' <b class="off">apart</b>')+'</td></tr>':'')
+      +(S.ti!=null?'<tr><td></td><td>Taxable income worked out here<div class="mut" style="font-size:11px">The sheet says '+money(S.ti)
+        +'; the deduction is where they part, if they do</div></td><td class="n num">'+money(L['37'])+(so.tiAgree?' <span class="ok">agree</span>':' <b class="off">apart</b>')+'</td></tr>':'')
+    :'';
+  const open=nyOpenList(ret,g).map(function(o){ return '<li><b>'+esc(o.what)+'</b> — '+esc(o.why)+'</li>'; }).join('');
+  return '<div class="sheet" id="nyReturn"><h3>New York, worked out <span class="r">IT-201 · '+y+'</span></h3>'
+    +mut('The resident return worked from New York’s own figures for '+y+' (the IT-201 instructions, as PolicyEngine keeps them) and '
+      +'from what this book holds. '+(pending?'New York has not published the '+y+' forms yet: these are the figures the law has enacted. ':'')
+      +'Line numbers are the 2024–2025 form’s; match the label if one moved.')
+    +'<div class="tblwrap"><table class="tbl tight"><tbody>'+rows+beside+'</tbody></table></div>'
+    +'<h4 style="margin:12px 0 4px">What only you can say for '+y+'</h4>'+nyAnswersForm(y,g.answers)
+    +'<h4 style="margin:12px 0 4px">Not worked out here</h4><ul class="mut" style="font-size:12px;line-height:1.55">'+open+'</ul></div>';
+}
+/* The filing pack's New York block, for a year whose sheet has no New York figures. */
+function nyPackBlock(year){
+  const g=nyInputs(year), ret=nyReturn(g.inp);
+  if(ret.none) return null;
+  const L=ret.lines;
+  return {form:'IT-201 · New York (worked out here)',
+    note:'Worked from New York’s own figures and this book; see Taxes › Check-up › New York, worked out, for what each line came from '
+      +'and what is not worked out. Mail it, or use New York’s free e-file if your income qualifies.',
+    lines:nyLinesShown(L).map(function(k){ return {box:k,label:NY_LINE_LABEL[k]||'',v:L[k],note:''}; })};
+}
+/* And for a year whose sheet has them: what the tables say about the sheet's own taxable income. */
+function nyPackCheck(year){
+  const so=nySecondOpinion(year);
+  if(so.none||so.onSheet==null||so.sheet.tax==null||so.tablesAgree) return null;
+  return {what:'New York’s tables disagree with the sheet’s New York tax',
+    why:'On the sheet’s own taxable income of '+money(so.sheet.ti)+', New York’s '+so.ret.year+' tables and worksheets give '+money(so.onSheet)
+      +'; the sheet says '+money(so.sheet.tax)+'. Taxes › Check-up › New York, worked out, shows the arithmetic.',text:true};
 }
 
 /* ---- THE ENERGY CREDIT, FOUND IN THE RENOVATION ----
@@ -23037,7 +23471,7 @@ function taxSteps(year,today){
     FD.status==='filed'?'done':F.open?'wait':'todo',
     FD.status==='filed'?'filed'+(FD.on?' on '+fDlong(FD.on):''):
       F.open?'not until January — the return is due '+fDlong(F.dueDate)
-      :'copy the pack into Direct File, then record the date here',
+      :'copy the pack onto the forms (Free File Fillable Forms, or paper), then record the date here',
     'file');
   const done=S.filter(function(s){ return s.state==='done'; }).length;
   return {year:y,steps:S,done:done,total:S.length,needs:needs};
@@ -23157,7 +23591,7 @@ const TAX_TABS=[
   ['return','Return','What did the return say?',
     'The filed record, read line by line. Tap any ✓ to see how that figure was worked from the others.'],
   ['file','File it','Ready to file?',
-    'The return step by step — what is settled, what is missing, what you’ll need — then the worksheet to correct and the pack to copy into Direct File.'],
+    'The return step by step — what is settled, what is missing, what you’ll need — then the worksheet to correct and the pack to copy onto the forms.'],
   ['stub','Pay stub','What is payroll actually taking?',
     'Upload the PDF once a quarter. Every other tab then stops guessing at the withholding and reads the real pace.'],
   ['sheet','Sheet','What does the spreadsheet hold?',
@@ -50190,6 +50624,11 @@ document.addEventListener('change',ev=>{
   if(el.dataset.act==='giftletter'){ const draft=taxGiftDraftRead(); snap('charity letter');
     if(!taxGiftLetterSet(el.dataset.id,el.value)){ snapCancel(); render(); return; }
     S.tax.giftDraft=draft; save(); render(); return; }
+  if(el.dataset.act==='nyset'){   /* an answer the New York return needs (tax/ny-inputs.js) */
+    snap('a New York answer');
+    const r=nyAnswerSet(S.tax.year,el.dataset.field,el.value);
+    if(!r.ok){ snapCancel(); toast(r.why,'warn'); render(); return; }
+    save(); render(); return; }
   if(el.dataset.act==='taxintakeset'){
     snap('a tax question answered');
     const r=taxIntakeSet(S.tax.year,el.dataset.field,el.value);
@@ -56729,7 +57168,7 @@ function renderOnce(name,fn){
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
     bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
-    BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
+    BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
     historyForget,
