@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-ZFQ/xexTTkSBvcD7bxHVzMfu+JJulp3pW7P4TGcuiDY=' 'sha256-tS5HOynmLFoNp/P4jmrrARW2O/tj1Th9zrxTL7kyFdI=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-O3cbxdkDDCBwIB2fGr3Xyn2AjZp625Aivi6QXOx9JDI=' 'sha256-tS5HOynmLFoNp/P4jmrrARW2O/tj1Th9zrxTL7kyFdI=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -3068,7 +3068,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.85";
+const APP_V="v28.86";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3090,7 +3090,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="254a290";
+const APP_BUILD="478e5d9";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -14931,10 +14931,12 @@ const TAX_LIMITS={
     MAGI over 500,000, never below the old 10,000. */
  2025:{salt:40000,saltPhase:500000,saltRate:0.30,saltFloor:10000,hsa:{self:4300,family:8550},
        elective:23500,c415:70000,dcfsa:{mfj:5000,single:5000,mfs:2500},charFloor:0},
- /* 2026 is an indexed projection until the IRS publishes; est carries that
-    into every sentence that prints one of these, the same way TAX_CONST does. */
+ /* 2026: published (Rev. Proc. 2025-32, Notice 2025-67, Rev. Proc. 2025-19), and SALT, the dependent-care account and
+    the 0.5% floor are written into the statute (OBBBA). A year still projected carries est:true, which every sentence
+    that prints one of these reads, the same way TAX_CONST does. npChar (from 2026, §170(p)): cash gifts deductible
+    WITHOUT itemising, $2,000 joint and $1,000 otherwise. */
  2026:{salt:40400,saltPhase:505000,saltRate:0.30,saltFloor:10000,hsa:{self:4400,family:8750},
-       elective:24500,c415:72000,dcfsa:{mfj:7500,single:7500,mfs:3750},charFloor:0.005,est:true}
+       elective:24500,c415:72000,dcfsa:{mfj:7500,single:7500,mfs:3750},charFloor:0.005,npChar:{mfj:2000,other:1000}}
 };
 /* ANCHORED TO THE WHOLE CELL, and that is not fussiness. Every sheet in this
    book carries an IRS worksheet note reading '...filing status is Married
@@ -15052,7 +15054,7 @@ function taxDeferWorth(F,extra){
   return r2v(fed+st);
 }
 /* What one ordinary year can itemise, and what a bunched pair can. Separate
-   functions because the play asks each of them three times and the §170(p)
+   functions because the play asks each of them three times and the §170(b)(1)(I)
    floor must be applied ONCE to the doubled gift — applying it twice, or to the
    single gift and then doubling, both understate the case for bunching by most
    of a year's giving on the book this was written for. */
@@ -15062,6 +15064,10 @@ function _bunchAnnual(F){
 function _bunchDoubled(F){
   return r2v((F.dedBase||0)+Math.max(0,2*(F.charity||0)-(F.charFloor||0)));
 }
+/* What a year of giving deducts WITHOUT itemising (§170(p), from 2026; 0 before): cash, to the cap. Two ordinary years
+   take it twice; a bunched pair takes it in neither (the bunched year itemises, the other gives nothing). */
+function _bunchNp(F,g){ return r2v(Math.min(Math.max(0,g==null?(F.charity||0):g),F.npChar||0)); }
+function _bunchGain(F){ return r2v(_bunchDoubled(F)-F.std-2*_bunchNp(F)); }
 function taxCapGains(){
   const rows=[]; const byYear={}; let net=0, everNegative=false;
   /* taxPairsAll takes ONE year key and hands back {label:[values]} — an array
@@ -15491,6 +15497,9 @@ function taxFacts(year,today){
      playsview.js calls the whole value of the exercise. */
   F.charityAny=(F.charity>0)?F.charity:null;
   F.charFloor=(L.charFloor&&agi!=null)?r2v(L.charFloor*agi):0;
+  /* From 2026 (§170(p)) cash gifts are deductible WITHOUT itemising, up to $2,000 joint and $1,000 otherwise (v28.86):
+     below the standard deduction giving is no longer worth nothing, and bunching gives that up in both years. */
+  F.npChar=L.npChar?(fil.filing==='mfj'?L.npChar.mfj:L.npChar.other):0;
   /* Everything that could itemise BEFORE any gift — the bar a gift has to clear
      before it starts buying anything. */
   F.dedBase=(mort!=null&&saltPaid!=null&&saltCap!=null)
@@ -17926,7 +17935,7 @@ const TAX_CONST={
   2023:{std:{single:13850,mfj:27700,hoh:20800},salt:10000,ctc:2000,ctcKid:17},
   2024:{std:{single:14600,mfj:29200,hoh:21900},salt:10000,ctc:2000,ctcKid:17},
   2025:{std:{single:15750,mfj:31500,hoh:23625},salt:40000,ctc:2200,ctcKid:17},
-  2026:{std:{single:16100,mfj:32200,hoh:24150},salt:40000,ctc:2200,ctcKid:17,est:true},
+  2026:{std:{single:16100,mfj:32200,hoh:24150},salt:40400,ctc:2200,ctcKid:17},
 };
 /* Separately, the standard deduction is single's (§63(c)(2)). */
 Object.keys(TAX_CONST).forEach(function(y){ const C=TAX_CONST[y]; if(C.std&&C.std.mfs==null) C.std.mfs=C.std.single; });
@@ -18235,14 +18244,18 @@ function taxAdvisorHtml(year){
     const salt=Math.min((prop||0)+(SP.amt||0),saltCap);
     const medFloor=r2v((R.sum.agi||0)*0.075);
     const medOver=r2v(Math.max(0,scan.medical.total-medFloor));
-    const item=r2v((mort||0)+salt+scan.charity.total+medOver);
+    /* From 2026 the first 0.5% of AGI given is not deductible (§170(b)(1)(I)); the fact layer took it off and this
+       comparison did not, overstating itemising by it (v28.86). */
+    const charFloor=r2v((((typeof TAX_LIMITS==='object'&&TAX_LIMITS[y])||{}).charFloor||0)*(R.sum.agi||0));
+    const charity=r2v(Math.max(0,scan.charity.total-charFloor));
+    const item=r2v((mort||0)+salt+charity+medOver);
     const rows=[
       ['Mortgage interest',mort!=null?money(mort):'not on the sheet','sheet pair “Mortgage Interest”'],
       ['State & local taxes (SALT), capped at '+money(saltCap,0)+(saltCap<C.salt?' at this income':''),money(salt),
         SP.unknown?(prop!=null?money(prop)+' property tax (sheet); ':'')+'what '+(SP.name&&SP.name!=='State'?SP.name:'the state')+' took is not on this sheet or a W-2'
           :SP.src==='none'?(prop!=null?money(prop)+' property tax (sheet); ':'')+SP.name+' has no income tax on wages'
           :(prop!=null?money(prop)+' property tax (sheet) + ':'')+money(SP.amt||0)+' '+(SP.name&&SP.name!=='State'?SP.name:'state')+' income tax withheld ('+(SP.src==='w2'?'W-2 boxes 17 and 19':'the sheet')+')'],
-      ['Charitable gifts',money(scan.charity.total),
+      ['Charitable gifts'+(charFloor>0?', less the '+money(charFloor,0)+' floor (0.5% of AGI)':''),money(charity),
         scan.charity.fromLog?scan.charity.rows.length+' gift(s) in your log on the Plan tab'
         :scan.charity.tracked||scan.charity.rows.length
           ?scan.charity.rows.length+' candidate row(s) found in the book'
@@ -18587,8 +18600,9 @@ function taxDocsHtml(year){
 
 /* The ordinary-income brackets, as (ceiling, rate) pairs, top bracket
    ceiling-less. And the 0%/15% breakpoints for qualified dividends and
-   long-term gains — the 20% rate starts past the second figure. 2026 is the
-   indexed estimate, flagged exactly as TAX_CONST flags it. */
+   long-term gains — the 20% rate starts past the second figure. 2026 is
+   Rev. Proc. 2025-32 (v28.86: no longer flagged est; a year still projected
+   carries est:true, and TAX_CONST flags it the same way). */
 const TAX_FED={
   2018:{single:[[9525,.10],[38700,.12],[82500,.22],[157500,.24],[200000,.32],[500000,.35],[null,.37]],
         mfj:[[19050,.10],[77400,.12],[165000,.22],[315000,.24],[400000,.32],[600000,.35],[null,.37]],
@@ -18616,7 +18630,7 @@ const TAX_FED={
         hoh:[[17000,.10],[64850,.12],[103350,.22],[197300,.24],[250500,.32],[626350,.35],[null,.37]]},
   2026:{single:[[12400,.10],[50400,.12],[105700,.22],[201775,.24],[256225,.32],[640600,.35],[null,.37]],
         mfj:[[24800,.10],[100800,.12],[211400,.22],[403550,.24],[512450,.32],[768700,.35],[null,.37]],
-        hoh:[[17700,.10],[67450,.12],[105700,.22],[201750,.24],[256200,.32],[640600,.35],[null,.37]],est:true},
+        hoh:[[17700,.10],[67450,.12],[105700,.22],[201750,.24],[256200,.32],[640600,.35],[null,.37]]},
 };
 const TAX_LTCG={
   2018:{single:[38600,425800],mfj:[77200,479000],hoh:[51700,452400],mfs:[38600,239500]},
@@ -18627,7 +18641,7 @@ const TAX_LTCG={
   2023:{single:[44625,492300],mfj:[89250,553850],hoh:[59750,523050],mfs:[44625,276900]},
   2024:{single:[47025,518900],mfj:[94050,583750],hoh:[63000,551350],mfs:[47025,291850]},
   2025:{single:[48350,533400],mfj:[96700,600050],hoh:[64750,566700],mfs:[48350,300000]},
-  2026:{single:[49450,545500],mfj:[98900,611600],hoh:[66200,579600],est:true},
+  2026:{single:[49450,545500],mfj:[98900,613700],hoh:[66200,579600],mfs:[49450,306850]},
 };
 /* MARRIED FILING SEPARATELY IS HALF A JOINT RETURN (§1(f)(8)), so its
    brackets are derived rather than typed: a hand-kept copy is one more table
@@ -21351,7 +21365,6 @@ const TAX_PLAYS_DEDUCT=[
     F.saltRoom>0.5
       ?'A property-tax bill is only deductible once the town has assessed it. Paying an estimate ahead of the bill does not count.'
       :null,
-    F.est?'The '+F.year+' cap is an indexed estimate until the IRS publishes.':null,
     (F.magi!=null&&TAX_LIMITS[F.year]&&TAX_LIMITS[F.year].saltPhase!=null
       &&F.magi>TAX_LIMITS[F.year].saltPhase-60000)
       ?'More income this year lowers the cap by 30¢ on the dollar, so a late bonus or a realised gain takes some of this back.'
@@ -21427,7 +21440,7 @@ const TAX_PLAYS_DEDUCT=[
      overstate by the standard deduction, which is the largest number on the
      sheet.
 
-     AND THE 2026 FLOOR CUTS THE RIGHT WAY. From 2026 §170(p) disallows the
+     AND THE 2026 FLOOR CUTS THE RIGHT WAY. From 2026 §170(b)(1)(I) disallows the
      first 0.5% of AGI of giving. That floor is annual, so bunching pays it ONCE
      instead of twice — the arithmetic below applies it once to the doubled gift
      rather than twice to the single one, which is not a rounding detail: on this
@@ -21439,9 +21452,9 @@ const TAX_PLAYS_DEDUCT=[
     /* Only where itemising LOSES today. Where it already wins, salt-headroom
        and standard-vs-sheet own the year and this would double-count the same
        gap — the same partition those two already keep between themselves. */
-    return _bunchAnnual(F)<F.std&&_bunchDoubled(F)>F.std;
+    return _bunchAnnual(F)<F.std+_bunchNp(F)&&_bunchGain(F)>0;
   },
-  dollars:function(F){ return taxDedWorth(F,r2v(_bunchDoubled(F)-F.std)); },
+  dollars:function(F){ return taxDedWorth(F,_bunchGain(F)); },
   /* 31 DECEMBER, AND FOR A REASON THAT IS NOT THE USUAL ONE. §170 is cash basis
      for an individual: the gift counts in the year it is actually MADE, so a
      cheque written on 2 January lands in the next year and the pair does not
@@ -21450,9 +21463,11 @@ const TAX_PLAYS_DEDUCT=[
   window:function(F){ return F.open?{closes:F.year+'-12-31',
     why:'a gift counts in the year it is made, so this only works if the second year\u2019s giving actually leaves your account before the 31st'}:null; },
   say:function(F){
-    const gain=r2v(_bunchDoubled(F)-F.std);
+    const gain=_bunchGain(F), np=_bunchNp(F);
     const worth=taxDedWorth(F,gain);
     const short=r2v(F.std-_bunchAnnual(F));
+    /* From 2026 a year that does not itemise still deducts its cash gifts to the cap (§170(p)). */
+    const now=np>0?'your giving counts only through the '+money(np,0)+' you may deduct without itemising':'your giving is currently worth nothing in tax at all';
     if(!F.open) return {
       what:'Two years of giving in one would have beaten the standard deduction',
       why:'Your itemisable total for '+F.year+' was '+money(_bunchAnnual(F),0)+' against a '
@@ -21465,12 +21480,12 @@ const TAX_PLAYS_DEDUCT=[
       what:'Give two years at once and keep '+money(worth,0),
       why:'You give about '+money(F.charity,0)+' a year, and your itemisable total is '
         +money(_bunchAnnual(F),0)+' against a '+money(F.std,0)+' standard deduction — '
-        +money(short,0)+' short, so <b>your giving is currently worth nothing in tax at all</b>. '
+        +money(short,0)+' short, so <b>'+now+'</b>. '
         +'Make next year\u2019s gift this year as well: that year itemises at '
         +money(_bunchDoubled(F),0)+', the next takes the standard, and the pair deducts '
-        +money(gain,0)+' more than two ordinary years would. Same money to the same charities, '
+        +money(gain,0)+' more than two ordinary years would'+(np>0?' (each of which would have deducted the '+money(np,0)+')':'')+'. Same money to the same charities, '
         +'a different date on one cheque.',
-      chip:'<code>'+money(_bunchDoubled(F),0)+' bunched \u2212 '+money(F.std,0)+' standard = '
+      chip:'<code>'+money(_bunchDoubled(F),0)+' bunched \u2212 '+money(F.std,0)+' standard'+(np>0?' \u2212 2 \u00d7 '+money(np,0)+' without itemising':'')+' = '
         +money(gain,0)+' more deducted \u00d7 '+_rateLab(F.fedRate)+'</code>'};
   },
   guards:function(F){ return [
@@ -21480,7 +21495,7 @@ const TAX_PLAYS_DEDUCT=[
     F.est?'The '+F.year+' standard deduction is an indexed estimate until the IRS publishes.':null]; }
 },
 { id:'charitable-value', family:'deduction',
-  law:'§170 (charitable contributions), with the §170(p) floor from 2026',
+  law:'§170 (charitable contributions), with the §170(b)(1)(I) floor and the §170(p) deduction without itemising from 2026',
   needs:['dedBase','std','taxable','filing','agi'],
   blind:'not enough of the sheet to say what a gift would be worth',
   /* A FLAG, DELIBERATELY, AND IT CLAIMS NOTHING. Nobody has given anything, so
@@ -21503,9 +21518,11 @@ const TAX_PLAYS_DEDUCT=[
        household $20,000 into the year that its first $1,625 bought nothing. */
     const c=F.charity>0?F.charity:0, used=Math.max(0,c-F.charFloor);
     const floorLeft=Math.max(0,r2v(F.charFloor-c));
+    /* Taking the standard deduction, cash gifts still deduct to the §170(p) cap from 2026 (F.npChar; 0 before). */
+    const np=function(x){ return Math.min(x,F.npChar||0); };
     const worth=function(g){
-      const before=Math.max(F.dedBase+used,F.std);
-      const after=Math.max(F.dedBase+Math.max(0,c+g-F.charFloor),F.std);
+      const before=Math.max(F.dedBase+used,F.std+np(c));
+      const after=Math.max(F.dedBase+Math.max(0,c+g-F.charFloor),F.std+np(c+g));
       return taxDedWorth(F,r2v(after-before));
     };
     const hurdle=Math.max(0,r2v(F.std-F.dedBase-used));
@@ -21514,7 +21531,11 @@ const TAX_PLAYS_DEDUCT=[
       /* NINE WORDS. 'The first $2,360 you give in 2026 buys no deduction' is
          ten, and the sheet arrives folded — the title is often the whole
          reading. The year is in the chip and in the body. */
-      what:F.charFloor>0&&floorLeft>0
+      /* Taking the standard deduction from 2026, the first cash gifts deduct without itemising and the floor (an
+         itemiser's) does not touch them: "buys no deduction" would be false there (v28.86). */
+      what:F.npChar>0&&hurdle>0&&c<F.npChar
+        ?'Your '+(c>0?'next '+money(F.npChar-c,0):'first '+money(F.npChar,0))+' of cash gifts deducts without itemising'
+        :F.charFloor>0&&floorLeft>0
         ?(c>0?'Your next '+money(floorLeft,0)+' of giving buys no deduction'
           :'Your first '+money(F.charFloor,0)+' of giving buys no deduction')
         :'A '+money(ex,0)+' gift would keep you '+money(worth(ex),0),
@@ -21523,11 +21544,12 @@ const TAX_PLAYS_DEDUCT=[
           :'You have never recorded a gift in this book, so this is a price rather than a finding. ')
         +(F.charFloor>0
           ?'From '+F.year+' the first half a percent of your income — '+money(F.charFloor,0)
-           +' — is not deductible at all'+(c>=F.charFloor?', and your giving is already past it. ':'. ')
+           +' — is not deductible when you itemise'+(c>=F.charFloor?', and your giving is already past it. ':'. ')
           :'')
         +(hurdle>0
           ?'And you would need '+money(hurdle,0)+' more of giving before itemising beat '
-           +'the standard deduction, so a small gift is worth nothing and a large one is worth a '
+           +'the standard deduction, so '+(F.npChar>0?'below it only the first '+money(F.npChar,0)+' of cash gifts counts (deductible without itemising from '+F.year+')'
+             :'a small gift is worth nothing')+' and a large one is worth a '
            +'great deal. That is the case for bunching: give two years in one calendar year, '
            +'itemise that year, take the standard deduction the next.'
           :'Past it, every dollar comes off income that is already being itemised — a '
@@ -21657,8 +21679,7 @@ const TAX_PLAYS_INCOME=[
       : 'A joint return needs earned income from both spouses for this. Nothing in this book can see a second earner — the interview above asks, and a no stops this pricing itself.',
     F.deps>0
       ? 'Electing this displaces the dependent-care credit dollar for dollar, so the net is smaller than the figure above — up to '+money(1200,0)+' smaller if you claim the credit today.'
-      : 'If you claim the dependent-care credit, electing this displaces it dollar for dollar and the net is up to '+money(1200,0)+' smaller. No dependents are on file, so that cannot be checked from here.',
-    F.est?'The '+F.year+' ceiling of '+money(F.dcfsaCap,0)+' is an indexed estimate until the IRS publishes.':null]; }
+      : 'If you claim the dependent-care credit, electing this displaces it dollar for dollar and the net is up to '+money(1200,0)+' smaller. No dependents are on file, so that cannot be checked from here.',]; }
 },
 { id:'elective-ceiling', family:'payroll',
   law:'§402(g) (elective deferral limit)',
@@ -22003,8 +22024,7 @@ const TAX_PLAYS_BANDS=[
   },
   guards:function(F){ return [
     'The line is measured on modified adjusted gross income for the whole year, which this app reads as the sheet’s AGI — a figure that moves with every cheque, so the room here is a snapshot.',
-    'Only worth acting on while itemising beats the standard deduction; it does on this year, which is why this fires.',
-    F.est?'The '+F.year+' threshold and cap are indexed estimates until the IRS publishes.':null]; }
+    'Only worth acting on while itemising beats the standard deduction; it does on this year, which is why this fires.',]; }
 },
 /* THE CREDIT THE INCOME IS TAKING BACK. The child credit phases out at $50
    for every $1,000 of income over a line — $400,000 on a joint return — so
@@ -22100,7 +22120,7 @@ const TAX_PLAYS_BANDS=[
         +Math.round(F.saltRate*100)+'¢ × '+_rateLab(F.fedRate)+' = '+money(cost,0)+'</code>'};
   },
   guards:function(F){ return [
-    'Next year’s line is indexed and not yet published; this year’s '+money(F.saltPhase,0)+' is the yardstick, and the real one will sit a little higher.',
+    'Next year’s line is set by the statute at 1% more than this year’s '+money(F.saltPhase,0)+', and the cap rises with it; from 2030 the cap goes back to $10,000.',
     'The base assumes next year’s salary and bonus match this year’s. A raise moves it up; a smaller bonus moves it down.',
     F.ctcThresh!=null?'The child credit has its own band, '+money(F.ctcThresh,0)+' to about '+money(F.ctcThresh+Math.ceil((F.ctcBase||0)/50)*1000,0)+', and a stack that clears the top of it takes the whole credit with it.':null,
     'Under §409A the election to defer is made before the year the bonus is earned, so this is about the NEXT election, not the one already made — the money due in '+F.dueNextYear+' cannot be moved.']; }
@@ -22897,7 +22917,7 @@ function taxDeferHtml(year,today){
     +'<div style="font-size:12.5px;line-height:1.6;margin-top:10px">'+verdict
     +'Nothing here is saved; it is arithmetic on your own figures.</div>'
     +'<ul class="mut" style="font-size:11.5px;line-height:1.55;margin:8px 0 0;padding-left:18px">'
-    +'<li>'+P.year+'’s tables for every year: the later years’ brackets, SALT line and credit are indexed and not yet published, so a landing year’s cost is a little overstated and its line sits a little higher.</li>'
+    +'<li>'+P.year+'’s tables for every year: the later years’ brackets and child credit are indexed and not yet published (the SALT line rises 1% a year by statute), so a landing year’s cost is a little overstated and its line sits a little higher.</li>'
     +'<li>A landing year’s base is this year’s income plus what the sheet already says is due there. A raise, a smaller bonus or a move changes it.</li>'
     +'<li>Under §409A the election is made before the year the bonus is earned and cannot be undone, and a deferred bonus is an unsecured promise from the employer until it is paid.</li>'
     +'<li>One landing year per row; a split across two is roughly the sum of two rows. Payroll tax is paid at deferral either way, so it is not in these figures — nor is the plan’s crediting rate, which is not tax.</li>'
@@ -57633,7 +57653,7 @@ function renderOnce(name,fn){
     historyForget,
     AUTH,authUser,authWanted,authSetWanted,authSignIn,authSignOut,authErrText,authExplain,authInit,AUTH_CFG_URL,_rulesOwn,_rulesShared,
     pfDerive,syncFingerprint,pfEncrypt,pfDecrypt,bookEmpty,syncFetch,syncDeleteDoc,syncTornWhy,syncSecure,syncPushDoc,syncPullDoc,_syncPartId,syncSnapList,syncSnapKeep,syncSnapRows,syncSnapFail,_snapPlan,PF_SNAP_MIN,get _syncLastWrite(){return _syncLastWrite;},PF_SNAP_TIERS,PF_SNAP_N,
-    taxRuns,TAX_LIMITS,taxFacts,taxPlays,taxPlaysHtml,taxPlaysRowHtml,taxPlayById,_taxPlayList,TAX_PLAYS_DEDUCT,TAX_PLAYS_INCOME,taxFilingFor,TAX_FILINGS,taxFilingKey,taxFilingLabel,taxSurtaxThreshold,taxCtcThreshold,taxSaltCap,taxStage,taxAmendBy,taxDueDate,taxFiled,taxFiledRead,taxFiledSet,TAX_INTAKE,taxIntakeRead,taxGifts,taxGiftLong,taxGiftValue,taxGiftSummary,taxGiftAdd,taxGiftDel,taxGiftAck,taxGiftsHtml,taxGiftDraftRead,taxGiftsShown,taxGiftsSheetHtml,taxGiftCandidates,taxGiftAdopt,taxGiftLetters,taxGiftLetterLink,taxGiftLetterSet,taxGiftLetterFlags,TAXDOC_LETTER,taxLogShown,taxBookCandidates,GIFT_CARRY_YEARS,taxGiftLimit,taxGiftCarry,taxGiftCarryFlags,_giftRows,_giftCats,MED_FLOOR,taxMedical,taxMedValue,taxMedSummary,taxMedAdd,taxMedDel,taxMedCandidates,taxMedAdopt,taxMedShown,taxMedicalSheetHtml,taxMedicalHtml,taxMedDraftRead,ESTPAY_TO,taxEstPays,taxEstPaySummary,taxEstPayFed,taxEstPayAdd,taxEstPayDel,taxEstPayExplains,taxEstPayShown,taxEstPaySheetHtml,taxEstPayHtml,taxEstPayDraftRead,taxIntakeSet,taxIntakeSummary,taxIntakeKey,taxDoneRead,taxDoneIs,taxDoneSet,taxPlaysSplit,taxPlaysGroups,taxAmendByFor,taxNyAmendBy,_taxRollFwd,taxPublished,taxDedWorth,taxDeferWorth,_bunchAnnual,_bunchDoubled,taxMedDeductible,TAX_SUPP,taxSupRate,taxSupHeld,taxSupWages,taxQualDivWorth,TAX_PLAYS_INVEST,TAX_PLAYS_BANDS,TAX_PLAYS_ACCOUNTS,TAX_PLAYS_BROKERAGE,taxDueLater,taxPlaysText,taxDeferStack,taxDeferPlan,taxDeferHtml,taxDeferYears,taxCapGains,taxPairsAll,_taxHeldFor,_taxPrevFor,_jurKey,taxBlocks,taxBlockHtml,fmtTax,taxFormLines,taxPairs,taxBrackets,taxReturn,taxChecks,taxReturnHtml,TAX_FORMS,taxBracketBar,taxSplitBar,_rateLab,taxYearLine,taxHero,taxWhyFor,taxMarginal,taxAdvice,taxAdviceHtml,taxPlanBands,_planOpenBand,taxPlanFill,taxPlanSeed,taxPlanCompute,taxPlanForget,taxPlanHtml,taxPlanPaint,taxFilePack,taxFilePackText,taxFileHtml,taxConst,TAX_CONST,taxProfile,taxProfileParse,taxProfileSave,taxDeductScan,taxQuarterly,taxHarborPct,taxCreditScan,taxAdvisorHtml,taxDocs,taxDocsFor,taxDocAdd,taxDocParse,taxDocRead,taxDocCheck,taxDocExpected,taxDocsHtml,TAXDOC_PROMPT,TAX_FED,TAX_LTCG,taxFedBrackets,taxFedEstimate,taxEstimateInputs,taxSecondOpinion,taxSecondOpinionHtml,TAX_ENERGY,taxEnergyRows,taxEnergyCredit,taxEnergyHtml,taxYoY,taxYoYHtml,taxW4,taxW4Html,taxDepCare,taxDepCareHtml,weekDoneShown,weekLeft,weekResetPrev,weekResetNext,weekLeftWords,weekBadgePaint,taxVerify,taxVerifyRows,taxVerifyHtml,taxEvidence,taxEvidenceHtml,TAX_SETTLES,taxReviewFlags,taxReviewSummary,taxReviewRank,taxSurtaxFlags,taxStaleFlags,taxStaleCells,taxNyDeductionFrozen,taxNyDeductionFlag,taxNyClock,taxCellFrozenSince,taxCellVintage,TAX_SHEET_CONSTANTS,taxMedhiBase,taxNiitBase,_taxNonWage,taxReviewHtml,TAXWORK_FIELDS,taxWork,taxWorkSet,taxWorkInputs,taxWorkEstimate,taxBuildHtml,
+    taxRuns,TAX_LIMITS,taxFacts,taxPlays,taxPlaysHtml,taxPlaysRowHtml,taxPlayById,_taxPlayList,TAX_PLAYS_DEDUCT,TAX_PLAYS_INCOME,taxFilingFor,TAX_FILINGS,taxFilingKey,taxFilingLabel,taxSurtaxThreshold,taxCtcThreshold,taxSaltCap,taxStage,taxAmendBy,taxDueDate,taxFiled,taxFiledRead,taxFiledSet,TAX_INTAKE,taxIntakeRead,taxGifts,taxGiftLong,taxGiftValue,taxGiftSummary,taxGiftAdd,taxGiftDel,taxGiftAck,taxGiftsHtml,taxGiftDraftRead,taxGiftsShown,taxGiftsSheetHtml,taxGiftCandidates,taxGiftAdopt,taxGiftLetters,taxGiftLetterLink,taxGiftLetterSet,taxGiftLetterFlags,TAXDOC_LETTER,taxLogShown,taxBookCandidates,GIFT_CARRY_YEARS,taxGiftLimit,taxGiftCarry,taxGiftCarryFlags,_giftRows,_giftCats,MED_FLOOR,taxMedical,taxMedValue,taxMedSummary,taxMedAdd,taxMedDel,taxMedCandidates,taxMedAdopt,taxMedShown,taxMedicalSheetHtml,taxMedicalHtml,taxMedDraftRead,ESTPAY_TO,taxEstPays,taxEstPaySummary,taxEstPayFed,taxEstPayAdd,taxEstPayDel,taxEstPayExplains,taxEstPayShown,taxEstPaySheetHtml,taxEstPayHtml,taxEstPayDraftRead,taxIntakeSet,taxIntakeSummary,taxIntakeKey,taxDoneRead,taxDoneIs,taxDoneSet,taxPlaysSplit,taxPlaysGroups,taxAmendByFor,taxNyAmendBy,_taxRollFwd,taxPublished,taxDedWorth,taxDeferWorth,_bunchAnnual,_bunchDoubled,_bunchNp,_bunchGain,taxMedDeductible,TAX_SUPP,taxSupRate,taxSupHeld,taxSupWages,taxQualDivWorth,TAX_PLAYS_INVEST,TAX_PLAYS_BANDS,TAX_PLAYS_ACCOUNTS,TAX_PLAYS_BROKERAGE,taxDueLater,taxPlaysText,taxDeferStack,taxDeferPlan,taxDeferHtml,taxDeferYears,taxCapGains,taxPairsAll,_taxHeldFor,_taxPrevFor,_jurKey,taxBlocks,taxBlockHtml,fmtTax,taxFormLines,taxPairs,taxBrackets,taxReturn,taxChecks,taxReturnHtml,TAX_FORMS,taxBracketBar,taxSplitBar,_rateLab,taxYearLine,taxHero,taxWhyFor,taxMarginal,taxAdvice,taxAdviceHtml,taxPlanBands,_planOpenBand,taxPlanFill,taxPlanSeed,taxPlanCompute,taxPlanForget,taxPlanHtml,taxPlanPaint,taxFilePack,taxFilePackText,taxFileHtml,taxConst,TAX_CONST,taxProfile,taxProfileParse,taxProfileSave,taxDeductScan,taxQuarterly,taxHarborPct,taxCreditScan,taxAdvisorHtml,taxDocs,taxDocsFor,taxDocAdd,taxDocParse,taxDocRead,taxDocCheck,taxDocExpected,taxDocsHtml,TAXDOC_PROMPT,TAX_FED,TAX_LTCG,taxFedBrackets,taxFedEstimate,taxEstimateInputs,taxSecondOpinion,taxSecondOpinionHtml,TAX_ENERGY,taxEnergyRows,taxEnergyCredit,taxEnergyHtml,taxYoY,taxYoYHtml,taxW4,taxW4Html,taxDepCare,taxDepCareHtml,weekDoneShown,weekLeft,weekResetPrev,weekResetNext,weekLeftWords,weekBadgePaint,taxVerify,taxVerifyRows,taxVerifyHtml,taxEvidence,taxEvidenceHtml,TAX_SETTLES,taxReviewFlags,taxReviewSummary,taxReviewRank,taxSurtaxFlags,taxStaleFlags,taxStaleCells,taxNyDeductionFrozen,taxNyDeductionFlag,taxNyClock,taxCellFrozenSince,taxCellVintage,TAX_SHEET_CONSTANTS,taxMedhiBase,taxNiitBase,_taxNonWage,taxReviewHtml,TAXWORK_FIELDS,taxWork,taxWorkSet,taxWorkInputs,taxWorkEstimate,taxBuildHtml,
     stmtParse,stmtPhotoLines,_stmtIsSummary,_stmtDateParts,_stmtYearFrom,_stmtIso,_stmtDate,stmtPhotoMerge,stmtPhotoRead,STMT_PHOTO_PROMPT,_stmtLineKey,reconMatch,reconCandidates,reconScore,stmtNameScore,cardMatches,stmtCat,gridParse,gridDiff,
     pdfRuns,pdfLines,_a85,_ahx,_stmtStripDates,stmtCycle,parseHomeDepot,pdfToReceipt,rcpAddPdf,reconImport,RECON_ISSUERS,reconIssuerOfName,reconIssuerOfText,reconGuard,reconGuardHold,reconHeldImport,reconHeldPanel,reconRun,reconDecide,reconGet,reconKey,reconOrphans,
     SRV,srvUrl,srvSetUrl,srvOn,srvHealth,srvLoadBook,srvSaveBook,srvFlush,srvReadReceipt,srvFileReceipt,srvConnect,srvAuthPrompt,srvAdopt};
