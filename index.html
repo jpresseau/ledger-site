@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Y4brZbm+xpNBRmHdSEhdskS1zqhnjBoT68N28FCAbfY=' 'sha256-tS5HOynmLFoNp/P4jmrrARW2O/tj1Th9zrxTL7kyFdI=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-HJbAd1ubVuqCmeBylA8ksPpz15RMvyBVzVL6o7dxyXU=' 'sha256-tS5HOynmLFoNp/P4jmrrARW2O/tj1Th9zrxTL7kyFdI=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2727,8 +2727,8 @@ body.dark{--tr-line:#34A874}
   .qbmenu #weekPct{position:static;align-self:stretch;min-height:46px;padding:9px 12px;border-radius:9px;border-color:transparent;
     text-align:left;font-size:0;font-weight:500;white-space:normal;line-height:1.35}
   .qbmenu #weekPct::after{content:attr(title);font-size:13.5px}
-  /* News behind the ⋯ — a conflict or a newer copy to sync, a newer build, something to do today — is a dot on it. */
-  .qbmore:has(#qbSync.newer,#qbSync.choose,#qbRefresh.newer,#qbToday.has) #qbMoreBtn::after{content:"";position:absolute;top:7px;right:7px;
+  /* News behind the ⋯ — a conflict or a newer copy to sync, a sync that is failing, a newer build, something to do today — is a dot on it. */
+  .qbmore:has(#qbSync.newer,#qbSync.choose,#qbSync.sickly,#qbRefresh.newer,#qbToday.has) #qbMoreBtn::after{content:"";position:absolute;top:7px;right:7px;
     width:8px;height:8px;border-radius:50%;background:var(--ember);box-shadow:0 0 0 2px var(--card)}
   /* -- the tab bar -- */
   /* Opaque, not frosted: a label's contrast is measured against whatever the page scrolls under a translucent
@@ -3068,7 +3068,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 /* ============ THE LEDGER v3.0 — single-file personal finance app ============ */
-const APP_V="v28.83";
+const APP_V="v28.84";
 /* The Ledger's own address (v28.56; set in v28.57). The owner's copy lived at jpresseau.github.io/ledger/, beside five other
    apps that share its storage (SECURITY.md F4); it now lives at LEDGER_HOME, its own origin. A copy opened at LEDGER_FROM,
    the old address, says where the book should go and how to take it there; anywhere else (the new address, Ledger Cloud
@@ -3090,7 +3090,7 @@ function ledgerMovedHtml(){
    change you could see - so it rides inside the toolbar's Refresh button, and
    changes whenever anything in the page does. (Don't write the token itself in
    prose anywhere: build.py substitutes it there too.) */
-const APP_BUILD="de788a3";
+const APP_BUILD="2e924d1";
 /* ---------- store ---------- */
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -38578,8 +38578,14 @@ function cloudPanel(){
     body+=(typeof billPanel==='function'?billPanel():'')+sessPanel(st)+actPanel(st)+pkPanel(st)+recPanel(c)+bookPanel(c,st)+(typeof plaidPanel==='function'?plaidPanel():'');
   } else {
     let prev={}; try{ prev=JSON.parse(devRead(CLOUD_K)||'null')||{}; }catch(e){}
-    body='<div class="mut" style="font-size:12px;margin-bottom:8px">An account keeps the book’s encrypted copy where your other devices can reach it. '
-      +'Your passphrase still encrypts it here first — the account is what stops anyone else writing to it.</div>'
+    const out=typeof cloudSignedOut==='function'?cloudSignedOut():null;
+    /* Signed out but still this account's device (v28.84): sync waits for the sign-in, and Forget is the way to stop. */
+    body=(out?'<div class="secrow off"><span class="dot"></span><div><b>Signed out'+(out.lost?' by the service':'')+': sync is paused on this device</b>'
+      +'<div class="mut">The book’s encrypted copy is still in '+esc(out.email)+'’s account, and this device remembers where it was with it. '
+      +'Sign in again and the next sync carries on from there. To stop using this account here instead, forget it.</div>'
+      +'<div class="formrow"><button class="btn ghost sm" data-act="cloudforget">Forget this account on this device</button></div></div></div>'
+      :'<div class="mut" style="font-size:12px;margin-bottom:8px">An account keeps the book’s encrypted copy where your other devices can reach it. '
+      +'Your passphrase still encrypts it here first — the account is what stops anyone else writing to it.</div>')
       /* A form, so a password manager can save and fill it, and Enter signs in (events/click.js routes it). */
       +'<form class="pwform" data-go="cloudin">'
       +(LEDGER_CLOUD_URL?'':'<div class="fld"><label for="cloudUrl">Service address</label>'
@@ -49685,7 +49691,9 @@ function _imgLossOk(what){
   else if(act==='joinup'||act==='joinin'){ if(!(S.join&&S.join.busy)) joinGo(act==='joinup'?'up':'in'); }
   /* Membership (sync/billing.js, v28.59): Stripe's pages for subscribing and for the card, receipts and cancelling. */
   else if(act==='billsub'||act==='billmanage'){ if(!(S.bill&&S.bill.busy)) billGo(act==='billmanage'?'portal':'checkout'); }
-  else if(act==='cloudout'){ cloudSignOut().then(function(){ S.cloud={}; S.bill=null; render(); toast('Signed out of Ledger Cloud — the book on this device is untouched','ok'); }); }
+  else if(act==='cloudout'){ cloudSignOut().then(function(){ S.cloud={}; S.bill=null; render(); toast('Signed out of Ledger Cloud — sync is paused here until you sign in again; the book on this device is untouched','ok'); }); }
+  /* Stop using the account on this device (v28.84): sync then starts afresh wherever it is pointed next. */
+  else if(act==='cloudforget'){ if(confirm('Forget the Ledger Cloud account on this device? Its encrypted copy stays in the account. This device then syncs nowhere until you sign in or choose another place, and the next sync asks which copy to keep.')){ cloudForget(); S.cloud={}; S.bill=null; render(); toast('This device has forgotten the Ledger Cloud account','ok'); } }
   else if(act==='clouddel'){
     modal('Delete the Ledger Cloud account?',
       '<div class="mut" style="font-size:12.5px;margin-bottom:8px">Every encrypted copy the account holds is deleted with it, for good. '
@@ -53360,6 +53368,9 @@ async function fsInit(){
   if(_fsDb) return _fsDb;
   /* A Ledger Cloud account, signed in on this device, is where the book goes (sync/cloud.js). */
   if(typeof cloudCfg==='function'){ const c=cloudCfg(); if(c){ fsInject(cloudFs(c.url,c.token),{cloud:1}); return _fsDb; } }
+  /* Signed out of Ledger Cloud: the book's copy is there, so nowhere else will do (v28.84). Before, this fell through to
+     Firebase, and a lock blob counts as having chosen it (fbChosen). */
+  if(typeof cloudSignedOut==='function'&&cloudSignedOut()) throw new Error(CLOUD_OUT_WHY);
   const app=await _appInit();
   const fsMod=await _fsImport();
   /* SOMETHING ELSE MAY HAVE ARRIVED WHILE THIS WAS LOADING. The SDK takes a
@@ -53538,8 +53549,11 @@ async function cloudCall(url,method,path,body,token,extra){
   let j=null; try{ j=await r.json(); }catch(e){}
   if(!r.ok){
     const x=new Error((j&&j.detail)||('Ledger Cloud answered '+r.status+'.')); x.status=r.status;
-    /* Signed out on the service (expired, ended elsewhere, account deleted): this device forgets the token. */
-    if(r.status===401&&token){ const c=cloudCfg(); if(c&&c.token===token){ cloudSet(Object.assign({},c,{token:''})); fbSwitched(); } }
+    /* Signed out on the service (expired, ended elsewhere, account deleted): this device forgets the token, and only
+       the token (v28.84). It used to start sync afresh as well (fbSwitched), which forgot what this device was in step
+       with and, on a locked device, sent the next sync to the Firebase project a lock blob counts as chosen. The book's
+       copy is still this account's; sync waits for a sign-in (cloudSignedOut) and carries on from where it was. */
+    if(r.status===401&&token){ const c=cloudCfg(); if(c&&c.token===token){ cloudSet(Object.assign({},c,{token:'',out:Date.now(),lost:1})); _cloudDrop(CLOUD_OUT_WHY); } }
     throw x;
   }
   return j;
@@ -53579,22 +53593,46 @@ function cloudFs(url,token){
       return {empty:true,docs:[],size:0}; }
   };
 }
-/* Signing up, in and out. Each starts the engine afresh against the account
-   (fbSwitched): the cloud copy a device was in step with belongs to wherever
-   it was before. */
+/* SIGNED OUT, BUT STILL THIS ACCOUNT'S DEVICE (v28.84): an address and an email kept with no session. The book's copy
+   is on that account, so sync waits for a sign-in rather than going anywhere else; {url,email,out,lost} or null.
+   `lost`: the service ended it (expired, signed out elsewhere), not a press of Sign out here, so the page says so loudly. */
+function cloudSignedOut(){
+  try{ const c=JSON.parse(devRead(CLOUD_K)||'null');
+    return c&&typeof c==='object'&&cloudUrlOk(c.url)&&c.email&&!c.token?{url:c.url,email:String(c.email),out:Number(c.out)||0,lost:!!c.lost}:null; }catch(e){ return null; }
+}
+const CLOUD_OUT_WHY='Signed out of Ledger Cloud, so this device has stopped syncing. Sign in again on the Data page and it carries on where it left off.';
+/* The engine's handle holds the old token: the next sync makes a new one. Nothing it knew about the copy goes. */
+function _cloudDrop(why){ _fsDb=null; _fs=null;
+  if(typeof SYNCST==='object'){ SYNCST.remoteTs=0; SYNCST.ok=why?false:null; SYNCST.msg=why||''; }
+  if(typeof syncPaint==='function') try{ syncPaint(); }catch(e){} }
+/* Signing up or in. The SAME account again (address and email) carries on from where this device was: its sync
+   history, its merge base and a shared book it was pointed at all belong to that account. Any other account starts
+   the engine afresh (fbSwitched): the cloud copy a device was in step with belongs to wherever it was before. */
+function _cloudIn(url,j){
+  let was=null; try{ was=JSON.parse(devRead(CLOUD_K)||'null'); }catch(e){}
+  const same=!!was&&typeof was==='object'&&_cloudBase(was.url)===_cloudBase(url)
+    &&String(was.email||'').toLowerCase()===String(j.account.email||'').toLowerCase();
+  const next={url:_cloudBase(url),email:j.account.email,token:j.token};
+  if(same){ if(was.book) next.book=was.book; if(was.rec!=null) next.rec=was.rec; }
+  cloudSet(next);
+  if(same) _cloudDrop(); else fbSwitched();
+  return same;
+}
 async function cloudSignUp(url,email,password){
   const j=await cloudCall(url,'POST','/v1/signup',{email,password});
-  cloudSet({url:_cloudBase(url),email:j.account.email,token:j.token}); fbSwitched(); return j.account;
+  _cloudIn(url,j); return j.account;
 }
 async function cloudSignIn(url,email,password){
   const j=await cloudCall(url,'POST','/v1/login',{email,password});
-  cloudSet({url:_cloudBase(url),email:j.account.email,token:j.token}); fbSwitched(); return j.account;
+  _cloudIn(url,j); return j.account;
 }
+/* Signing out pauses sync on this device, as an expired session does; Forget is the way to use another service. */
 async function cloudSignOut(){
   const c=cloudCfg(); if(!c) return;
   try{ await cloudCall(c.url,'POST','/v1/logout',{},c.token); }catch(e){}
-  cloudSet(Object.assign({},c,{token:''})); fbSwitched();
+  cloudSet(Object.assign({},c,{token:'',out:Date.now()})); _cloudDrop();
 }
+function cloudForget(){ cloudSet(null); fbSwitched(); }
 async function cloudMe(){ const c=cloudCfg(); if(!c) return null; return cloudCall(c.url,'GET','/v1/me',undefined,c.token); }
 /* Deleting the account takes its password again, and every encrypted copy on the service with it. */
 async function cloudDeleteAccount(password){
@@ -53991,7 +54029,7 @@ async function pkSignIn(url){
   catch(e){ return {ok:false,why:pkErr(e)}; }
   try{ j=await cloudCall(url,'POST','/v1/passkey/login/verify',{ticket:o.ticket,credential:_pkCredJson(a)}); }
   catch(e){ return {ok:false,why:e.message}; }
-  cloudSet({url:_cloudBase(url),email:j.account.email,token:j.token}); fbSwitched();
+  _cloudIn(url,j);
   const prf=_pkPrfOut(a);
   if(!prf.bytes) return {ok:true,account:j.account,pass:null,why:'This passkey signs in but cannot carry the passphrase, so type it.'};
   const c=cloudCfg(), f=cloudFs(c.url,c.token);
@@ -55666,6 +55704,12 @@ async function syncNow(interactive,again){
      that has never synced is not given one — see fbChosen() in sync/config.js.
      Refused rather than silently pointed somewhere: a book of finances landing
      in a stranger's project is not a thing to do on somebody's behalf. */
+  /* Signed out of Ledger Cloud (v28.84): the copy is on that account, so it waits for a sign-in and goes nowhere else. */
+  if(typeof cloudSignedOut==='function'&&cloudSignedOut()){
+    SYNCST.ok=false; SYNCST.msg=CLOUD_OUT_WHY; syncPaint();
+    if(interactive){ toast('Signed out of Ledger Cloud — sign in again on the Data page to sync','warn'); render(); }
+    return;
+  }
   if(typeof fbChosen==='function'&&!fbChosen()){
     if(interactive){
       SYNCST.ok=false;
@@ -57074,7 +57118,13 @@ function syncHeldWords(){
 function syncHeldBar(){
   const el=document.getElementById('syncHeld');
   if(!el) return;
-  if(!syncHeldLoud()){ el.classList.remove('show'); el.innerHTML=''; return; }
+  if(!syncHeldLoud()){
+    /* A session the service ended (v28.84): sync has stopped until a sign-in, and nothing else on a phone says so. */
+    const out=!LOCKED&&typeof cloudSignedOut==='function'?cloudSignedOut():null;
+    if(out&&out.lost){ el.innerHTML='⚠ Signed out of Ledger Cloud, so this device has stopped syncing. Sign in as '+esc(out.email)+' and it carries on where it left off.'
+      +'<button data-act="go" data-view="data">Sign in</button>'; el.classList.add('show'); return; }
+    el.classList.remove('show'); el.innerHTML=''; return;
+  }
   const mh=SYNCST.mergeHeld||0;
   el.innerHTML='⚠ A sync decision has been waiting <u>'+esc(syncHeldWords())
     +'</u> — '+(mh?'this device and the cloud have both changed, and '+mh+' thing'+(mh===1?' was':'s were')
@@ -57122,6 +57172,11 @@ function syncWhyBlocked(){
   /* AFTER the passphrase and before the lock, which is the order syncNow checks
      in — a device with neither has not started, and naming the project first
      would send somebody to set up a cloud for a book they have not made. */
+  if(typeof cloudSignedOut==='function'&&cloudSignedOut())
+    return {why:'Signed out of Ledger Cloud, so this device has stopped syncing',
+      fix:'The book’s encrypted copy is still in the account, and this device remembers where it was with it. Sign in again '
+        +'under <b>Ledger Cloud</b> on this page and the next sync carries on from there. A session ends after thirty days unused, '
+        +'or when it is signed out from another device.'};
   if(typeof fbChosen==='function'&&!fbChosen())
     return {why:'No cloud project is chosen on this device, so there is nowhere to sync to',
       fix:'This app used to default to a project belonging to somebody else\u2019s app, which is the wrong '
@@ -57253,6 +57308,7 @@ async function syncPeek(){
   if(typeof srvOn==='function'&&srvOn()) return 'server';
   if(!autoPull()) return 'off';
   if(_autoFails>=3) return 'given-up';
+  if(typeof cloudSignedOut==='function'&&cloudSignedOut()){ if(SYNCST.ok!==false){ SYNCST.ok=false; SYNCST.msg=CLOUD_OUT_WHY; syncPaint(); } return 'signed-out'; }
   const pass=syncPass();
   if(!pass) return 'nopass';
   if(LOCKED) return 'locked';
@@ -57542,7 +57598,7 @@ function renderOnce(name,fn){
     toast('Added '+_aug.added.join(', ')+' to '+_aug.sheets+' sheet'+(_aug.sheets===1?'':'s')
       +' from August 2026 \u2014 remove any you do not want in Categories','ok');
   },900);
-  window.__PF={S,get DB(){return DB;},set DB(v){DB=v;},setBook,chargeId,chargeIdsFill,quickAdd,isTextEntry,cellTerms,setCellTerms,setCell,gridRestore,_hasPlain,blankMonthTmpl,emptyView,bioAfterReseal,APP_V,APP_BUILD,paintChrome,parseBillAlert,billRouteFor,parseBillAlert,seriesTaken,seriesDelete,seriesFreqAll,_pdfScan,_pdfStreamEnd,pdfDiag,parseRbsInvoices,_rbsCells,rbsToRows,rbsIsInvoice,rbsIsStatement,rbsIsRbs,vendorIsGeneral,suggestDest,rbsLineOff,rbsInvoiceOff,parseRbsStatement,rbsReconcile,rbsStmtPanel,rbsTakeFiles,rbsWireDrop,rbsAlreadyIn,r4DupeRows,r4VendorKey,rbsPanel,pdfRuns,billDupe,billPastePanel,_billToken,_billDate,save,saveFlush,saveSettled,imgPut,imgGet,imgDel,imgHave,imgBytes,imgCount,imgLoadAll,imgMigrate,imgGC,imgMissing,imgMissingCount,imgAdoptFrom,imgAdoptApply,_imgKeyOf,imgPushedRead,imgMarkPushed,imgAtRisk,imgAtRiskCount,imgWouldDrop,imgReady,imgWait,imgSettled,imgUnreadable,rcpImg,rcpHasImg,rcpImgBad,_imgSrcOK,imgSealAll,imgOpenAll,imgSealedCount,imgSealStat,imgSealCatchUp,imgRekey,imgClearAll,imgShutCount,imgBrokeCount,_imgIsEnv,bookWithImages,saveWhy,SAVE_WHY,saveWhere,storageAudit,storagePanel,appInstalled,fbChosen,fbStopOwn,roomForImage,lsBytes,lsHeadroom,lsCeiling,lsRefusedAt,lsNoteRefusal,LS_CEILING,saveWarnPaint,backupMark,backupLast,backupAgeDays,backupWords,backupKindOf,cfChaseParse,bankParse,TILE_SEL,TILE_MENUS,tileMenuFor,tileMenuItems,tileMenusWire,tileMenuOpen,tileMenuClose,tileMenuRates,rwCardsAll,rwOffersAll,rwClosedIds,rwIsClosed,CF_BANK_TYPES,cfBankList,cfMainBank,cfBanks,cfBankGet,cfBankId,cfBook,cfCur,cfBankAdd,cfBankSet,cfBankDel,cfBankState,cfBankBalance,cfBankPoints,cfBankSummaryParse,cfBankInterest,CF_XFER_DAYS,cfXferKey,cfXferWords,cfTransfers,cfXferSay,cfXferNoReset,cfImportXfers,cfProjectAll,reconCards,PLAID_ACCT_K,plaidAcct,MAIL_FILE_V,mailFileReady,mailFileBook,mailFileDest,mailFileQueue,mailFileLabels,mailFilePass,mailFileSheet,mailFileList,MAIL_ASSIST_V,mailAssistReady,mailAssistState,mailAssistFiling,mailAssistOp,mailAssistCost,mailAssistSheet,mailRecapCard,mailFileOnRead,mailFileGuess,mailFileCatLabel,mailFileFind,mailFileSub,plaidAcctSet,plaidCfg,plaidCfgOnly,plaidSignIn,plaidSignOut,plaidBook,plaidTake,plaidMapSet,plaidFile,plaidInboxSettle,plaidWaiting,plaidReview,plaidRow,plaidGuess,plaidCatWord,plaidKeyNew,plaidOpen,plaidKid,plaidStatus,plaidEnsureKey,plaidConnect,plaidPull,plaidAuto,plaidRemove,plaidPanel,plaidLinkLoad,plaidOAuthOnBoot,PLAID_LINK_SRC,PLAID_SEAL_INFO,PLAID_TYPE,hhCfg,hhOn,hhBooksList,hhOpen,hhDocId,hhKeyNew,hhWrapPut,hhKeyFor,syncKeyPass,hhShare,hhInvite,hhLinkTake,hhJoin,hhMembers,hhInvites,hhRevoke,hhActivity,hhRemove,hhRekey,hhLeave,hhStop,hhGone,hhForget,bookPanel,hhInviteModal,hhJoinModal,hhLinkOnBoot,HH_WORDS,bookMerge,syncBaseSet,syncBaseGet,syncBaseForget,syncMergeWith,syncMergeDone,syncMergeAuto,syncMergeWords,syncManId,fsInit,syncBookId,syncBookOldId,syncBookV3,pfDerive3,pfSaltNew,pfSaltOk,BOOK_ID,syncEncOpt,bookSaltGet,bookSaltSet,syncBookMoved,PF_KDF_ITER3,_pkOpen,_unb64,rotatePlan,rotateState,rotateConfirmText,rotateDoneModal,pkDropSeals,_repassSecrets,syncRepass,syncNWrap,syncNUnwrap,syncSeenGet,syncSeenSet,syncIsOlder,syncNextN,cfReconWindows,cfReconDays,cfStmtBacked,mkey,monthByKey,r2v,ONCE_NAMES,ONCE_HITS,renderOnce,vpW,PDF_PARSERS,parseAnyInvoice,anyHeadRoles,anyLineOff,rbsAlreadyIn,zipStore,crc32,foldSheetLazy,zipBookText,ledgerFileText,exportAllFiles,exportAllZip,exportMint,EXPORT_EXTRA,_expGrid,aggParse,aggSniff,cfAggNear,aggToRecon,CF_AGG_DAYS,anyToInv,rbsReadRuns,rbsInvWord,aggDate,aggDateOrder,aggSuggest,cfImpStart,AGG_FORMATS,csvEsc,taxNyRules,taxStateNote,taxStatePaid,taxYearKey,taxYearEnd,taxYearEndOn,yearEndInsights,yearEndModal,YEAREND_FROM_MONTH,taxFileStateBlock,taxPlanState,cfBankGo,cfBankName,cfExpectNs,catHead,catRenamed,catRenameRcp,_cfXferLoose,catAddTo,catLineUp,catLineUpPlan,catRenameFwd,catLater,rcpOtherCats,rcpCatOk,rcpCatEnsure,rcpCatOptions,RCP_CASHBACK,RCP_CASHBACK_DAYS,rcpLooksCashback,rcpCashbackWords,rcpCashbackDest,rcpCashbackCard,rcpCashbackRedemptions,rcpCashbackFields,RW_PT_VAL,RW_PT_PILE,RW_PT_EXP_DAYS,rwPtVal,rwPoints,rwPointsAll,rwPointsLine,rwPointsNudges,rwPointsClosing,mailRedeemSubj,mailRedeemRead,mailRedeemCard,mailRedeemUse,mailRedeemDrop,mailRedeemActs,MAIL_REFUND_NEAR,mailRefundFind,mailRefundHave,mailRefundRecord,mailRefundUndo,mailRefundAuto,mailRefundChecks,mailRefundInsights,mailRefundActs,mailHandled,mailHandledText,mailHandledSheet,MAIL_SELF_DAYS,MAIL_SELF,mailIsPromo,mailSelfRun,mailSelfPass,mailSelfPreview,mailPreviewSheet,mailLessonFor,mailLessonApply,mailLessonHtml,mailSelfUndo,mailSelfChecks,mailSelfInsights,mailSelfActs,mailSelfSheet,CF_SELF_NEAR,MAIL_RCP_SEEN,mailCashBank,mailCashSureAccount,mailSelfCash,mailRcpCat,mailSelfReceipt,mailSelfUndoWhy,mailSelfMoneyUndo,MAIL_WEEK_DAYS,MAIL_WEEK_DUPE,MAIL_WEEK_KINDS,mailWeek,mailWeekSheet,cardPays,cardPayLines,cardPayWords,cardPayPoints,cardPayMissing,cardPayPanel,CARDPAY_BEFORE,CARDPAY_AFTER,cardsOpen,cfPayeeKeyV1,cfAllOn,cfAllPoints,cfAllSpan,cfAllTotal,cfAllMoves,cfXferSeries,cfComingAllPanel,cfImportCat,cfCatIndex,cfXferPanel,TAX_STATES,TAX_NO_WAGE_TAX,taxStateKey,taxStateName,taxStateTaxesWages,taxStateFor,taxIsNY,taxStateWord,taxProfileCard,_stubStateCode,BANKS,bankFrom,bankNamed,bankBody,bankTail,bankWho,bankDate,mailAttSniff,syncLegacyId,syncLegacyGone,cardClosedOn,cardIsClosed,cardClosedSet,cardCloseOpen,cardCloseSave,cardReopen,titleCase,seriesStats,seriesCycle,seriesArea,seriesTile,seriesCountUp,bankOfxParse,bankCsvParse,bankIsOfx,_cfFinish,cfAlertParse,cfAlertPanel,cfPayeeKey,cfMapGet,cfMapSet,cfGuessAccount,cfSugTokens,cfSuggestAccount,cfNewRows,cfBackfill,cfRowEntry,cfBankDays,cfBankDaysMerge,cfBankDaysNew,cfImportPlan,cfAccountAdd,cfAddDays,cfAddMonths,cfDaysBetween,cfSeriesKey,cfSeriesName,cfCadence,cfNextDate,cfNthDate,cfDatesAfter,cfAmountShape,cfCardFor,cfCardLinkGet,cfCardLinkSet,cfCardDue,cfCardDueOn,cfCardDueToggle,cfExpectGet,cfExpectSet,cfSeries,cfSeriesAll,cfSubSeries,taxPaySeries,taxPaydaysLeft,taxPerCheque,taxStubParse,taxStubDerive,taxStubGet,taxStubSave,taxDeferPace,taxWithheldPace,taxStubPanel,stubFileBtn,taxSubTabs,taxTabKey,taxYearNav,taxStamp,taxHomeData,taxHomeHtml,taxSteps,taxStepsHtml,taxDocNeeds,taxKeyDates,taxYoYWords,cfRemaining,cfForecast,cfOneStatement,cfProject,cfMovedSet,cfMovedToggle,cfIsMoved,cfSplit,cfBalancePoints,cfLatestBalance,cfStatedThrough,cfBalanceChartPts,CF_SPANS,cfSpanOk,cfSpanFrom,cfSpanPoints,cfSpanStats,CF_SECTION_ICO,cfHi,cfFresh,CF_TYPE_ICO,cfTypeIco,cfDir,cfFlowBar,SUB_KINDS,SUB_COMMON,subKind,subAvatar,subHi,subFresh,subRenew,subShareBar,BILL_KINDS,billKind,billFresh,cardMono,cardMini,cardStatus,cardFresh,RECON_SECTIONS,reconSheet,reconFresh,reconRing,NAVDEF,EMOJI,ico,ICON_STYLE,UI_WORDS,UI_ICO_DEFAULT,uiIcoFor,uiPageIco,uiPageIcoName,uiDecorate,uiEntered,macTint,macTrack,macBack,macFwd,macToolbar,macSideSet,macBadges,macPages,macGoKey,macMenuItems,macMenuShow,macMenuClose,TRIAL_WARN,TRIAL_GRACE,trialGet,trialSet,trialClear,trialState,trialsDue,trialWords,trialInsights,trialPill,trialKeep,trialCancel,trialNotify,STORE_ICO,storeLines,storePeriods,storeName,storeIco,storeTable,storeMonthly,storeCharges,storeInsights,storeDelta,WORTH_TYPES,WORTH_SPANS,worthType,worthBook,worthEnsure,worthAdd,worthSet,worthRemove,worthSources,worthAt,worthMonthly,worthInsights,worthLinkOk,rcpCardLinkGet,rcpCardLinkSet,cardTallyOpen,rcpCardOf,cardTallies,cardTally,cardTallyLostHtml,cardTallyNow,cfCardDue,cardStmtImported,cardStmtEmail,mailCardStmtSubj,mailCardStmtRead,mailCardStmtCard,mailCardStmtUse,mailCardStmtActs,cardDueGet,stmtSummary,stmtSummaryApply,cardStmtDay,cardBillWord,cardBillNote,CARDBILL_DAYS,worthLinkSet,worthDue,WORTH_MONTHLY,RET_POLICY,retPolicy,retFor,warFor,returnsDue,warrantiesEnding,retWhen,returnsInsights,returnsSheet,returnsFields,returnsRead,returnsApply,ODD_DAYS,oddId,oddCharges,oddWords,oddInsights,oddOk,oddSheet,TAXPACK_HOME,taxPackAgi,taxPackYears,taxPack,taxPackCsv,GUARD_IDLE_CHOICES,GUARD_FREE,guardIdleMinutes,guardIdleSet,guardTouch,guardDue,guardLockNow,guardWaitFor,guardUnlockWait,guardUnlockFailed,guardUnlockPassed,guardWaitWords,guardRow,MAIL_DEPS,MAIL_GAS,MAIL_GAS_V,MAIL_GAS_MANIFEST,MAIL_FROM_DEFAULT,MAIL_KINDS,MAIL_ACT,mailKeyNew,mailKeyOk,mailSigned,mailOpen,mailScriptSource,mailAddr,mailDomain,mailName,mailFromIs,mailAmounts,MAIL_TOTAL_RES,mailTotal,mailRead,mailBook,mailEnsure,mailLinked,mailUrlOk,mailStale,mailAsk,mailMerge,mailPrune,mailPull,mailWaiting,mailItem,mailMark,mailDay,mailAsText,mailQueueReceipts,mailIsPuller,mailLocal,mailLocalSet,mailSenderOk,mailRewind,mailRefusedNew,MAIL_MAX,MAIL_TEXT_SHORT,mailSays,mailAuto,mailRwMatch,mailWhen,mailCursor,mailCovers,mailNoteRefused,mailRetired,mailRetire,mailLocalReset,mailLinkKeep,mailLinkPut,mailRefundAmt,MAIL_NOTE_DAYS,MAIL_REFUND_BACK,MAIL_LOOKBACK_DAYS,MAIL_MARKS,MAIL_PAGE,MAIL_HOLD,mailShape,mailRuleKey,mailRule,mailLearn,mailAmtAs,mailMarkAs,mailResort,mailXferDir,MAIL_XFER_RE,mailCashParse,mailCashOpen,mailSubGuess,mailSubOpen,mailSubPanel,mailLegacyKey,mailTwins,mailIgnore,mailUnignore,MAIL_ATT_AUTO,mailAttIsPdf,mailAttIsImg,mailAttsClean,mailAttTexts,mailAttCan,mailAttFetch,mailAttApply,mailAttRead,mailAttAuto,mailAttIsRbs,mailAttFile,mailAttWent,mailAttOpen,mailAttRow,CLOUD_K,LEDGER_CLOUD_URL,cloudCfg,cloudOn,cloudSet,cloudUrlOk,cloudCall,cloudFs,cloudSignUp,cloudSignIn,cloudSignOut,cloudMe,cloudDeleteAccount,cloudPanel,REC_ID,recKeyNew,recNorm,recFmt,recSeal,recOpen,recHas,recMake,recRecover,recRewrap,cloudUrlKnown,readEngine,cloudForgot,cloudReset,cloudVerify,cloudVerifySend,cloudPwChange,cloudLinkTake,cloudLinkOnBoot,cloudSessions,cloudSessionEnd,cloudSessionsEndOthers,cloudActivity,ACT_WORDS,actWords,actWhen,actPanel,pkSupported,pkAdd,pkSignIn,pkList,pkRemove,pkRewrap,_pkDocId,WEL_CATS,WEL_STEPS,welDraft,welList,welPlan,welApply,welWanted,MAIL_ATT_LOOK,mailAttTargets,cfReconPoints,cfReconDays,cfStmtBacked,cfReconWindows,cfReconSummary,cfReconBlame,cfImportPanel,cfComingPanel,cfOverdue,CF_STANDIN_DAYS,cfPaidNote,cfChipWord,cfChipKey,subPayGet,subPaySet,subPayer,subPayNote,subPayModal,SUBPAY_DAYS,cfSettled,cfSettledSummary,CF_SETTLED_BACK,cfSettledPanel,CF_ASSUMED,cfIsAssumed,cfLateSkipSet,cfAssumedSpent,get saveBlock(){return saveBlock;},get saveState(){return saveState;},render,Views,healFromSeed,mviewDefault,dayListHtml,calSumHtml,money,catSums,
+  window.__PF={S,get DB(){return DB;},set DB(v){DB=v;},setBook,chargeId,chargeIdsFill,quickAdd,isTextEntry,cellTerms,setCellTerms,setCell,gridRestore,_hasPlain,blankMonthTmpl,emptyView,bioAfterReseal,APP_V,APP_BUILD,paintChrome,parseBillAlert,billRouteFor,parseBillAlert,seriesTaken,seriesDelete,seriesFreqAll,_pdfScan,_pdfStreamEnd,pdfDiag,parseRbsInvoices,_rbsCells,rbsToRows,rbsIsInvoice,rbsIsStatement,rbsIsRbs,vendorIsGeneral,suggestDest,rbsLineOff,rbsInvoiceOff,parseRbsStatement,rbsReconcile,rbsStmtPanel,rbsTakeFiles,rbsWireDrop,rbsAlreadyIn,r4DupeRows,r4VendorKey,rbsPanel,pdfRuns,billDupe,billPastePanel,_billToken,_billDate,save,saveFlush,saveSettled,imgPut,imgGet,imgDel,imgHave,imgBytes,imgCount,imgLoadAll,imgMigrate,imgGC,imgMissing,imgMissingCount,imgAdoptFrom,imgAdoptApply,_imgKeyOf,imgPushedRead,imgMarkPushed,imgAtRisk,imgAtRiskCount,imgWouldDrop,imgReady,imgWait,imgSettled,imgUnreadable,rcpImg,rcpHasImg,rcpImgBad,_imgSrcOK,imgSealAll,imgOpenAll,imgSealedCount,imgSealStat,imgSealCatchUp,imgRekey,imgClearAll,imgShutCount,imgBrokeCount,_imgIsEnv,bookWithImages,saveWhy,SAVE_WHY,saveWhere,storageAudit,storagePanel,appInstalled,fbChosen,fbStopOwn,roomForImage,lsBytes,lsHeadroom,lsCeiling,lsRefusedAt,lsNoteRefusal,LS_CEILING,saveWarnPaint,backupMark,backupLast,backupAgeDays,backupWords,backupKindOf,cfChaseParse,bankParse,TILE_SEL,TILE_MENUS,tileMenuFor,tileMenuItems,tileMenusWire,tileMenuOpen,tileMenuClose,tileMenuRates,rwCardsAll,rwOffersAll,rwClosedIds,rwIsClosed,CF_BANK_TYPES,cfBankList,cfMainBank,cfBanks,cfBankGet,cfBankId,cfBook,cfCur,cfBankAdd,cfBankSet,cfBankDel,cfBankState,cfBankBalance,cfBankPoints,cfBankSummaryParse,cfBankInterest,CF_XFER_DAYS,cfXferKey,cfXferWords,cfTransfers,cfXferSay,cfXferNoReset,cfImportXfers,cfProjectAll,reconCards,PLAID_ACCT_K,plaidAcct,MAIL_FILE_V,mailFileReady,mailFileBook,mailFileDest,mailFileQueue,mailFileLabels,mailFilePass,mailFileSheet,mailFileList,MAIL_ASSIST_V,mailAssistReady,mailAssistState,mailAssistFiling,mailAssistOp,mailAssistCost,mailAssistSheet,mailRecapCard,mailFileOnRead,mailFileGuess,mailFileCatLabel,mailFileFind,mailFileSub,plaidAcctSet,plaidCfg,plaidCfgOnly,plaidSignIn,plaidSignOut,plaidBook,plaidTake,plaidMapSet,plaidFile,plaidInboxSettle,plaidWaiting,plaidReview,plaidRow,plaidGuess,plaidCatWord,plaidKeyNew,plaidOpen,plaidKid,plaidStatus,plaidEnsureKey,plaidConnect,plaidPull,plaidAuto,plaidRemove,plaidPanel,plaidLinkLoad,plaidOAuthOnBoot,PLAID_LINK_SRC,PLAID_SEAL_INFO,PLAID_TYPE,hhCfg,hhOn,hhBooksList,hhOpen,hhDocId,hhKeyNew,hhWrapPut,hhKeyFor,syncKeyPass,hhShare,hhInvite,hhLinkTake,hhJoin,hhMembers,hhInvites,hhRevoke,hhActivity,hhRemove,hhRekey,hhLeave,hhStop,hhGone,hhForget,bookPanel,hhInviteModal,hhJoinModal,hhLinkOnBoot,HH_WORDS,bookMerge,syncBaseSet,syncBaseGet,syncBaseForget,syncMergeWith,syncMergeDone,syncMergeAuto,syncMergeWords,syncManId,fsInit,syncBookId,syncBookOldId,syncBookV3,pfDerive3,pfSaltNew,pfSaltOk,BOOK_ID,syncEncOpt,bookSaltGet,bookSaltSet,syncBookMoved,PF_KDF_ITER3,_pkOpen,_unb64,rotatePlan,rotateState,rotateConfirmText,rotateDoneModal,pkDropSeals,_repassSecrets,syncRepass,syncNWrap,syncNUnwrap,syncSeenGet,syncSeenSet,syncIsOlder,syncNextN,cfReconWindows,cfReconDays,cfStmtBacked,mkey,monthByKey,r2v,ONCE_NAMES,ONCE_HITS,renderOnce,vpW,PDF_PARSERS,parseAnyInvoice,anyHeadRoles,anyLineOff,rbsAlreadyIn,zipStore,crc32,foldSheetLazy,zipBookText,ledgerFileText,exportAllFiles,exportAllZip,exportMint,EXPORT_EXTRA,_expGrid,aggParse,aggSniff,cfAggNear,aggToRecon,CF_AGG_DAYS,anyToInv,rbsReadRuns,rbsInvWord,aggDate,aggDateOrder,aggSuggest,cfImpStart,AGG_FORMATS,csvEsc,taxNyRules,taxStateNote,taxStatePaid,taxYearKey,taxYearEnd,taxYearEndOn,yearEndInsights,yearEndModal,YEAREND_FROM_MONTH,taxFileStateBlock,taxPlanState,cfBankGo,cfBankName,cfExpectNs,catHead,catRenamed,catRenameRcp,_cfXferLoose,catAddTo,catLineUp,catLineUpPlan,catRenameFwd,catLater,rcpOtherCats,rcpCatOk,rcpCatEnsure,rcpCatOptions,RCP_CASHBACK,RCP_CASHBACK_DAYS,rcpLooksCashback,rcpCashbackWords,rcpCashbackDest,rcpCashbackCard,rcpCashbackRedemptions,rcpCashbackFields,RW_PT_VAL,RW_PT_PILE,RW_PT_EXP_DAYS,rwPtVal,rwPoints,rwPointsAll,rwPointsLine,rwPointsNudges,rwPointsClosing,mailRedeemSubj,mailRedeemRead,mailRedeemCard,mailRedeemUse,mailRedeemDrop,mailRedeemActs,MAIL_REFUND_NEAR,mailRefundFind,mailRefundHave,mailRefundRecord,mailRefundUndo,mailRefundAuto,mailRefundChecks,mailRefundInsights,mailRefundActs,mailHandled,mailHandledText,mailHandledSheet,MAIL_SELF_DAYS,MAIL_SELF,mailIsPromo,mailSelfRun,mailSelfPass,mailSelfPreview,mailPreviewSheet,mailLessonFor,mailLessonApply,mailLessonHtml,mailSelfUndo,mailSelfChecks,mailSelfInsights,mailSelfActs,mailSelfSheet,CF_SELF_NEAR,MAIL_RCP_SEEN,mailCashBank,mailCashSureAccount,mailSelfCash,mailRcpCat,mailSelfReceipt,mailSelfUndoWhy,mailSelfMoneyUndo,MAIL_WEEK_DAYS,MAIL_WEEK_DUPE,MAIL_WEEK_KINDS,mailWeek,mailWeekSheet,cardPays,cardPayLines,cardPayWords,cardPayPoints,cardPayMissing,cardPayPanel,CARDPAY_BEFORE,CARDPAY_AFTER,cardsOpen,cfPayeeKeyV1,cfAllOn,cfAllPoints,cfAllSpan,cfAllTotal,cfAllMoves,cfXferSeries,cfComingAllPanel,cfImportCat,cfCatIndex,cfXferPanel,TAX_STATES,TAX_NO_WAGE_TAX,taxStateKey,taxStateName,taxStateTaxesWages,taxStateFor,taxIsNY,taxStateWord,taxProfileCard,_stubStateCode,BANKS,bankFrom,bankNamed,bankBody,bankTail,bankWho,bankDate,mailAttSniff,syncLegacyId,syncLegacyGone,cardClosedOn,cardIsClosed,cardClosedSet,cardCloseOpen,cardCloseSave,cardReopen,titleCase,seriesStats,seriesCycle,seriesArea,seriesTile,seriesCountUp,bankOfxParse,bankCsvParse,bankIsOfx,_cfFinish,cfAlertParse,cfAlertPanel,cfPayeeKey,cfMapGet,cfMapSet,cfGuessAccount,cfSugTokens,cfSuggestAccount,cfNewRows,cfBackfill,cfRowEntry,cfBankDays,cfBankDaysMerge,cfBankDaysNew,cfImportPlan,cfAccountAdd,cfAddDays,cfAddMonths,cfDaysBetween,cfSeriesKey,cfSeriesName,cfCadence,cfNextDate,cfNthDate,cfDatesAfter,cfAmountShape,cfCardFor,cfCardLinkGet,cfCardLinkSet,cfCardDue,cfCardDueOn,cfCardDueToggle,cfExpectGet,cfExpectSet,cfSeries,cfSeriesAll,cfSubSeries,taxPaySeries,taxPaydaysLeft,taxPerCheque,taxStubParse,taxStubDerive,taxStubGet,taxStubSave,taxDeferPace,taxWithheldPace,taxStubPanel,stubFileBtn,taxSubTabs,taxTabKey,taxYearNav,taxStamp,taxHomeData,taxHomeHtml,taxSteps,taxStepsHtml,taxDocNeeds,taxKeyDates,taxYoYWords,cfRemaining,cfForecast,cfOneStatement,cfProject,cfMovedSet,cfMovedToggle,cfIsMoved,cfSplit,cfBalancePoints,cfLatestBalance,cfStatedThrough,cfBalanceChartPts,CF_SPANS,cfSpanOk,cfSpanFrom,cfSpanPoints,cfSpanStats,CF_SECTION_ICO,cfHi,cfFresh,CF_TYPE_ICO,cfTypeIco,cfDir,cfFlowBar,SUB_KINDS,SUB_COMMON,subKind,subAvatar,subHi,subFresh,subRenew,subShareBar,BILL_KINDS,billKind,billFresh,cardMono,cardMini,cardStatus,cardFresh,RECON_SECTIONS,reconSheet,reconFresh,reconRing,NAVDEF,EMOJI,ico,ICON_STYLE,UI_WORDS,UI_ICO_DEFAULT,uiIcoFor,uiPageIco,uiPageIcoName,uiDecorate,uiEntered,macTint,macTrack,macBack,macFwd,macToolbar,macSideSet,macBadges,macPages,macGoKey,macMenuItems,macMenuShow,macMenuClose,TRIAL_WARN,TRIAL_GRACE,trialGet,trialSet,trialClear,trialState,trialsDue,trialWords,trialInsights,trialPill,trialKeep,trialCancel,trialNotify,STORE_ICO,storeLines,storePeriods,storeName,storeIco,storeTable,storeMonthly,storeCharges,storeInsights,storeDelta,WORTH_TYPES,WORTH_SPANS,worthType,worthBook,worthEnsure,worthAdd,worthSet,worthRemove,worthSources,worthAt,worthMonthly,worthInsights,worthLinkOk,rcpCardLinkGet,rcpCardLinkSet,cardTallyOpen,rcpCardOf,cardTallies,cardTally,cardTallyLostHtml,cardTallyNow,cfCardDue,cardStmtImported,cardStmtEmail,mailCardStmtSubj,mailCardStmtRead,mailCardStmtCard,mailCardStmtUse,mailCardStmtActs,cardDueGet,stmtSummary,stmtSummaryApply,cardStmtDay,cardBillWord,cardBillNote,CARDBILL_DAYS,worthLinkSet,worthDue,WORTH_MONTHLY,RET_POLICY,retPolicy,retFor,warFor,returnsDue,warrantiesEnding,retWhen,returnsInsights,returnsSheet,returnsFields,returnsRead,returnsApply,ODD_DAYS,oddId,oddCharges,oddWords,oddInsights,oddOk,oddSheet,TAXPACK_HOME,taxPackAgi,taxPackYears,taxPack,taxPackCsv,GUARD_IDLE_CHOICES,GUARD_FREE,guardIdleMinutes,guardIdleSet,guardTouch,guardDue,guardLockNow,guardWaitFor,guardUnlockWait,guardUnlockFailed,guardUnlockPassed,guardWaitWords,guardRow,MAIL_DEPS,MAIL_GAS,MAIL_GAS_V,MAIL_GAS_MANIFEST,MAIL_FROM_DEFAULT,MAIL_KINDS,MAIL_ACT,mailKeyNew,mailKeyOk,mailSigned,mailOpen,mailScriptSource,mailAddr,mailDomain,mailName,mailFromIs,mailAmounts,MAIL_TOTAL_RES,mailTotal,mailRead,mailBook,mailEnsure,mailLinked,mailUrlOk,mailStale,mailAsk,mailMerge,mailPrune,mailPull,mailWaiting,mailItem,mailMark,mailDay,mailAsText,mailQueueReceipts,mailIsPuller,mailLocal,mailLocalSet,mailSenderOk,mailRewind,mailRefusedNew,MAIL_MAX,MAIL_TEXT_SHORT,mailSays,mailAuto,mailRwMatch,mailWhen,mailCursor,mailCovers,mailNoteRefused,mailRetired,mailRetire,mailLocalReset,mailLinkKeep,mailLinkPut,mailRefundAmt,MAIL_NOTE_DAYS,MAIL_REFUND_BACK,MAIL_LOOKBACK_DAYS,MAIL_MARKS,MAIL_PAGE,MAIL_HOLD,mailShape,mailRuleKey,mailRule,mailLearn,mailAmtAs,mailMarkAs,mailResort,mailXferDir,MAIL_XFER_RE,mailCashParse,mailCashOpen,mailSubGuess,mailSubOpen,mailSubPanel,mailLegacyKey,mailTwins,mailIgnore,mailUnignore,MAIL_ATT_AUTO,mailAttIsPdf,mailAttIsImg,mailAttsClean,mailAttTexts,mailAttCan,mailAttFetch,mailAttApply,mailAttRead,mailAttAuto,mailAttIsRbs,mailAttFile,mailAttWent,mailAttOpen,mailAttRow,CLOUD_K,LEDGER_CLOUD_URL,cloudCfg,cloudOn,cloudSet,cloudUrlOk,cloudCall,cloudFs,cloudSignUp,cloudSignIn,cloudSignOut,cloudSignedOut,cloudForget,get CLOUD_OUT_WHY(){return CLOUD_OUT_WHY;},cloudMe,cloudDeleteAccount,cloudPanel,REC_ID,recKeyNew,recNorm,recFmt,recSeal,recOpen,recHas,recMake,recRecover,recRewrap,cloudUrlKnown,readEngine,cloudForgot,cloudReset,cloudVerify,cloudVerifySend,cloudPwChange,cloudLinkTake,cloudLinkOnBoot,cloudSessions,cloudSessionEnd,cloudSessionsEndOthers,cloudActivity,ACT_WORDS,actWords,actWhen,actPanel,pkSupported,pkAdd,pkSignIn,pkList,pkRemove,pkRewrap,_pkDocId,WEL_CATS,WEL_STEPS,welDraft,welList,welPlan,welApply,welWanted,MAIL_ATT_LOOK,mailAttTargets,cfReconPoints,cfReconDays,cfStmtBacked,cfReconWindows,cfReconSummary,cfReconBlame,cfImportPanel,cfComingPanel,cfOverdue,CF_STANDIN_DAYS,cfPaidNote,cfChipWord,cfChipKey,subPayGet,subPaySet,subPayer,subPayNote,subPayModal,SUBPAY_DAYS,cfSettled,cfSettledSummary,CF_SETTLED_BACK,cfSettledPanel,CF_ASSUMED,cfIsAssumed,cfLateSkipSet,cfAssumedSpent,get saveBlock(){return saveBlock;},get saveState(){return saveState;},render,Views,healFromSeed,mviewDefault,dayListHtml,calSumHtml,money,catSums,
     undo,undo,redo,snap,snapCancel,toast,palOpen,palClose,palSearch,palIsOpen,PAL,UNDO,REDO,
     computeInsights,bookIntegrity,taxOpenMoney,taxOpenMoneyHtml,integrityHtml,_grpMonthly,chartW,chartBand,billMonths,billPerMonth,cfCadenceFromFreq,seriesMonthsPer,seriesFreqLabel,seriesPerMonth,seriesRate,seriesFreqGet,SERIES_FREQ_OPTS,SERIES_AUTO,seriesIsAuto,seriesAutoGet,seriesAutoWindow,seriesAutoDue,seriesAutoNext,seriesAutoRun,seriesRecord,seriesAutoSet,seriesAutoTick,seriesAutoAfterSync,workOverdue,workDepositKey,workReimbMatches,workPaidBy,workFollowInsights,WORK_LATE_DAYS,subsHistory,subsHistorySheet,SUBS_HIST_MONTHS,subsMerchantKey,subsDisplayName,subsFound,subsFoundAdd,subsFoundNot,subsFoundSheet,subsLineSeries,subsFromLine,subsLineUnlink,subsLineLink,subsLinePicker,seriesPriceChange,seriesPriceWatched,seriesPriceRecent,seriesCosts,RW_ALWAYS_FROM,RW_ALWAYS_TO,rwIsAlways,rwWhen,rwOfferAlways,rwCards,rwOffers,rwCard,rwOffer,rwCardAdd,rwCardSet,rwCardDel,rwOfferAdd,rwOfferDel,rwMax,rwSpent,rwStatus,rwDaysLeft,RW_TOPICS,rwTopicsOf,rwCovers,rwBest,rwEarnedYear,RW_PRESETS,rwPresetsOpen,rwCardFind,rwMerge,rwPresetApply,rwPrompt,rwRead,rwStmtCards,rwStmtGuess,rwStmtFor,rwCardForStmt,rwLineTopics,rwExcludes,rwLineCovered,rwLines,rwOfferSpend,rwRateFor,rwMissed,rwNudges,RW_NUDGE_MAX,rwIsRedemption,rwRedemptions,rwRedeemedYear,reconRewardsSettle,FOODSPLIT_WORDS,foodSplitGuess,foodSplitPlan,foodSplitApply,foodSplitOpen,closeYm,closeLabel,closeRange,closeShift,closeDefault,closeGet,closeSet,closeItems,closeSummary,closeInsights,RW_FLAT,rwStatementFees,rwCardYear,rwWorthAll,rwWorthInsights,rwWorthSheet,RW_ICO,rwIcoFor,rwFresh,rwCardColor,rwTier,rwPill,rwBar,seriesStaleAfter,seriesIsCold,computeAudit,csv,CSVSETS,focusCell,startCellEdit,catManager,CAT_SUGGEST,aliasGet,aliasSet,aliasReset,aliasWords,ALIAS_DEFAULT,grpManager,grp,gcolor,curMonth,dashPace,dashBudgetSplit,dashCatOrder,dashDaily,dashCash,budgetTotal,budgetPrevCol,budgetCached,budgetSync,catAugustColumns,catAugustAfterBook,dayDrawer,dayDrawerSave,calMonth,calendarHtml,txAll,txFiltered,txCsv,txReceiptIndex,dayCharges,dayMerchant,dayAddRow,dayRowsNow,dayAmt,dayCountHtml,dayRecount,catDropColumns,CAT_AUG_FLAG,CAT_DROP_FLAG,modal,closeModal,modalStale,get BOOKGEN(){return BOOKGEN;},
     RCP,RCP_PROMPT,mailVouched,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
