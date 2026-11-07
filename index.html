@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-1ofigFnnk4+UXAWpHloRPGocnjgtRhIwWNh4pCAvznQ=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-mQUYlgDTOTV+3+DC1/JczLVXYoFQ8U9ACxcJ1ITlm+s=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2632,7 +2632,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v28.95";
+const APP_V="v28.96";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2646,7 +2646,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="4b2941f";
+const APP_BUILD="4bf1fd8";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -26430,7 +26430,7 @@ async function mailOpen(env,keyB64){
 }
 
 
-const MAIL_GAS_V=22;   
+const MAIL_GAS_V=23;   
 const MAIL_GAS=[
 function doGet(e){
   var p=(e&&e.parameter)||{}, out;
@@ -26636,11 +26636,17 @@ function ledgerText_(part){
       if(p.mimeType==='text/plain') plain.push(s); else if(p.mimeType==='text/html') html.push(s); }
     (p.parts||[]).forEach(walk);
   })(part);
-  if(plain.length) return plain.join('\n');
-  return html.join('\n').replace(/<(style|script|head)[\s\S]*?<\/\1>/gi,' ').replace(/<br\s*\/?>|<\/(p|div|tr|li|h\d|table)>/gi,'\n')
+  var h=html.length?html.join('\n').replace(/<(style|script|head)[\s\S]*?<\/\1>/gi,' ').replace(/<br\s*\/?>|<\/(p|div|tr|li|h\d|table)>/gi,'\n')
     .replace(/<[^>]+>/g,' ').replace(/&nbsp;/gi,' ').replace(/&amp;/gi,'&').replace(/&lt;/gi,'<').replace(/&gt;/gi,'>')
     .replace(/&quot;/gi,'"').replace(/&#39;|&apos;/gi,"'").replace(/&#(\d+);/g,function(m,n){ return String.fromCharCode(Number(n)); })
-    .replace(/[ \t\u00a0]+/g,' ').replace(/ ?\n ?/g,'\n');
+    .replace(/[ \t\u00a0]+/g,' ').replace(/ ?\n ?/g,'\n'):'';
+  var p=plain.join('\n');
+  if(!p) return h;
+  
+
+  var fig=/\$\s?\d|\bUSD\s?\d|\d\s?USD\b|\bending in\b/i;
+  if(h&&(/visit the following link to view|\bview (this|your) (message|email)\b|\bview (it|this email) (online|in (your|a) browser)\b/i.test(p)||(fig.test(h)&&!fig.test(p)))) return h+'\n\n'+p;
+  return p;
 },
 function ledgerS_(x){ x=x&255; return x>127?x-256:x; },
 function ledgerBytes_(s){ return Utilities.newBlob(String(s)).getBytes(); },
@@ -27536,10 +27542,14 @@ function mailFromIs(from,base){ const d=mailDomain(from); return d===base||d.sli
 
 const MAIL_SECURITY_RE=/\b(fraud|suspicious|unusual activity|unauthori[sz]ed|did you (make|authori[sz]e|attempt|try|recogni[sz]e)|was this you|(verify|confirm) (this|a|your|recent) (transaction|purchase|charge|activity|identity)|security (alert|code|notice)|account (is |has been )?(locked|restricted|suspended)|new (sign[- ]?in|device|login)|password)/i;
 const MAIL_NOT_USD=/^\s*(CAD|AUD|NZD|HKD|SGD|MXN|TWD|C\$|A\$)\b/i;
+
+
 function mailAmounts(t){
-  const s=String(t||''), out=[], re=/(?:US\s*)?\$\s?(\d{1,3}(?:,\d{3})+|\d+)\.(\d{2})(?!\d)/g; let m;
-  while((m=re.exec(s))){ if(MAIL_NOT_USD.test(s.slice(re.lastIndex,re.lastIndex+6))) continue;
-    out.push(Number(m[1].replace(/,/g,'')+'.'+m[2])); }
+  const s=String(t||''), out=[], N='(\\d{1,3}(?:,\\d{3})+|\\d+)\\.(\\d{2})(?!\\d)';
+  const re=new RegExp('(?:US\\s*)?\\$\\s?'+N+'(?:\\s?USD\\b)?|\\bUSD\\s?'+N+'|\\b'+N+'\\s?USD\\b','g'); let m;
+  while((m=re.exec(s))){ if(m[1]!=null&&MAIL_NOT_USD.test(s.slice(re.lastIndex,re.lastIndex+6))) continue;
+    const w=m[1]!=null?m[1]:m[3]!=null?m[3]:m[5], c=m[1]!=null?m[2]:m[3]!=null?m[4]:m[6];
+    out.push(Number(w.replace(/,/g,'')+'.'+c)); }
   return out;
 }
 
@@ -27549,7 +27559,7 @@ function mailHasFx(t){ return MAIL_FX_AMT.test(String(t||'')); }
 
 
 
-const _MAIL_AMT='\\s*:?\\s*(?:USD\\s*|US\\s*)?\\$\\s?(\\d{1,3}(?:,\\d{3})+|\\d+)\\.(\\d{2})(?!\\d)(?!\\s*(?:CAD|AUD|NZD|HKD|SGD|MXN|TWD)\\b)';
+const _MAIL_AMT='\\s*:?\\s*(?:(?:USD\\s*|US\\s*)?\\$\\s?|USD\\s?)(\\d{1,3}(?:,\\d{3})+|\\d+)\\.(\\d{2})(?!\\d)(?!\\s*(?:CAD|AUD|NZD|HKD|SGD|MXN|TWD)\\b)';
 const MAIL_TOTAL_RES=[
   new RegExp('\\b(order total|grand total|total charged|amount charged|amount paid|payment amount|total paid)'+_MAIL_AMT,'i'),
   new RegExp('\\b(you paid|you sent)'+_MAIL_AMT,'i'),
@@ -27642,6 +27652,15 @@ function mailRead(m){
   if(!bank&&/\b(card|visa|mastercard)\b[^.\n]{0,30}\bstatement\b/i.test(subj)&&typeof mailCardStmtSubj==='function'&&mailCardStmtSubj(subj,text)){
     out.kind='cardstmt'; out.amt=mailCardStmtRead({subj:subj,text:text}).balance; return out; }
   
+
+  if(/\bthis is not a receipt\b/i.test(text)){ out.kind='other';
+    out.why=/\bfamily organi[sz]er\b/i.test(text)?'not a receipt: '+mailName(from)+' sent the receipt to the family organizer':'the email says it is not a receipt';
+    return out; }
+  
+
+  if(!bank&&/\bstatement\b/i.test(subj)&&typeof mailSupplierOf==='function'&&mailSupplierOf(from,subj)){
+    out.kind='suppstmt'; out.amt=mailTotal(both); return out; }
+  
   const follow=/revision|update|delay|ready for pick ?up|picked up|feedback|review|message|question|return/i.test(subj);
   const buy=!bank&&!follow&&((paypal&&/receipt|you paid|you sent|payment to|your payment|\border\b/i.test(subj))
     ||(ebay&&/order confirmed|you bought|your order|thanks for your (order|purchase)|purchase confirm|order total/i.test(subj))
@@ -27668,17 +27687,17 @@ function mailRead(m){
   return out;
 }
 
-const MAIL_KINDS=[['receipt','🧾','Receipts'],['bill','📄','Bills'],['cardstmt','💳','Card statements'],['sub','🔁','Subscriptions'],['cashback','💰','Cash back'],
+const MAIL_KINDS=[['receipt','🧾','Receipts'],['bill','📄','Bills'],['cardstmt','💳','Card statements'],['suppstmt','🏗️','Supplier statements'],['sub','🔁','Subscriptions'],['cashback','💰','Cash back'],
   ['deposit','🏦','Bank deposits'],['withdrawal','🏧','Bank withdrawals'],['transfer','⇄','Transfers'],['income','💵','Money in'],
   ['alert','💳','Card alerts'],['refund','↩️','Refunds'],['ship','📦','Shipping'],['other','✉️','Everything else']];
-const MAIL_ACT={receipt:1,bill:1,cardstmt:1,sub:1,cashback:1,deposit:1,withdrawal:1,transfer:1,alert:1,refund:1,income:1};
+const MAIL_ACT={receipt:1,bill:1,cardstmt:1,suppstmt:1,sub:1,cashback:1,deposit:1,withdrawal:1,transfer:1,alert:1,refund:1,income:1};
 
 
 const MAIL_FROM_DEFAULT=['chase.com','paypal.com','ebay.com','amazon.com'];
 const MAIL_FIRST_DAYS=30, MAIL_LOOKBACK_DAYS=3, MAIL_EVERY=15*60000, MAIL_KEEP_DAYS=400, MAIL_TEXT_DAYS=60, MAIL_MAX=500;
 
 
-const MAIL_TEXT_FULL={receipt:1,bill:1,cardstmt:1,cashback:1,sub:1,deposit:1,withdrawal:1,transfer:1,income:1}, MAIL_TEXT_SHORT=1500;
+const MAIL_TEXT_FULL={receipt:1,bill:1,cardstmt:1,suppstmt:1,cashback:1,sub:1,deposit:1,withdrawal:1,transfer:1,income:1}, MAIL_TEXT_SHORT=1500;
 
 
 const MAIL_HOLD={receipt:1,bill:1,cashback:1,sub:1};
@@ -27771,6 +27790,19 @@ function mailMerge(list,into){
     const old=kept[m.id];
     if(!old||old.atts||filled.indexOf(old)>=0) return;
     const atts=typeof mailAttsClean==='function'?mailAttsClean(m.atts):[]; if(atts.length){ old.atts=atts; filled.push(old); }
+  });
+  
+
+  const more=function(t){ return mailAmounts(t).length+(/\bending in\b/i.test(t)?1:0); };
+  (Array.isArray(list)?list:[]).forEach(function(m){
+    const old=m&&typeof m.id==='string'?kept[m.id]:null;
+    if(!old||old.state!=='new'||old.marked||typeof m.text!=='string') return;
+    const now=m.text.slice(0,6000);
+    if(now.length<=String(old.text||'').length||more(now)<=more(old.text)) return;
+    old.text=now; const r=mailRead(old);
+    ['kind','amt','who','card','bank','bill','why'].forEach(function(k){ if(r[k]==null) delete old[k]; else old[k]=r[k]; });
+    if(!MAIL_TEXT_FULL[old.kind]) old.text=old.text.slice(0,MAIL_TEXT_SHORT);
+    if(filled.indexOf(old)<0) filled.push(old);
   });
   added.filled=filled;
   (Array.isArray(list)?list:[]).forEach(function(m){
@@ -27963,11 +27995,16 @@ async function mailPull(){
     
     const fresh7=!cursor&&!M.attsBack&&!!body&&Number(body.v)>=7;
     const sv=body&&Number(body.v)>0&&!(M.scriptV&&M.scriptV.url===M.url&&M.scriptV.v===Number(body.v));   
-    if(added.length||filled.length||selfDone||att7||fresh7||rolled||heard||rwMoved||noted||sv||mailTwins(M)||JSON.stringify(M.scriptAuto||[])!==autoWas){
+    
+
+    const v23=Number(body&&body.v)>=23&&!M.htmlReread;
+    if(added.length||filled.length||selfDone||att7||fresh7||rolled||heard||rwMoved||noted||sv||v23||mailTwins(M)||JSON.stringify(M.scriptAuto||[])!==autoWas){
       M.since=after; if(att7||fresh7) M.attsBack=1;
       if(rw==null) delete M.rewindTo; else M.rewindTo=rw;
       if(rolled){ mailRetire(M.key); M.key=key; delete M.keyNext; }
       if(heard) M.scriptFrom=from; if(sv) M.scriptV={url:M.url,v:Number(body.v)};
+      
+      if(v23){ M.htmlReread=1; if(cursor) mailRewind(30); }
       mailPrune(null,M); save();
       if(typeof _imgSyncSoon==='function') _imgSyncSoon();   
     }
@@ -28126,10 +28163,10 @@ function mailKeyElsewhere(){ const M=mailBook(); return !!(_mailShared()&&M&&mai
 
 
 
-const MAIL_MARKS=[['receipt','Receipt'],['bill','Bill'],['cardstmt','Card statement (amount due)'],['sub','Subscription'],['deposit','Bank deposit'],
+const MAIL_MARKS=[['receipt','Receipt'],['bill','Bill'],['cardstmt','Card statement (amount due)'],['suppstmt','Supplier statement'],['sub','Subscription'],['deposit','Bank deposit'],
   ['withdrawal','Bank withdrawal'],['transfer','Transfer (between your accounts)'],['cashback','Cash back'],['alert','Card charge'],['refund','Refund'],
   ['income','Money in'],['ship','Shipping'],['other','Not money']];
-const MAIL_PAGE={receipt:['receipts','Receipts'],bill:['bills','Bills'],cardstmt:['cashflow','Cash Flow'],sub:['subs','Subscriptions'],
+const MAIL_PAGE={receipt:['receipts','Receipts'],bill:['bills','Bills'],cardstmt:['cashflow','Cash Flow'],suppstmt:['renos','Renovations'],sub:['subs','Subscriptions'],
   deposit:['cashflow','Cash Flow'],withdrawal:['cashflow','Cash Flow'],transfer:['cashflow','Cash Flow'],income:['cashflow','Cash Flow'],
   cashback:['rewards','Cash back'],alert:['charges','Charges'],refund:['charges','Charges']};
 const MAIL_RULES_MAX=1000;
@@ -28187,7 +28224,7 @@ function mailMarkAs(id,kind){
 
     const a=mailAmtAs(kind,x), cut=!x.text||x.text.length>=MAIL_TEXT_SHORT;
     x.kind=kind; x.amt=kind==='ship'||kind==='other'?null:a!=null?a:cut?x.amt:null;
-    delete x.bill; delete x.nm; x.marked=x===it?'own':'rule';
+    delete x.bill; delete x.nm; delete x.why; x.marked=x===it?'own':'rule';   
     if(kind==='bill'){ try{ const b=parseBillAlert(x.subj+'\n'+mailName(x.from)+'\n'+(x.text||'')); if(b&&b.ok&&b.nm) x.bill=b.nm; }catch(e){} }
     if(x!==it) n++;
   });
@@ -28208,7 +28245,7 @@ function mailResort(M){
   ((M&&M.items)||[]).forEach(function(x){
     if(!x||x.state!=='new'||x.marked||x.kind!=='other') return;
     const r=mailRead(x); if(r.kind==='other') return;
-    ['kind','amt','who','card','bank','bill'].forEach(function(k){ if(r[k]==null) delete x[k]; else x[k]=r[k]; }); n++;
+    ['kind','amt','who','card','bank','bill','why'].forEach(function(k){ if(r[k]==null) delete x[k]; else x[k]=r[k]; }); n++;
   });
   return n;
 }
@@ -28363,10 +28400,39 @@ function mailCardStmtRead(it){
   return {balance:bal!=null&&bal>0?bal:null,min:s.min,dueOn:s.dueDate};
 }
 
+
+const MCS_COMMON=/^(my|your|the|and|for|card|cards|credit|debit|visa|mastercard|master|amex|american|express|discover|platinum|signature|world|elite|preferred|rewards?|services?|members?|accounts?|statements?|online|alerts?|customer|center|team|info|bank|plus|new)$/;
+function _mcsIssuerWords(){
+  const w={}, add=function(s){ String(s||'').toLowerCase().split(/[^a-z0-9]+/).forEach(function(x){ if(x) w[x]=1; }); };
+  (typeof BANKS!=='undefined'?BANKS:[]).forEach(function(b){ add(b.name); });
+  (typeof RECON_ISSUERS!=='undefined'?RECON_ISSUERS:[]).forEach(function(r){ add(r[0]); (r[1]||[]).forEach(add); });
+  return w;
+}
+function mcsWords(s,iw){
+  iw=iw||_mcsIssuerWords();
+  return String(s||'').toLowerCase().replace(/[®™©]/g,' ').split(/[^a-z0-9]+/).filter(function(x){ return x.length>=3&&!/^\d+$/.test(x)&&!MCS_COMMON.test(x)&&!iw[x]; });
+}
+function mailCardProduct(it){
+  const iw=_mcsIssuerWords(), out={}, add=function(s){ mcsWords(s,iw).forEach(function(x){ out[x]=1; }); };
+  const nm=mailName(it&&it.from);
+  if(/\b(card|visa|mastercard|amex|discover)\b/i.test(nm)) add(nm);
+  const t=String(it&&it.subj||'')+'\n'+String(it&&it.text||'').slice(0,4000), re=/\b(?:your|my)\s+((?:\S+\s+){0,5}?)(?:credit\s+)?(?:card|visa|mastercard)\b/ig; let m;
+  while((m=re.exec(t))) add(m[1]);
+  return Object.keys(out);
+}
+
+
 function mailCardStmtCard(it){
   if(typeof rcpCardOf!=='function') return null;
+  const P=mailCardProduct(it), iw=_mcsIssuerWords(), open=typeof cardTallyOpen==='function'?cardTallyOpen():(DB.cardOrder||[]);
+  const has=function(c){ return mcsWords(c,iw).some(function(w){ return P.indexOf(w)>=0; }); };
+  const ib=it&&it.bank&&typeof reconIssuerOfName==='function'?reconIssuerOfName(it.bank):null;
+  const same=function(c){ const ci=ib&&typeof _reconCardIssuer==='function'?_reconCardIssuer(c):null; return !ci||ci===ib; };
+  if(P.length){ const xs=open.filter(function(c){ return has(c)&&same(c); }); if(xs.length===1) return xs[0]; }
   const lab=[it&&it.bank,it&&it.card?'••'+it.card:''].filter(Boolean).join(' ');
-  return lab?rcpCardOf(lab):null;
+  const g=lab?rcpCardOf(lab):null;
+  if(g&&P.length&&mcsWords(g,iw).length&&!has(g)) return null;
+  return g;
 }
 function cardDueGet(){ const m=(DB.meta||{}).cardDue; return m&&typeof m==='object'?m:{}; }
 
@@ -29961,7 +30027,7 @@ async function mailAttApply(it,a,bytes){
   catch(e){ throw new Error('That PDF could not be read: '+(e.message||e)); }
   a.text=text.replace(/\n{3,}/g,'\n\n').trim().slice(0,MAIL_ATT_TEXT); a.read=1;
   const whole={from:it.from,subj:it.subj,text:(it.text||'')+mailAttTexts(it)};
-  if(!it.marked){ const r=mailRead(whole); ['kind','amt','who','card','bill'].forEach(function(k){ if(r[k]==null) delete it[k]; else it[k]=r[k]; }); }
+  if(!it.marked){ const r=mailRead(whole); ['kind','amt','who','card','bill','why'].forEach(function(k){ if(r[k]==null) delete it[k]; else it[k]=r[k]; }); }
   else if(it.amt==null) it.amt=mailAmtAs(it.kind,whole);
   return a.text.length;
 }
@@ -30076,10 +30142,12 @@ function mailAttRow(it){
 
 function mailRbsStmtSettle(it,stmt){
   const M=mailBook();
-  if(!M||M.selfOff||!it||it.state!=='new'||it.marked==='own'||!mailVouched(it)) return null;
-  if(typeof mailAutoOnly==='function'&&mailAutoOnly(it,M)) return null;
+  if(!M||!it||it.state!=='new'||it.marked==='own') return null;
   if(!stmt||!Array.isArray(stmt.lines)||typeof rbsReconcile!=='function') return null;
   const rec=rbsReconcile(stmt,((DB.renos||{}).r4||{}).rows||[]);
+  
+  it.stmtCheck={n:rec.checks.length,missing:Number(rec.missing)||0,differs:Number(rec.differs)||0};
+  if(M.selfOff||!mailVouched(it)||(typeof mailAutoOnly==='function'&&mailAutoOnly(it,M))) return null;
   if(!rec.checks.length||rec.missing||rec.differs) return {waits:true,missing:rec.missing,differs:rec.differs};
   const n=rec.checks.length, name=typeof renoProjectName==='function'?renoProjectName('r4'):'the renovation';
   mailMark(it.id,'done','Riverhead statement: all '+n+' invoice'+(n===1?'':'s')+' on it '+(n===1?'is':'are')+' in '+name);
@@ -30095,6 +30163,25 @@ async function mailRbsSelf(it,f){
     if(!Array.isArray(runs)||!rbsIsStatement(runs)) return null;
     return mailRbsStmtSettle(it,parseRbsStatement(runs));
   }catch(e){ return null; }
+}
+
+
+function mailSupplierOf(from,subj){
+  const nm=mailName(from);
+  if(typeof rbsIsRbs==='function'&&rbsIsRbs(nm+'\n'+String(subj||''))) return 'Riverhead Building Supply';
+  if(typeof r4VendorKey!=='function') return '';
+  const k=r4VendorKey(nm); if(k.length<4) return '';
+  const rows=((DB.renos||{}).r4||{}).rows||[];
+  const hit=rows.find(function(r){ const v=r&&r.vendor; return v&&v!=='RBS'&&r4VendorKey(v)===k&&!(typeof vendorIsGeneral==='function'&&vendorIsGeneral(v)); });
+  return hit?String(hit.vendor):'';
+}
+
+function mailSuppWhy(it){
+  const c=it&&it.stmtCheck, p=typeof renoProjectName==='function'?renoProjectName('r4'):'the renovation';
+  if(!c) return 'checked against '+p+' when its PDF is read';
+  if(!c.n) return 'nothing on it to check against '+p;
+  if(!c.missing&&!c.differs) return 'all '+c.n+' invoice'+(c.n===1?'':'s')+' on it '+(c.n===1?'is':'are')+' in '+p;
+  return [c.missing?c.missing+' of its '+c.n+' invoice'+(c.n===1?'':'s')+' not in '+p:'',c.differs?c.differs+' at another amount there':''].filter(Boolean).join(', ');
 }
 
 
@@ -30129,6 +30216,8 @@ function mailRowActs(it){
     ?_mailBtn('mailgo',it.id,'In Receipts ›','',' data-view="receipts"'):(it.text||mailDocs(it)?_mailBtn('mailrcp',it.id,'Read as receipt',''):'');
   else if(it.kind==='bill') a+=_mailBtn('mailbill',it.id,'Record bill','');
   else if(it.kind==='cardstmt') a+=mailCardStmtActs(it);
+  
+  else if(it.kind==='suppstmt'&&mailDocs(it)) a+=_mailBtn('mailrcp',it.id,'Check against '+(typeof renoProjectName==='function'?renoProjectName('r4'):'the renovation'),'');
   else if(it.kind==='sub') a+=_mailBtn('mailsub',it.id,'Record subscription','');
   
 
@@ -30149,7 +30238,12 @@ function mailRow(it){
   return '<tr data-mail="'+esc(it.id)+'"><td style="white-space:nowrap">'+esc(fD(mailDay(it)))+'</td>'
     +'<td><b>'+esc(it.subj||'(no subject)')+'</b><div class="mut" style="font-size:11px">'+esc(mailName(it.from))
     +(it.who&&it.who!==mailName(it.from)?' · '+esc(it.who):'')+(it.card?' · card ••'+esc(it.card):'')
-    +(it.note?' · '+esc(it.note):'')+_mailGateTag(it)+'</div>'+(typeof mailAttRow==='function'?mailAttRow(it):'')+'</td>'
+    +(it.note?' · '+esc(it.note):'')
+    
+
+    +(it.why?' · <span class="mailwhy">'+esc(it.why)+'</span>':'')
+    +(it.kind==='suppstmt'&&it.state==='new'&&typeof mailSuppWhy==='function'?' · <span class="mailwhy">'+esc(mailSuppWhy(it))+'</span>':'')
+    +_mailGateTag(it)+'</div>'+(typeof mailAttRow==='function'?mailAttRow(it):'')+'</td>'
     +'<td class="n num">'+(it.amt!=null?money(it.amt):'')+'</td><td class="acts">'+mailRowActs(it)+'</td></tr>';
 }
 function _mailTbl(rows){ return '<div class="tblwrap"><table class="tbl tight mailtbl"><tbody>'+rows.map(mailRow).join('')+'</tbody></table></div>'; }
@@ -30259,7 +30353,9 @@ Views.mail=function(){
     +(q?_mailBtn('mailgo',null,'🧾 '+q+' receipt'+(q===1?'':'s')+' to file ›','',' data-view="receipts"'):'')+'</div>'
     +(L.err?'<div class="mailwarn">Last check: '+esc(L.err)+'</div>':'')
     +(M.keyNext?'<div class="mailwarn">A new key is waiting: paste the script again and deploy a new version. Until then the old key keeps working. '+_mailBtn('mailscript',null,'Show the script')+'</div>':'')
-    +(L.url===M.url&&L.v&&L.v<MAIL_GAS_V?'<div class="mailwarn">'+mailOldScriptWords(L.v)+' '+_mailBtn('mailscript',null,'Show the script')+'</div>':'')
+    
+
+    +((function(){ const sv=typeof mailScriptV==='function'?mailScriptV():0; return sv&&sv<MAIL_GAS_V?'<div class="mailwarn">'+mailOldScriptWords(sv)+' '+_mailBtn('mailscript',null,'Show the script')+'</div>':''; })())
     +mailSavedNotDeployed()
     +(mailStale()?'<div class="mailwarn">The script in Google still has the old list of senders. Show the script again, paste it over the old one and deploy a new version (Deploy → Manage deployments → ✎ → New version).</div>':'')
     +'<div class="plates">'+plate('Waiting',String(wait.length),wait.length?'for a press':'nothing',wait.length>0)
@@ -46796,7 +46892,7 @@ function renderOnce(name,fn){
     toast('Added '+_aug.added.join(', ')+' to '+_aug.sheets+' sheet'+(_aug.sheets===1?'':'s')
       +' from August 2026 \u2014 remove any you do not want in Categories','ok');
   },900);
-  window.__PF={S,get DB(){return DB;},set DB(v){DB=v;},setBook,chargeId,chargeIdsFill,quickAdd,isTextEntry,cellTerms,setCellTerms,setCell,gridRestore,headFit,plateFit,fD,fDY,fDay,tapWord,tabJoin,tabHold,tabOnStorage,get _tabStuck(){return _tabStuck;},set _tabStuck(v){_tabStuck=v;},_advStop,_hasPlain,blankMonthTmpl,emptyView,bioAfterReseal,APP_V,APP_BUILD,paintChrome,parseBillAlert,billRouteFor,parseBillAlert,seriesTaken,seriesDelete,seriesFreqAll,_pdfScan,_pdfStreamEnd,pdfDiag,parseRbsInvoices,_rbsCells,rbsToRows,rbsIsInvoice,rbsIsStatement,rbsIsRbs,vendorIsGeneral,suggestDest,rbsLineOff,rbsInvoiceOff,parseRbsStatement,rbsReconcile,rbsStmtPanel,rbsTakeFiles,rbsWireDrop,rbsAlreadyIn,r4DupeRows,r4VendorKey,rbsPanel,pdfRuns,billDupe,billPastePanel,_billToken,_billDate,save,saveFlush,saveSettled,imgPut,imgGet,imgDel,imgHave,imgBytes,imgCount,imgLoadAll,imgMigrate,imgGC,imgMissing,imgMissingCount,imgAdoptFrom,imgAdoptApply,_imgKeyOf,imgPushedRead,imgMarkPushed,imgAtRisk,imgAtRiskCount,imgWouldDrop,imgReady,imgWait,imgSettled,imgUnreadable,rcpImg,rcpHasImg,rcpImgBad,_imgSrcOK,imgSealAll,imgOpenAll,imgSealedCount,imgSealStat,imgSealCatchUp,imgRekey,imgClearAll,imgShutCount,imgBrokeCount,_imgIsEnv,bookWithImages,saveWhy,SAVE_WHY,saveWhere,storageAudit,storagePanel,appInstalled,fbChosen,fbStopOwn,roomForImage,lsBytes,lsHeadroom,lsCeiling,lsRefusedAt,lsNoteRefusal,LS_CEILING,saveWarnPaint,backupMark,backupLast,backupAgeDays,backupWords,backupKindOf,cfChaseParse,bankParse,TILE_SEL,TILE_MENUS,tileMenuFor,tileMenuItems,tileMenusWire,tileMenuOpen,tileMenuClose,tileMenuRates,rwCardsAll,rwOffersAll,rwClosedIds,rwIsClosed,CF_BANK_TYPES,cfBankList,cfMainBank,cfBanks,cfBankGet,cfBankId,cfBook,cfCur,cfBankAdd,cfBankSet,cfBankDel,cfBankState,cfBankBalance,cfBankPoints,cfBankSummaryParse,cfBankInterest,CF_XFER_DAYS,cfXferKey,cfXferWords,cfTransfers,cfXferSay,cfXferNoReset,cfImportXfers,cfProjectAll,reconCards,PLAID_ACCT_K,plaidAcct,MAIL_FILE_V,mailFileReady,mailFileBook,mailFileDest,mailFileQueue,mailFileLabels,mailFilePass,mailFileSheet,mailFileList,MAIL_ASSIST_V,mailAssistReady,mailAssistState,mailAssistFiling,mailAssistOp,mailWaitGate,_mpWhy,mailAssistCost,mailAssistSheet,mailRecapCard,mailFileOnRead,mailFileGuess,mailFileCatLabel,mailFileFind,mailFileSub,plaidAcctSet,plaidCfg,plaidCfgOnly,plaidSignIn,plaidSignOut,plaidBook,plaidTake,plaidMapSet,plaidFile,plaidInboxSettle,plaidWaiting,plaidReview,plaidRow,plaidGuess,plaidCatWord,plaidKeyNew,plaidOpen,plaidKid,plaidStatus,plaidEnsureKey,plaidConnect,plaidPull,plaidAuto,plaidRemove,plaidPanel,plaidLinkLoad,plaidOAuthOnBoot,PLAID_LINK_SRC,PLAID_SEAL_INFO,PLAID_TYPE,hhCfg,hhOn,hhBooksList,hhOpen,hhDocId,hhKeyNew,hhWrapPut,hhKeyFor,syncKeyPass,hhShare,hhInvite,hhLinkTake,hhJoin,hhMembers,hhInvites,hhRevoke,hhActivity,hhRemove,hhRekey,hhLeave,hhStop,hhGone,hhForget,bookPanel,hhInviteModal,hhJoinModal,hhLinkOnBoot,HH_WORDS,bookMerge,syncBaseSet,syncBaseGet,syncBaseForget,syncMergeWith,syncMergeDone,syncMergeAuto,syncMergeWords,syncManId,fsInit,syncBookId,syncBookOldId,syncBookV3,pfDerive3,pfSaltNew,pfSaltOk,BOOK_ID,syncEncOpt,bookSaltGet,bookSaltSet,syncBookMoved,PF_KDF_ITER3,_pkOpen,_unb64,rotatePlan,rotateState,rotateConfirmText,rotateDoneModal,pkDropSeals,_repassSecrets,syncRepass,syncNWrap,syncNUnwrap,syncSeenGet,syncSeenSet,syncIsOlder,syncNextN,cfReconWindows,cfReconDays,cfStmtBacked,mkey,monthByKey,r2v,ONCE_NAMES,ONCE_HITS,renderOnce,vpW,PDF_PARSERS,parseAnyInvoice,anyHeadRoles,anyLineOff,rbsAlreadyIn,zipStore,crc32,foldSheetLazy,zipBookText,ledgerFileText,exportAllFiles,exportAllZip,exportMint,EXPORT_EXTRA,_expGrid,aggParse,aggSniff,cfAggNear,aggToRecon,CF_AGG_DAYS,anyToInv,rbsReadRuns,rbsInvWord,aggDate,aggDateOrder,aggSuggest,cfImpStart,AGG_FORMATS,csvEsc,taxNyRules,taxStateNote,taxStatePaid,taxYearKey,taxYearEnd,taxYearEndOn,yearEndInsights,yearEndModal,YEAREND_FROM_MONTH,taxFileStateBlock,taxPlanState,cfBankGo,cfBankName,cfExpectNs,catHead,catRenamed,catRenameRcp,_cfXferLoose,catAddTo,catLineUp,catLineUpPlan,catRenameFwd,catLater,rcpOtherCats,rcpCatOk,rcpCatEnsure,rcpCatOptions,RCP_CASHBACK,RCP_CASHBACK_DAYS,rcpLooksCashback,rcpCashbackWords,rcpCashbackDest,rcpCashbackCard,rcpCashbackRedemptions,rcpCashbackFields,RW_PT_VAL,RW_PT_PILE,RW_PT_EXP_DAYS,rwPtVal,rwPoints,rwPointsAll,rwPointsLine,rwPointsNudges,rwPointsClosing,mailRedeemSubj,mailRedeemRead,mailRedeemCard,mailRedeemUse,mailRedeemDrop,mailRedeemActs,MAIL_REFUND_NEAR,mailRefundFind,mailRefundHave,mailRefundRecord,mailRefundUndo,mailRefundAuto,mailRefundChecks,mailRefundInsights,mailRefundActs,mailHandled,mailHandledText,mailHandledSheet,MAIL_SELF_DAYS,MAIL_SELF,mailIsPromo,mailSelfRun,mailSelfPass,mailSelfPreview,mailPreviewSheet,mailLessonFor,mailLessonApply,mailLessonHtml,mailSelfUndo,mailSelfChecks,mailSelfInsights,mailSelfActs,mailSelfSheet,CF_SELF_NEAR,MAIL_RCP_SEEN,mailCashBank,mailCashSureAccount,mailSelfCash,mailRcpCat,mailSelfReceipt,mailSelfUndoWhy,mailSelfMoneyUndo,MAIL_WEEK_DAYS,MAIL_WEEK_DUPE,MAIL_WEEK_KINDS,mailWeek,mailWeekSheet,cardPays,cardPayLines,cardPayWords,cardPayPoints,cardPayMissing,cardPayPanel,CARDPAY_BEFORE,CARDPAY_AFTER,cardsOpen,cfPayeeKeyV1,cfAllOn,cfAllPoints,cfAllSpan,cfAllTotal,cfAllMoves,cfXferSeries,cfComingAllPanel,cfImportCat,cfCatIndex,cfXferPanel,TAX_STATES,TAX_NO_WAGE_TAX,taxStateKey,taxStateName,taxStateTaxesWages,taxStateFor,taxIsNY,taxStateWord,taxProfileCard,_stubStateCode,BANKS,bankFrom,bankNamed,bankBody,bankTail,bankWho,bankDate,mailAttSniff,syncLegacyId,syncLegacyGone,cardClosedOn,cardIsClosed,cardClosedSet,cardCloseOpen,cardCloseSave,cardReopen,titleCase,seriesStats,seriesCycle,seriesArea,seriesTile,seriesCountUp,bankOfxParse,bankCsvParse,bankIsOfx,_cfFinish,cfAlertParse,cfAlertPanel,cfPayeeKey,cfMapGet,cfMapSet,cfGuessAccount,cfSugTokens,cfSuggestAccount,cfNewRows,cfBackfill,cfRowEntry,cfBankDays,cfBankDaysMerge,cfBankDaysNew,cfImportPlan,cfAccountAdd,cfAddDays,cfAddMonths,cfDaysBetween,cfSeriesKey,cfSeriesName,cfCadence,cfNextDate,cfNthDate,cfDatesAfter,cfAmountShape,cfCardFor,cfCardLinkGet,cfCardLinkSet,cfCardDue,cfCardDueOn,cfCardDueToggle,cfExpectGet,cfExpectSet,cfSeries,cfSeriesAll,cfSubSeries,taxPaySeries,taxPaydaysLeft,taxPerCheque,taxStubParse,taxStubDerive,taxStubGet,taxStubSave,taxDeferPace,taxWithheldPace,taxStubPanel,stubFileBtn,taxSubTabs,taxTabKey,taxYearNav,taxStamp,taxHomeData,taxHomeHtml,taxSteps,taxStepsHtml,taxDocNeeds,taxKeyDates,taxYoYWords,cfRemaining,cfForecast,cfOneStatement,cfProject,cfMovedSet,cfMovedToggle,cfIsMoved,cfSplit,cfBalancePoints,cfLatestBalance,cfStatedThrough,cfBalanceChartPts,CF_SPANS,cfSpanOk,cfSpanFrom,cfSpanPoints,cfSpanStats,CF_SECTION_ICO,cfHi,cfFresh,CF_TYPE_ICO,cfTypeIco,cfDir,cfFlowBar,SUB_KINDS,SUB_COMMON,subKind,subAvatar,subHi,subFresh,subRenew,subShareBar,BILL_KINDS,billKind,billFresh,cardMono,cardMini,cardStatus,cardFresh,RECON_SECTIONS,reconSheet,reconFresh,reconRing,NAVDEF,EMOJI,ico,ICON_STYLE,UI_WORDS,UI_ICO_DEFAULT,uiIcoFor,uiPageIco,uiPageIcoName,uiDecorate,uiEntered,macTint,macTrack,macBack,macFwd,macToolbar,macSideSet,macBadges,macPages,macGoKey,macMenuItems,macMenuShow,macMenuClose,TRIAL_WARN,TRIAL_GRACE,trialGet,trialSet,trialClear,trialState,trialsDue,trialWords,trialInsights,trialPill,trialKeep,trialCancel,trialNotify,STORE_ICO,storeLines,storePeriods,storeName,storeIco,storeTable,storeMonthly,storeCharges,storeInsights,storeDelta,WORTH_TYPES,WORTH_SPANS,worthType,worthBook,worthEnsure,worthAdd,worthSet,worthRemove,worthSources,worthAt,worthMonthly,worthInsights,worthLinkOk,rcpCardLinkGet,rcpCardLinkSet,cardTallyOpen,rcpCardOf,cardTallies,cardTally,cardTallyLostHtml,cardTallyNow,cfCardDue,cardStmtImported,cardStmtEmail,mailCardStmtSubj,mailCardStmtRead,mailCardStmtCard,mailCardStmtUse,mailCardStmtActs,cardDueGet,stmtSummary,stmtSummaryApply,cardStmtDay,cardBillWord,cardBillNote,CARDBILL_DAYS,worthLinkSet,worthDue,WORTH_MONTHLY,RET_POLICY,retPolicy,retFor,warFor,returnsDue,warrantiesEnding,retWhen,returnsInsights,returnsSheet,returnsFields,returnsRead,returnsApply,ODD_DAYS,oddId,oddCharges,oddWords,oddInsights,oddOk,oddSheet,TAXPACK_HOME,taxPackAgi,taxPackYears,taxPack,taxPackCsv,GUARD_IDLE_CHOICES,GUARD_FREE,guardIdleMinutes,guardIdleSet,guardTouch,guardDue,guardLockNow,guardWaitFor,guardUnlockWait,guardUnlockFailed,guardUnlockPassed,guardWaitWords,guardRow,MAIL_DEPS,MAIL_GAS,MAIL_GAS_V,MAIL_GAS_MANIFEST,MAIL_FROM_DEFAULT,MAIL_KINDS,MAIL_ACT,mailKeyNew,mailKeyOk,mailSigned,mailOpen,mailScriptSource,mailAddr,mailDomain,mailName,mailFromIs,mailAmounts,MAIL_TOTAL_RES,mailTotal,mailRead,mailBook,mailEnsure,mailLinked,mailUrlOk,mailStale,mailAsk,mailMerge,mailPrune,mailPull,mailWaiting,mailItem,mailMark,mailDay,mailAsText,mailQueueReceipts,mailIsPuller,mailLocal,mailLocalSet,mailSenderOk,mailRewind,mailRefusedNew,MAIL_MAX,MAIL_TEXT_SHORT,mailSays,mailAuto,mailRwMatch,mailWhen,mailCursor,mailCovers,mailNoteRefused,mailRetired,mailRetire,mailLocalReset,mailLinkKeep,mailLinkPut,mailRefundAmt,MAIL_NOTE_DAYS,MAIL_REFUND_BACK,MAIL_LOOKBACK_DAYS,MAIL_MARKS,MAIL_PAGE,MAIL_HOLD,mailShape,mailRuleKey,mailRule,mailLearn,mailAmtAs,mailMarkAs,mailResort,mailXferDir,MAIL_XFER_RE,mailCashParse,mailCashOpen,mailSubGuess,mailSubOpen,mailSubPanel,mailLegacyKey,mailTwins,mailIgnore,mailUnignore,MAIL_ATT_AUTO,mailAttIsPdf,mailAttIsImg,mailAttsClean,mailAttTexts,mailAttCan,mailAttFetch,mailAttApply,mailAttRead,mailAttAuto,mailAttIsRbs,mailAttFile,mailAttWent,mailAttOpen,mailAttRow,CLOUD_K,LEDGER_CLOUD_URL,cloudCfg,cloudOn,cloudSet,cloudUrlOk,cloudCall,cloudFs,cloudSignUp,cloudSignIn,cloudSignOut,cloudSignedOut,cloudForget,syncStaleFor,syncOkMark,SYNC_OK_K,set _autoFails(v){_autoFails=v;},taxHeroGap,themeFollow,themeSystem,moneyShort,applyTheme,toggleTheme,errLog,errNote,errClear,errSay,errCardHtml,errPanel,errText,errOnError,errOnReject,ERRLOG_K,set _errSaid(v){_errSaid=v;},get CLOUD_OUT_WHY(){return CLOUD_OUT_WHY;},cloudMe,cloudDeleteAccount,cloudPanel,REC_ID,recKeyNew,recNorm,recFmt,recSeal,recOpen,recHas,recMake,recRecover,recRewrap,cloudUrlKnown,readEngine,cloudForgot,cloudReset,cloudVerify,cloudVerifySend,cloudPwChange,cloudLinkTake,cloudLinkOnBoot,cloudSessions,cloudSessionEnd,cloudSessionsEndOthers,cloudActivity,ACT_WORDS,actWords,actWhen,actPanel,pkSupported,pkAdd,pkSignIn,pkList,pkRemove,pkRewrap,_pkDocId,WEL_CATS,WEL_STEPS,welDraft,welList,welPlan,welApply,welWanted,MAIL_ATT_LOOK,mailAttTargets,cfReconPoints,cfReconDays,cfStmtBacked,cfReconWindows,cfReconSummary,cfReconBlame,cfImportPanel,cfComingPanel,cfOverdue,CF_STANDIN_DAYS,cfPaidNote,cfChipWord,cfChipKey,subPayGet,subPaySet,subPayer,subPayNote,subPayModal,SUBPAY_DAYS,cfSettled,cfSettledSummary,CF_SETTLED_BACK,cfSettledPanel,CF_ASSUMED,cfIsAssumed,cfLateSkipSet,cfAssumedSpent,get saveBlock(){return saveBlock;},get saveState(){return saveState;},render,Views,healFromSeed,mviewDefault,dayListHtml,calSumHtml,money,catSums,
+  window.__PF={S,get DB(){return DB;},set DB(v){DB=v;},setBook,chargeId,chargeIdsFill,quickAdd,isTextEntry,cellTerms,setCellTerms,setCell,gridRestore,headFit,plateFit,fD,fDY,fDay,tapWord,mailSupplierOf,mailSuppWhy,mailCardProduct,mailAmounts,tabJoin,tabHold,tabOnStorage,get _tabStuck(){return _tabStuck;},set _tabStuck(v){_tabStuck=v;},_advStop,_hasPlain,blankMonthTmpl,emptyView,bioAfterReseal,APP_V,APP_BUILD,paintChrome,parseBillAlert,billRouteFor,parseBillAlert,seriesTaken,seriesDelete,seriesFreqAll,_pdfScan,_pdfStreamEnd,pdfDiag,parseRbsInvoices,_rbsCells,rbsToRows,rbsIsInvoice,rbsIsStatement,rbsIsRbs,vendorIsGeneral,suggestDest,rbsLineOff,rbsInvoiceOff,parseRbsStatement,rbsReconcile,rbsStmtPanel,rbsTakeFiles,rbsWireDrop,rbsAlreadyIn,r4DupeRows,r4VendorKey,rbsPanel,pdfRuns,billDupe,billPastePanel,_billToken,_billDate,save,saveFlush,saveSettled,imgPut,imgGet,imgDel,imgHave,imgBytes,imgCount,imgLoadAll,imgMigrate,imgGC,imgMissing,imgMissingCount,imgAdoptFrom,imgAdoptApply,_imgKeyOf,imgPushedRead,imgMarkPushed,imgAtRisk,imgAtRiskCount,imgWouldDrop,imgReady,imgWait,imgSettled,imgUnreadable,rcpImg,rcpHasImg,rcpImgBad,_imgSrcOK,imgSealAll,imgOpenAll,imgSealedCount,imgSealStat,imgSealCatchUp,imgRekey,imgClearAll,imgShutCount,imgBrokeCount,_imgIsEnv,bookWithImages,saveWhy,SAVE_WHY,saveWhere,storageAudit,storagePanel,appInstalled,fbChosen,fbStopOwn,roomForImage,lsBytes,lsHeadroom,lsCeiling,lsRefusedAt,lsNoteRefusal,LS_CEILING,saveWarnPaint,backupMark,backupLast,backupAgeDays,backupWords,backupKindOf,cfChaseParse,bankParse,TILE_SEL,TILE_MENUS,tileMenuFor,tileMenuItems,tileMenusWire,tileMenuOpen,tileMenuClose,tileMenuRates,rwCardsAll,rwOffersAll,rwClosedIds,rwIsClosed,CF_BANK_TYPES,cfBankList,cfMainBank,cfBanks,cfBankGet,cfBankId,cfBook,cfCur,cfBankAdd,cfBankSet,cfBankDel,cfBankState,cfBankBalance,cfBankPoints,cfBankSummaryParse,cfBankInterest,CF_XFER_DAYS,cfXferKey,cfXferWords,cfTransfers,cfXferSay,cfXferNoReset,cfImportXfers,cfProjectAll,reconCards,PLAID_ACCT_K,plaidAcct,MAIL_FILE_V,mailFileReady,mailFileBook,mailFileDest,mailFileQueue,mailFileLabels,mailFilePass,mailFileSheet,mailFileList,MAIL_ASSIST_V,mailAssistReady,mailAssistState,mailAssistFiling,mailAssistOp,mailWaitGate,_mpWhy,mailAssistCost,mailAssistSheet,mailRecapCard,mailFileOnRead,mailFileGuess,mailFileCatLabel,mailFileFind,mailFileSub,plaidAcctSet,plaidCfg,plaidCfgOnly,plaidSignIn,plaidSignOut,plaidBook,plaidTake,plaidMapSet,plaidFile,plaidInboxSettle,plaidWaiting,plaidReview,plaidRow,plaidGuess,plaidCatWord,plaidKeyNew,plaidOpen,plaidKid,plaidStatus,plaidEnsureKey,plaidConnect,plaidPull,plaidAuto,plaidRemove,plaidPanel,plaidLinkLoad,plaidOAuthOnBoot,PLAID_LINK_SRC,PLAID_SEAL_INFO,PLAID_TYPE,hhCfg,hhOn,hhBooksList,hhOpen,hhDocId,hhKeyNew,hhWrapPut,hhKeyFor,syncKeyPass,hhShare,hhInvite,hhLinkTake,hhJoin,hhMembers,hhInvites,hhRevoke,hhActivity,hhRemove,hhRekey,hhLeave,hhStop,hhGone,hhForget,bookPanel,hhInviteModal,hhJoinModal,hhLinkOnBoot,HH_WORDS,bookMerge,syncBaseSet,syncBaseGet,syncBaseForget,syncMergeWith,syncMergeDone,syncMergeAuto,syncMergeWords,syncManId,fsInit,syncBookId,syncBookOldId,syncBookV3,pfDerive3,pfSaltNew,pfSaltOk,BOOK_ID,syncEncOpt,bookSaltGet,bookSaltSet,syncBookMoved,PF_KDF_ITER3,_pkOpen,_unb64,rotatePlan,rotateState,rotateConfirmText,rotateDoneModal,pkDropSeals,_repassSecrets,syncRepass,syncNWrap,syncNUnwrap,syncSeenGet,syncSeenSet,syncIsOlder,syncNextN,cfReconWindows,cfReconDays,cfStmtBacked,mkey,monthByKey,r2v,ONCE_NAMES,ONCE_HITS,renderOnce,vpW,PDF_PARSERS,parseAnyInvoice,anyHeadRoles,anyLineOff,rbsAlreadyIn,zipStore,crc32,foldSheetLazy,zipBookText,ledgerFileText,exportAllFiles,exportAllZip,exportMint,EXPORT_EXTRA,_expGrid,aggParse,aggSniff,cfAggNear,aggToRecon,CF_AGG_DAYS,anyToInv,rbsReadRuns,rbsInvWord,aggDate,aggDateOrder,aggSuggest,cfImpStart,AGG_FORMATS,csvEsc,taxNyRules,taxStateNote,taxStatePaid,taxYearKey,taxYearEnd,taxYearEndOn,yearEndInsights,yearEndModal,YEAREND_FROM_MONTH,taxFileStateBlock,taxPlanState,cfBankGo,cfBankName,cfExpectNs,catHead,catRenamed,catRenameRcp,_cfXferLoose,catAddTo,catLineUp,catLineUpPlan,catRenameFwd,catLater,rcpOtherCats,rcpCatOk,rcpCatEnsure,rcpCatOptions,RCP_CASHBACK,RCP_CASHBACK_DAYS,rcpLooksCashback,rcpCashbackWords,rcpCashbackDest,rcpCashbackCard,rcpCashbackRedemptions,rcpCashbackFields,RW_PT_VAL,RW_PT_PILE,RW_PT_EXP_DAYS,rwPtVal,rwPoints,rwPointsAll,rwPointsLine,rwPointsNudges,rwPointsClosing,mailRedeemSubj,mailRedeemRead,mailRedeemCard,mailRedeemUse,mailRedeemDrop,mailRedeemActs,MAIL_REFUND_NEAR,mailRefundFind,mailRefundHave,mailRefundRecord,mailRefundUndo,mailRefundAuto,mailRefundChecks,mailRefundInsights,mailRefundActs,mailHandled,mailHandledText,mailHandledSheet,MAIL_SELF_DAYS,MAIL_SELF,mailIsPromo,mailSelfRun,mailSelfPass,mailSelfPreview,mailPreviewSheet,mailLessonFor,mailLessonApply,mailLessonHtml,mailSelfUndo,mailSelfChecks,mailSelfInsights,mailSelfActs,mailSelfSheet,CF_SELF_NEAR,MAIL_RCP_SEEN,mailCashBank,mailCashSureAccount,mailSelfCash,mailRcpCat,mailSelfReceipt,mailSelfUndoWhy,mailSelfMoneyUndo,MAIL_WEEK_DAYS,MAIL_WEEK_DUPE,MAIL_WEEK_KINDS,mailWeek,mailWeekSheet,cardPays,cardPayLines,cardPayWords,cardPayPoints,cardPayMissing,cardPayPanel,CARDPAY_BEFORE,CARDPAY_AFTER,cardsOpen,cfPayeeKeyV1,cfAllOn,cfAllPoints,cfAllSpan,cfAllTotal,cfAllMoves,cfXferSeries,cfComingAllPanel,cfImportCat,cfCatIndex,cfXferPanel,TAX_STATES,TAX_NO_WAGE_TAX,taxStateKey,taxStateName,taxStateTaxesWages,taxStateFor,taxIsNY,taxStateWord,taxProfileCard,_stubStateCode,BANKS,bankFrom,bankNamed,bankBody,bankTail,bankWho,bankDate,mailAttSniff,syncLegacyId,syncLegacyGone,cardClosedOn,cardIsClosed,cardClosedSet,cardCloseOpen,cardCloseSave,cardReopen,titleCase,seriesStats,seriesCycle,seriesArea,seriesTile,seriesCountUp,bankOfxParse,bankCsvParse,bankIsOfx,_cfFinish,cfAlertParse,cfAlertPanel,cfPayeeKey,cfMapGet,cfMapSet,cfGuessAccount,cfSugTokens,cfSuggestAccount,cfNewRows,cfBackfill,cfRowEntry,cfBankDays,cfBankDaysMerge,cfBankDaysNew,cfImportPlan,cfAccountAdd,cfAddDays,cfAddMonths,cfDaysBetween,cfSeriesKey,cfSeriesName,cfCadence,cfNextDate,cfNthDate,cfDatesAfter,cfAmountShape,cfCardFor,cfCardLinkGet,cfCardLinkSet,cfCardDue,cfCardDueOn,cfCardDueToggle,cfExpectGet,cfExpectSet,cfSeries,cfSeriesAll,cfSubSeries,taxPaySeries,taxPaydaysLeft,taxPerCheque,taxStubParse,taxStubDerive,taxStubGet,taxStubSave,taxDeferPace,taxWithheldPace,taxStubPanel,stubFileBtn,taxSubTabs,taxTabKey,taxYearNav,taxStamp,taxHomeData,taxHomeHtml,taxSteps,taxStepsHtml,taxDocNeeds,taxKeyDates,taxYoYWords,cfRemaining,cfForecast,cfOneStatement,cfProject,cfMovedSet,cfMovedToggle,cfIsMoved,cfSplit,cfBalancePoints,cfLatestBalance,cfStatedThrough,cfBalanceChartPts,CF_SPANS,cfSpanOk,cfSpanFrom,cfSpanPoints,cfSpanStats,CF_SECTION_ICO,cfHi,cfFresh,CF_TYPE_ICO,cfTypeIco,cfDir,cfFlowBar,SUB_KINDS,SUB_COMMON,subKind,subAvatar,subHi,subFresh,subRenew,subShareBar,BILL_KINDS,billKind,billFresh,cardMono,cardMini,cardStatus,cardFresh,RECON_SECTIONS,reconSheet,reconFresh,reconRing,NAVDEF,EMOJI,ico,ICON_STYLE,UI_WORDS,UI_ICO_DEFAULT,uiIcoFor,uiPageIco,uiPageIcoName,uiDecorate,uiEntered,macTint,macTrack,macBack,macFwd,macToolbar,macSideSet,macBadges,macPages,macGoKey,macMenuItems,macMenuShow,macMenuClose,TRIAL_WARN,TRIAL_GRACE,trialGet,trialSet,trialClear,trialState,trialsDue,trialWords,trialInsights,trialPill,trialKeep,trialCancel,trialNotify,STORE_ICO,storeLines,storePeriods,storeName,storeIco,storeTable,storeMonthly,storeCharges,storeInsights,storeDelta,WORTH_TYPES,WORTH_SPANS,worthType,worthBook,worthEnsure,worthAdd,worthSet,worthRemove,worthSources,worthAt,worthMonthly,worthInsights,worthLinkOk,rcpCardLinkGet,rcpCardLinkSet,cardTallyOpen,rcpCardOf,cardTallies,cardTally,cardTallyLostHtml,cardTallyNow,cfCardDue,cardStmtImported,cardStmtEmail,mailCardStmtSubj,mailCardStmtRead,mailCardStmtCard,mailCardStmtUse,mailCardStmtActs,cardDueGet,stmtSummary,stmtSummaryApply,cardStmtDay,cardBillWord,cardBillNote,CARDBILL_DAYS,worthLinkSet,worthDue,WORTH_MONTHLY,RET_POLICY,retPolicy,retFor,warFor,returnsDue,warrantiesEnding,retWhen,returnsInsights,returnsSheet,returnsFields,returnsRead,returnsApply,ODD_DAYS,oddId,oddCharges,oddWords,oddInsights,oddOk,oddSheet,TAXPACK_HOME,taxPackAgi,taxPackYears,taxPack,taxPackCsv,GUARD_IDLE_CHOICES,GUARD_FREE,guardIdleMinutes,guardIdleSet,guardTouch,guardDue,guardLockNow,guardWaitFor,guardUnlockWait,guardUnlockFailed,guardUnlockPassed,guardWaitWords,guardRow,MAIL_DEPS,MAIL_GAS,MAIL_GAS_V,MAIL_GAS_MANIFEST,MAIL_FROM_DEFAULT,MAIL_KINDS,MAIL_ACT,mailKeyNew,mailKeyOk,mailSigned,mailOpen,mailScriptSource,mailAddr,mailDomain,mailName,mailFromIs,mailAmounts,MAIL_TOTAL_RES,mailTotal,mailRead,mailBook,mailEnsure,mailLinked,mailUrlOk,mailStale,mailAsk,mailMerge,mailPrune,mailPull,mailWaiting,mailItem,mailMark,mailDay,mailAsText,mailQueueReceipts,mailIsPuller,mailLocal,mailLocalSet,mailSenderOk,mailRewind,mailRefusedNew,MAIL_MAX,MAIL_TEXT_SHORT,mailSays,mailAuto,mailRwMatch,mailWhen,mailCursor,mailCovers,mailNoteRefused,mailRetired,mailRetire,mailLocalReset,mailLinkKeep,mailLinkPut,mailRefundAmt,MAIL_NOTE_DAYS,MAIL_REFUND_BACK,MAIL_LOOKBACK_DAYS,MAIL_MARKS,MAIL_PAGE,MAIL_HOLD,mailShape,mailRuleKey,mailRule,mailLearn,mailAmtAs,mailMarkAs,mailResort,mailXferDir,MAIL_XFER_RE,mailCashParse,mailCashOpen,mailSubGuess,mailSubOpen,mailSubPanel,mailLegacyKey,mailTwins,mailIgnore,mailUnignore,MAIL_ATT_AUTO,mailAttIsPdf,mailAttIsImg,mailAttsClean,mailAttTexts,mailAttCan,mailAttFetch,mailAttApply,mailAttRead,mailAttAuto,mailAttIsRbs,mailAttFile,mailAttWent,mailAttOpen,mailAttRow,CLOUD_K,LEDGER_CLOUD_URL,cloudCfg,cloudOn,cloudSet,cloudUrlOk,cloudCall,cloudFs,cloudSignUp,cloudSignIn,cloudSignOut,cloudSignedOut,cloudForget,syncStaleFor,syncOkMark,SYNC_OK_K,set _autoFails(v){_autoFails=v;},taxHeroGap,themeFollow,themeSystem,moneyShort,applyTheme,toggleTheme,errLog,errNote,errClear,errSay,errCardHtml,errPanel,errText,errOnError,errOnReject,ERRLOG_K,set _errSaid(v){_errSaid=v;},get CLOUD_OUT_WHY(){return CLOUD_OUT_WHY;},cloudMe,cloudDeleteAccount,cloudPanel,REC_ID,recKeyNew,recNorm,recFmt,recSeal,recOpen,recHas,recMake,recRecover,recRewrap,cloudUrlKnown,readEngine,cloudForgot,cloudReset,cloudVerify,cloudVerifySend,cloudPwChange,cloudLinkTake,cloudLinkOnBoot,cloudSessions,cloudSessionEnd,cloudSessionsEndOthers,cloudActivity,ACT_WORDS,actWords,actWhen,actPanel,pkSupported,pkAdd,pkSignIn,pkList,pkRemove,pkRewrap,_pkDocId,WEL_CATS,WEL_STEPS,welDraft,welList,welPlan,welApply,welWanted,MAIL_ATT_LOOK,mailAttTargets,cfReconPoints,cfReconDays,cfStmtBacked,cfReconWindows,cfReconSummary,cfReconBlame,cfImportPanel,cfComingPanel,cfOverdue,CF_STANDIN_DAYS,cfPaidNote,cfChipWord,cfChipKey,subPayGet,subPaySet,subPayer,subPayNote,subPayModal,SUBPAY_DAYS,cfSettled,cfSettledSummary,CF_SETTLED_BACK,cfSettledPanel,CF_ASSUMED,cfIsAssumed,cfLateSkipSet,cfAssumedSpent,get saveBlock(){return saveBlock;},get saveState(){return saveState;},render,Views,healFromSeed,mviewDefault,dayListHtml,calSumHtml,money,catSums,
     undo,undo,redo,snap,snapCancel,toast,palOpen,palClose,palSearch,palIsOpen,PAL,UNDO,REDO,
     computeInsights,bookIntegrity,taxOpenMoney,taxOpenMoneyHtml,integrityHtml,_grpMonthly,chartW,chartBand,billMonths,billPerMonth,cfCadenceFromFreq,seriesMonthsPer,seriesFreqLabel,seriesPerMonth,seriesRate,seriesFreqGet,SERIES_FREQ_OPTS,SERIES_AUTO,seriesIsAuto,seriesAutoGet,seriesAutoWindow,seriesAutoDue,seriesAutoNext,seriesAutoRun,seriesRecord,seriesAutoSet,seriesAutoTick,seriesAutoAfterSync,workOverdue,workDepositKey,workReimbMatches,workPaidBy,workFollowInsights,WORK_LATE_DAYS,subsHistory,subsHistorySheet,SUBS_HIST_MONTHS,subsMerchantKey,subsDisplayName,subsFound,subsFoundAdd,subsFoundNot,subsFoundSheet,subsLineSeries,subsFromLine,subsLineUnlink,subsLineLink,subsLinePicker,seriesPriceChange,seriesPriceWatched,seriesPriceRecent,seriesCosts,RW_ALWAYS_FROM,RW_ALWAYS_TO,rwIsAlways,rwWhen,rwOfferAlways,rwCards,rwOffers,rwCard,rwOffer,rwCardAdd,rwCardSet,rwCardDel,rwOfferAdd,rwOfferDel,rwMax,rwSpent,rwStatus,rwDaysLeft,RW_TOPICS,rwTopicsOf,rwCovers,rwBest,rwEarnedYear,RW_PRESETS,rwPresetsOpen,rwCardFind,rwMerge,rwPresetApply,rwPrompt,rwRead,rwStmtCards,rwStmtGuess,rwStmtFor,rwCardForStmt,rwLineTopics,rwExcludes,rwLineCovered,rwLines,rwOfferSpend,rwRateFor,rwMissed,rwNudges,RW_NUDGE_MAX,rwIsRedemption,rwRedemptions,rwRedeemedYear,reconRewardsSettle,FOODSPLIT_WORDS,foodSplitGuess,foodSplitPlan,foodSplitApply,foodSplitOpen,closeYm,closeLabel,closeRange,closeShift,closeDefault,closeGet,closeSet,closeItems,closeSummary,closeInsights,RW_FLAT,rwStatementFees,rwCardYear,rwWorthAll,rwWorthInsights,rwWorthSheet,RW_ICO,rwIcoFor,rwFresh,rwCardColor,rwTier,rwPill,rwBar,seriesStaleAfter,seriesIsCold,computeAudit,csv,CSVSETS,focusCell,startCellEdit,catManager,CAT_SUGGEST,aliasGet,aliasSet,aliasReset,aliasWords,ALIAS_DEFAULT,grpManager,grp,gcolor,curMonth,dashPace,dashBudgetSplit,dashCatOrder,dashDaily,dashCash,budgetTotal,budgetPrevCol,budgetCached,budgetSync,catAugustColumns,catAugustAfterBook,dayDrawer,dayDrawerSave,calMonth,calendarHtml,txAll,txFiltered,txCsv,txReceiptIndex,dayCharges,dayMerchant,dayAddRow,dayRowsNow,dayAmt,dayCountHtml,dayRecount,catDropColumns,CAT_AUG_FLAG,CAT_DROP_FLAG,modal,closeModal,modalStale,get BOOKGEN(){return BOOKGEN;},
     RCP,RCP_PROMPT,mailVouched,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
