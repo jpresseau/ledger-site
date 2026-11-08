@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-iuUmsAxHTgr3nhHA1nOCSh61NsY4L17U3m9FkU+yOnk=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-9DSKvikPHXim4wBpCINmTnES8Q9MfOyuxRaqXuD9o4M=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -702,6 +702,13 @@ tr:hover .rowdel,.rowdel:focus{opacity:1}
 .aud .ic{flex:none;width:22px;text-align:center}
 .aud .b{font-weight:650}
 .aud .lk{color:var(--accent);font-weight:650;cursor:pointer}
+
+.audacts{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.audacts .btn.sm{font-size:12px}
+.audrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;width:100%;font-size:12.5px}
+.audrow>span{flex:1 1 220px;color:var(--sub)}
+.audmore{width:100%;font-size:12.5px;color:var(--sub)}
+.audmore summary{cursor:pointer;color:var(--accent);font-weight:600}
 .kbdhint{font-size:11.5px;color:var(--sub2);display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;align-items:center}
 
 
@@ -2634,7 +2641,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v28.99";
+const APP_V="v29.00";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2648,7 +2655,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="6b2f821";
+const APP_BUILD="5636151";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -20083,7 +20090,10 @@ function computeInsights(){
 
 
 function computeAudit(){
-  const iss=[]; const A=(ic,b,txt,go)=>iss.push({ic,b,txt,go,clean:b.indexOf('clean')>=0});
+  
+
+  const iss=[]; const A=(ic,b,txt,go,acts)=>iss.push({ic,b,txt,go,acts:acts||'',clean:b.indexOf('clean')>=0});
+  const btn=(act,label,data)=>'<button class="btn sm ghost" data-act="'+act+'"'+Object.keys(data||{}).map(k=>' data-'+k+'="'+esc(String(data[k]))+'"').join('')+'>'+esc(label)+'</button>';
   const ms=DB.months;
   
   for(let i=1;i<ms.length;i++){
@@ -20102,15 +20112,21 @@ function computeAudit(){
   const empty=ms.filter(m=>!m.entries.length);
   if(empty.length) A(ico('alert',15),'Empty',empty.length+' month sheet'+(empty.length>1?'s have':' has')+' no entries at all: '+empty.slice(0,8).map(m=>MA[m.m-1]+" '"+String(m.y).slice(2)).join(', ')+(empty.length>8?' …':'')+'.');
   
-  const nob=ms.filter(m=>!budgetSplit(m).has);
-  if(nob.length) A(ico('alert',15),'No budget',nob.length+' of '+ms.length+' months have no budget set, so pace and variance can\u2019t be judged for them.');
+  const fb=ms.findIndex(m=>budgetSplit(m).has), since=fb<0?[]:ms.slice(fb), nob=since.filter(m=>!budgetSplit(m).has);
+  if(nob.length) A(ico('alert',15),'No budget',nob.length+' of the '+since.length+' months since budgeting began ('+MN[ms[fb].m-1]+' '+ms[fb].y
+    +') '+(nob.length===1?'has':'have')+' no budget set, so pace and variance can\u2019t be judged for them.',null,
+    nob.slice(-6).reverse().map(m=>btn('audshow',MA[m.m-1]+" '"+String(m.y).slice(2),{y:m.y,m:m.m})).join(''));
   
-  const dups=[];
+
+  const dups=[], ok=((DB.meta||{}).dupeOk)||{};
   ms.forEach(m=>{ const seen={};
     m.entries.forEach(([d,ci,a])=>{ const k=d+'|'+ci+'|'+a; seen[k]=(seen[k]||0)+1; });
-    Object.entries(seen).forEach(([k,n])=>{ if(n>1){ const[d,ci]=k.split('|');
-      dups.push(MA[m.m-1]+" '"+String(m.y).slice(2)+' · '+(m.cats[+ci]||'?')+' · day '+d+' ×'+n); } }); });
-  if(dups.length) A(ico('alert',15),'Possible dupes',dups.length+' same-day/same-category/same-amount repeats — may be legitimate, worth a look: '+dups.slice(0,6).join('; ')+(dups.length>6?' …':'')+'.');
+    Object.entries(seen).forEach(([k,n])=>{ if(n>1){ const[d,ci,a]=k.split('|'), key=mkey(m.y,m.m)+'|'+k; if(ok[key]) return;
+      dups.push({key,y:m.y,m:m.m,d:+d,label:MA[m.m-1]+" '"+String(m.y).slice(2)+' · '+(m.cats[+ci]||'?')+' · day '+d+' · '+money(+a)+' ×'+n}); } }); });
+  if(dups.length) A(ico('alert',15),'Possible dupes',dups.length+' same-day/same-category/same-amount repeat'+(dups.length>1?'s':'')
+    +' — may be legitimate. Show opens the day; Not a dupe takes it off this list.',null,
+    dups.slice(0,12).map(x=>'<div class="audrow"><span>'+esc(x.label)+'</span>'+btn('audshow','Show',{y:x.y,m:x.m,d:x.d})+btn('audnodupe','Not a dupe',{k:x.key})+'</div>').join('')
+    +(dups.length>12?'<div class="mut">and '+(dups.length-12)+' more</div>':''));
   
   const all=[]; ms.forEach(m=>m.entries.forEach(([d,ci,a])=>all.push({a,m,d,ci})));
   const sorted=all.map(x=>x.a).sort((x,y)=>x-y);
@@ -20123,15 +20139,15 @@ function computeAudit(){
   
 
   const _cold=(order,store,kind)=>{
-    const hit=[]; let said=false;
+    const hit=[], names=[]; let said=false;
     (order||[]).forEach(function(nm){ const s=(store||{})[nm]||[]; if(!s.length) return;
       const last=s[s.length-1][0], f=seriesFreqGet(kind,nm);
       
       if(kind==='cards'&&cardIsClosed(nm)) return;
       if(!seriesIsCold(last,f)) return;
       if(f) said=true;
-      hit.push(titleCase(nm)+' ('+fDlong(last)+')'); });
-    return {hit:hit,said:said};
+      hit.push(titleCase(nm)+' ('+fDlong(last)+')'); names.push(nm); });
+    return {hit:hit,said:said,names:names};
   };
   const _coldSay=(r,noun)=>r.said
     ? r.hit.length+' '+noun+' series are overdue a reading \u2014 four months, or their own '
@@ -20140,7 +20156,8 @@ function computeAudit(){
   const stale=_cold(DB.billOrder,DB.bills,'bills');
   if(stale.hit.length) A(ico('alert',15),'Stale bills',_coldSay(stale,'bill'));
   const staleC=_cold(DB.cardOrder,DB.cards,'cards');
-  if(staleC.hit.length) A(ico('alert',15),'Stale cards',_coldSay(staleC,'card'));
+  if(staleC.hit.length) A(ico('alert',15),'Stale cards',_coldSay(staleC,'card')+' One you no longer use can be marked closed: its statements stay.',null,
+    staleC.names.map(nm=>btn('cardclose','Mark '+titleCase(nm)+' closed',{nm:nm})).join(''));
   
   let bad=0;
   for(let i=1;i<DB.checking.length;i++){ const p=DB.checking[i-1],c=DB.checking[i];
@@ -20165,10 +20182,12 @@ function computeAudit(){
     const byCard={};
     recs.forEach(r=>{ const k=r.card||'card not recorded';
       byCard[k]=byCard[k]||{n:0,t:0}; byCard[k].n++; byCard[k].t=tot([byCard[k].t,r.total]); });
+    
+    const bc=Object.entries(byCard).sort((a,b)=>b[1].t-a[1].t).map(([k,v])=>k+' '+money(v.t,0)+' across '+v.n+' receipt'+(v.n>1?'s':''));
     A(ico('info',15),'Receipt totals',recs.length+' receipt'+(recs.length>1?'s':'')+' filed, '
-      +money(tot(recs.map(r=>r.total)))+' charged in all — '+Object.entries(byCard).sort((a,b)=>b[1].t-a[1].t)
-        .map(([k,v])=>k+' '+money(v.t,0)+' across '+v.n+' receipt'+(v.n>1?'s':'')).join(', ')
-      +'. These are the totals to match against a statement, split or not.');
+      +money(tot(recs.map(r=>r.total)))+' charged in all — '+bc.slice(0,5).join(', ')+(bc.length>5?' and '+(bc.length-5)+' more':'')
+      +'. These are the totals to match against a statement, split or not.',null,
+      bc.length>5?'<details class="audmore"><summary>The other '+(bc.length-5)+'</summary>'+esc(bc.slice(5).join(', '))+'.</details>':'');
   }
   
 
@@ -20179,7 +20198,8 @@ function computeAudit(){
     const stuck=openStmt.map(r=>({r,n:(r.lines||[]).filter(l=>(l.kind==='purchase'||l.kind==='credit')&&(l.state==='open'||l.state==='look')).length}))
       .filter(x=>x.n);
     if(stuck.length) A(ico('alert',15),'Statements open',stuck.length+' statement'+(stuck.length>1?'s have':' has')
-      +' charges still unexplained: '+stuck.slice(0,5).map(x=>x.r.card+' '+MA[Number(x.r.ym.slice(5,7))-1]+' '+x.r.ym.slice(0,4)+' ('+x.n+')').join(', ')+'.');
+      +' charges still unexplained: '+stuck.slice(0,5).map(x=>x.r.card+' '+MA[Number(x.r.ym.slice(5,7))-1]+' '+x.r.ym.slice(0,4)+' ('+x.n+')').join(', ')+'.',null,
+      stuck.slice(0,5).map(x=>btn('audrecon','Open '+titleCase(x.r.card)+' '+MA[Number(x.r.ym.slice(5,7))-1]+' '+x.r.ym.slice(0,4)+' in Reconcile',{card:x.r.card,ym:x.r.ym})).join(''));
     else if(rc.length) A(ico('check',15),'Statements clean','Every imported statement has each charge either matched to something in the book, filed, or set aside on purpose.');
     
     const drift=rc.filter(r=>r.total!=null&&Math.abs(tot((r.lines||[]).map(l=>l.amt))-r.total)>0.01);
@@ -20205,7 +20225,7 @@ Views.audit=function(){
   const intg=(typeof bookIntegrity==='function')?bookIntegrity():[];
   const intHits=intg.reduce((s,c)=>s+c.rows.length,0);
   const probs=iss.filter(i=>!i.clean).length+intHits;
-  const body=iss.map(i=>'<div class="aud"><div class="ic" style="color:'+(i.clean?'var(--pos)':'var(--amber)')+'">'+i.ic+'</div><div><span class="b">'+esc(i.b)+'</span> — '+esc(i.txt)+'</div></div>').join('');
+  const body=iss.map(i=>'<div class="aud"><div class="ic" style="color:'+(i.clean?'var(--pos)':'var(--amber)')+'">'+i.ic+'</div><div><span class="b">'+esc(i.b)+'</span> — '+esc(i.txt)+(i.acts?'<div class="audacts">'+i.acts+'</div>':'')+'</div></div>').join('');
   const ms=DB.months;
   const entries=ms.reduce((s,m)=>s+m.entries.length,0);
   const withB=ms.filter(m=>budgetSplit(m).has).length;
@@ -40704,6 +40724,24 @@ function _imgLossOk(what){
     save(); render();
     toast(was?closeLabel(ym)+' reopened':closeLabel(ym)+' closed'+(s.todo?' with '+s.todo+(s.todo===1?' thing':' things')+' still to do':'')+' · ⌘Z to undo','ok');
   }
+  
+
+  if(act==='audshow'){
+    const k=mkey(Number(b.dataset.y),Number(b.dataset.m)), d=Number(b.dataset.d)||0;
+    if(!monthByKey(k)) return toast('That month’s sheet is gone','warn');
+    S.view='months'; S.month=k; render(); window.scrollTo(0,0);
+    if(d&&typeof dayDrawer==='function') dayDrawer(d);
+  }
+  else if(act==='audnodupe'){
+    const k=String(b.dataset.k||''); if(!k) return;
+    snap('mark entries not a duplicate');
+    DB.meta=DB.meta||{}; DB.meta.dupeOk=Object.assign({},DB.meta.dupeOk); DB.meta.dupeOk[k]=todayISO();
+    save(); render(); toast('Not a duplicate: off the list · ⌘Z to undo','ok');
+  }
+  else if(act==='audrecon'){
+    S.view='reconcile'; S.recon=Object.assign({},S.recon,{card:b.dataset.card||'',ym:b.dataset.ym||''}); render(); window.scrollTo(0,0);
+  }
+
   
 
   if(act==='storeper'){ S.stores=Object.assign({per:'y0',open:'',all:false},S.stores,{per:b.dataset.p}); render(); }
