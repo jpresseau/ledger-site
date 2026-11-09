@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-PSr3rdDLKlUKKoAaSG8n4beZ4f6jXzfXDZpU870CB7M=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-8gCA7tjDiiACZGWSWQhVHCv6Ecqou75vleL/0TgZkT4=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2641,7 +2641,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.06";
+const APP_V="v29.07";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2655,7 +2655,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="160e9cd";
+const APP_BUILD="3418ad3";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -12176,10 +12176,13 @@ function taxFacts(year,today){
 
   let cs=null;
   try{ cs=(typeof taxCreditScan==='function')?taxCreditScan(year,R,prof2):null; }catch(e){ cs=null; }
-  F.ctcBase=(cs&&cs.kids&&cs.kids.length)?cs.base:null;
-  F.ctcCut=(cs&&cs.kids&&cs.kids.length)?cs.cut:null;
-  F.ctcThresh=(cs&&cs.kids&&cs.kids.length)?cs.thresh:null;
-  F.ctcAmount=(cs&&cs.kids&&cs.kids.length)?cs.amount:null;
+  
+  const _any=!!(cs&&((cs.kids&&cs.kids.length)||cs.odc));
+  F.ctcBase=_any?r2v(cs.base+(cs.odc||0)):null;
+  F.ctcCut=_any?cs.cut:null;
+  F.ctcThresh=_any?cs.thresh:null;
+  F.ctcAmount=_any?cs.amount:null;
+  F.odc=_any?(cs.odc||0):null;
   
 
   const DL=taxDueLater(R);
@@ -13971,7 +13974,7 @@ function taxProfileCard(year){
     +'<div class="formrow"><label>Filing status <select id="taxProfFiling">'+TAX_FILINGS.map(function(f){ return '<option value="'+f+'"'+(prof.filing===f?' selected':'')+'>'
       +taxFilingLabel(f).replace(/^./,function(c){ return c.toUpperCase(); })+'</option>'; }).join('')+'</select></label>'
     +'<label>State '+taxStateSelect('taxProfState',taxStateKey(prof.state))+'</label>'
-    +'<input id="taxProfDeps" type="hidden" value="'+esc(prof.deps.map(function(d){ return d.name+' '+d.born; }).join(', '))+'">'
+    +'<input id="taxProfDeps" type="hidden" value="'+esc(prof.deps.map(function(d){ return d.name+' '+d.born+(d.student?' student':''); }).join(', '))+'">'
     +'<button class="btn sm" data-act="taxprofsave">Save</button></div></div>';
 }
 
@@ -14012,8 +14015,10 @@ function taxProfile(){
 function taxProfileParse(filing,depsText,state){
   const deps=[];
   String(depsText||'').split(/[,\n;]+/).forEach(s=>{
-    const m=s.trim().match(/^(.+?)\s+(19\d{2}|20\d{2})$/);
-    if(m) deps.push({name:m[1].trim(),born:Number(m[2])});
+    
+
+    const m=s.trim().match(/^(.+?)\s+(19\d{2}|20\d{2})(\s+student)?$/i);
+    if(m) deps.push(Object.assign({name:m[1].trim(),born:Number(m[2])},m[3]?{student:true}:{}));
   });
   const was=taxProfile();
   const out={filing:taxFilingKey(filing),set:true,filingByYear:was.filingByYear,deps};
@@ -14127,12 +14132,16 @@ function taxCreditScan(year,R,prof){
   const C=taxConst(y); if(!C||!R||R.sum.agi==null) return null;
   const thresh=taxCtcThreshold(taxFilingFor(year).filing);
   const kids=prof.deps.filter(d=>(y-d.born)>=0&&(y-d.born)<C.ctcKid);
-  if(!kids.length) return {kids:[],amount:0};
+  
+
+  const others=prof.deps.filter(d=>{ const a=y-d.born; return a>=C.ctcKid&&(a<=18||(d.student&&a<=23)); });
+  const odc=y>=2018?500*others.length:0;
+  if(!kids.length&&!odc) return {kids:[],others:[],odc:0,amount:0};
   let base=0;
   kids.forEach(d=>{ base+=(C.ctcU6&&(y-d.born)<6)?C.ctcU6:C.ctc; });
   const over=Math.max(0,R.sum.agi-thresh);
   let cut=Math.ceil(over/1000)*50;
-  let amount=Math.max(0,base-cut);
+  let amount=Math.max(0,base+odc-cut);
   
 
   if(y===2021&&base>2000*kids.length){
@@ -14140,14 +14149,14 @@ function taxCreditScan(year,R,prof){
     const t1=fil==='mfj'?150000:fil==='hoh'?112500:75000;
     const inc=base-2000*kids.length;
     const cut1=Math.min(inc,Math.ceil(Math.max(0,R.sum.agi-t1)/1000)*50);
-    amount=Math.max(0,2000*kids.length-cut)+(inc-cut1);
-    cut=base-amount;
+    amount=Math.max(0,2000*kids.length+odc-cut)+(inc-cut1);
+    cut=base+odc-amount;
   }
   
 
   const onSheet=Object.keys(R.pairs).some(k=>/child.*credit|credit.*child|\bCTC\b/i.test(k))
     ||R.lines.some(l=>/child.*credit/i.test(l.label));
-  return {kids,base,cut,amount,thresh,onSheet};
+  return {kids,others,odc,base,cut,amount,thresh,onSheet};
 }
 
 
@@ -14234,7 +14243,7 @@ function taxAdvisorHtml(year){
 
     +'<label>State '+taxStateSelect('taxProfState',prof.state)+'</label>'
     +'<label>Dependents — one per child, as <i>Name YYYY</i>'
-    +'<input id="taxProfDeps" value="'+esc(prof.deps.map(d=>d.name+' '+d.born).join(', '))+'" placeholder="for example: Alex 2015, Sam 2019"></label>'
+    +'<input id="taxProfDeps" value="'+esc(prof.deps.map(d=>d.name+' '+d.born+(d.student?' student':'')).join(', '))+'" placeholder="for example: Alex 2015, Sam 2005 student"></label>'
     +'<button class="btn sm" data-act="taxprofsave">Save</button></div>');
 
   
@@ -14322,18 +14331,23 @@ function taxAdvisorHtml(year){
     cHtml=sec('Credits',mut('No dependents in the profile. If there are children, add them under <b>Who is filing</b> below — '
       +'a birth year is enough to price the Child Tax Credit for every year on file, including the '
       +'closed ones where it may never have been claimed.'));
-  } else if(cs&&cs.kids.length){
+  } else if(cs&&(cs.kids.length||cs.odc)){
     
     const missed=[];
     ys.forEach(yy=>{
       const yn=Number(yy.slice(0,4)); if(yn>=y) return;
       const RR=taxReturn(yy); const c2=taxCreditScan(yy,RR,prof);
-      if(c2&&c2.kids.length&&c2.amount>0&&!c2.onSheet) missed.push({y:yn,amt:c2.amount});
+      if(c2&&(c2.kids.length||c2.odc)&&c2.amount>0&&!c2.onSheet) missed.push({y:yn,amt:c2.amount});
     });
-    cHtml=sec('Child Tax Credit',
-      mut(cs.kids.map(d=>esc(d.name)+' ('+(y-d.born)+' in '+y+')').join(', ')+' qualif'
-        +(cs.kids.length===1?'ies':'y')+' this year.')
+    cHtml=sec(cs.odc?(cs.kids.length?'Child Tax Credit and the credit for other dependents':'The credit for other dependents'):'Child Tax Credit',
+      mut((cs.kids.length?cs.kids.map(d=>esc(d.name)+' ('+(y-d.born)+' in '+y+')').join(', ')+' qualif'
+        +(cs.kids.length===1?'ies':'y')+' for the child credit this year. ':'')
+        +(cs.odc?cs.others.map(d=>esc(d.name)+' ('+(y-d.born)+(d.student?', a student':'')+')').join(', ')
+          +(cs.others.length===1?' is past it, and counts for $500 as another dependent. ':' are past it, and count for $500 each as other dependents. '):'')
+        +(prof.deps.some(d=>{ const a=y-d.born; return a>18&&a<=23&&!d.student; })
+          ?'A child of 19 to 23 counts only as a full-time student: write “student” after the birth year below. ':''))
       +'<div style="font-size:13px">Base <b>'+money(cs.base,0)+'</b>'
+      +(cs.odc?' + '+money(cs.odc,0)+' for other dependents':'')
       +(cs.cut>0?' − '+money(cs.cut,0)+' phase-out ($50 per $1,000 of AGI over '+money(cs.thresh,0)+')':'')
       +' = <b>'+money(cs.amount,0)+'</b>. '
       +(cs.onSheet?'The sheet carries a child-credit line, so this looks priced in.'
@@ -18835,10 +18849,10 @@ function taxSteps(year,today){
   
   let cs=null; try{ cs=taxCreditScan(year,taxReturn(year),prof); }catch(e){ cs=null; }
   step('credits','Credits',
-    !prof.set?'todo':(!prof.deps.length||(cs&&cs.kids.length))?'done':'todo',
+    !prof.set?'todo':(!prof.deps.length||(cs&&(cs.kids.length||cs.odc)))?'done':'todo',
     !prof.set?'answered once the profile is':
       !prof.deps.length?'no dependents, so no child credit to price'
-      :cs&&cs.kids.length?'child tax credit '+money(cs.amount,0)+(cs.onSheet?', on the sheet':', not yet on the sheet')
+      :cs&&(cs.kids.length||cs.odc)?(cs.odc?(cs.kids.length?'child and other-dependent credits ':'credit for other dependents '):'child tax credit ')+money(cs.amount,0)+(cs.onSheet?', on the sheet':', not yet on the sheet')
       :'the dependents on file are past the credit’s age',
     'advisor');
   
