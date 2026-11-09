@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-adihqosCZCqLtkjLtnz62afQoXET25lhgGSETHM3+2Y=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-kHiSQwEXQwa9olkVVm/MWkmovbKzJJVW3ksd2AjcRFU=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2641,7 +2641,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.04";
+const APP_V="v29.05";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2655,7 +2655,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="439d4e3";
+const APP_BUILD="998442d";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -14622,6 +14622,9 @@ function taxFedBrackets(taxable,year,filing){
 }
 
 
+
+
+const TAX_ACTC={2018:1400,2019:1400,2020:1400,2022:1500,2023:1600,2024:1700,2025:1700,2026:1700};
 function taxFedEstimate(inp){
   const y=Number(String(inp.year).slice(0,4));
   const T=TAX_FED[y], G=TAX_LTCG[y];
@@ -14653,12 +14656,18 @@ function taxFedEstimate(inp){
   const netInv=r2v(interest+ordDiv+Math.max(0,ltcg));
   const niit=r2v(Math.min(netInv,Math.max(0,agi-thr))*0.038);
   const beforeCredits=r2v(ordTax+prefTax);
-  const ctc=inp.ctc||0;
-  const tax=r2v(Math.max(0,beforeCredits-ctc)+addlMed+niit);
+  
+
+  const care=Math.max(0,inp.care||0), ctcAll=Math.max(0,inp.ctc||0);
+  const ctc=r2v(Math.min(ctcAll,beforeCredits)), careUsed=r2v(Math.min(care,beforeCredits-ctc));
+  const earned=inp.earned!=null?inp.earned:r2v(wages+other), left=r2v(ctcAll-ctc);
+  const actc=left<=0?0:y===2021?left
+    :r2v(Math.min(left,(TAX_ACTC[y]||0)*Math.max(0,inp.ctcKids||0),Math.max(0,earned-2500)*0.15));
+  const tax=r2v(beforeCredits-ctc-careUsed+addlMed+niit);
   return {agi,taxable,ordTaxable,pref,ordTax:r2v(ordTax),prefTax:r2v(prefTax),
-    addlMed,niit,ctc,tax,est:!!(T.est||G.est),
+    addlMed,niit,ctc,care:careUsed,actc,tax,est:!!(T.est||G.est),
     held:inp.held!=null?r2v(inp.held):null,
-    owed:inp.held!=null?r2v(tax-inp.held):null};
+    owed:inp.held!=null?r2v(tax-inp.held-actc):null};
 }
 
 
@@ -14700,15 +14709,32 @@ function taxEstimateInputs(year){
   
 
   const _agi=r2v(wages+interest+ordDiv+ltcg+other), ND=ded==null&&typeof taxNewDed==='function'?taxNewDed(y,_agi,_fil):null;
-  const deduction=pick('deduction',null,ded!=null?ded:(C?r2v(C.std[_fil]+(ND?ND.total:0)):null));
-  const cs=(typeof taxCreditScan==='function')?taxCreditScan(year,R,prof):null;
+  
+
+  let F=null; if(ded==null){ try{ F=taxFacts(year); }catch(e){ F=null; } }
+  const IT=F&&(F.mort!=null||F.saltPaid!=null)?(function(){
+    const cap=taxSaltCap(y,_agi,_fil), salt=F.saltPaid!=null?r2v(Math.min(F.saltPaid,cap!=null?cap:Infinity)):0;
+    return {mort:F.mort||0,salt:salt,saltPaid:F.saltPaid,saltCap:cap,logs:F.logItem||0,total:r2v((F.mort||0)+salt+(F.logItem||0))}; })():null;
+  const itemize=!!(IT&&C&&IT.total>C.std[_fil]);
+  const deduction=pick('deduction',null,ded!=null?ded:(C?r2v((itemize?IT.total:C.std[_fil])+(ND?ND.total:0)):null));
+  if(ded==null&&C) src.deduction=itemize?'itemized':'standard';
+  
+
+  const _R=R.sum.agi!=null?R:Object.assign({},R,{sum:Object.assign({},R.sum,{agi:_agi})});
+  const cs=(typeof taxCreditScan==='function')?taxCreditScan(year,_R,prof):null;
+  
+
+  let DC=null; try{ DC=typeof taxDepCare==='function'?taxDepCare(year,_R,prof):null; }catch(e){ DC=null; }
+  const care=DC&&DC.fromAnswer&&!DC.noSecond?DC.credit:0;
+  src.care=care?'answer':'none';
   const held=pick('held',
     docs.some(d=>d.boxes&&(d.boxes['2']!=null||d.boxes['4']!=null))
       ?r2v(sum(w2,'2')+sum(docs.filter(d=>/^1099/.test(d.kind)),'4')):null,
     R.sum.fedHeld);
   return {year:y,filing:_fil,wages,interest,ordDiv,qualDiv,ltcg,other,
     medWages:w2.length?(sum(w2,'5')||null):null,
-    deduction,newDed:ND&&ND.total>0?ND:null,ctc:cs?cs.amount:0,held,src};
+    deduction,newDed:ND&&ND.total>0?ND:null,itemized:ded==null?IT:null,itemize:itemize,
+    ctc:cs?cs.amount:0,ctcKids:cs&&cs.kids?cs.kids.length:0,care:care,earned:r2v(wages+other),held,src};
 }
 function taxSecondOpinion(year){
   const inp=taxEstimateInputs(year);
@@ -14725,7 +14751,10 @@ function taxSecondOpinionHtml(year){
   if(!so) return '';
   const {inp,est,sheet}=so;
   const mut=t=>'<div class="mut" style="font-size:12px;margin-bottom:8px">'+t+'</div>';
-  const srcLab={documents:'from the documents',sheet:'from the sheet',none:'nothing found'};
+  const srcLab={documents:'from the documents',sheet:'from the sheet',none:'nothing found',
+    itemized:'itemized: mortgage interest '+money((inp.itemized||{}).mort||0,0)+' + state and local taxes '+money((inp.itemized||{}).salt||0,0)
+      +((inp.itemized||{}).logs?' + logged gifts and medical '+money(inp.itemized.logs,0):'')+(inp.newDed?' + the 2025 law’s new deductions':''),
+    standard:'the standard deduction'+(inp.itemized?', more than itemizing ('+money(inp.itemized.total,0)+')':'')+(inp.newDed?' + the 2025 law’s new deductions':'')};
   const rows=[
     ['Wages',inp.wages,inp.src.wages],
     ['Interest'+(inp.src.interest==='sheet'?' & other income':''),inp.interest,inp.src.interest],
@@ -14741,6 +14770,7 @@ function taxSecondOpinionHtml(year){
     est.addlMed?['Additional Medicare (8959)',est.addlMed]:null,
     est.niit?['Net investment tax (8960)',est.niit]:null,
     est.ctc?['Child Tax Credit',-est.ctc]:null,
+    est.care?['Child and dependent care credit (2441)',-est.care]:null,
   ].filter(Boolean).map(([a,b])=>'<tr><td>'+a+'</td><td class="n num">'+money(b)+'</td></tr>').join('');
   return '<div class="sheet"><h3>The second opinion</h3>'
     +mut('A federal return computed from first principles — IRS tables kept in the app, income from '
@@ -14753,6 +14783,7 @@ function taxSecondOpinionHtml(year){
     +(sheet!=null?'<tr><td>The sheet’s own answer</td><td class="n num">'+money(sheet)+'</td></tr>'
       +'<tr><td>'+(so.agree?'<span class="ok">Agree</span>':'<b class="off">Apart by</b>')+'</td>'
       +'<td class="n num">'+(so.agree?'within tolerance':'<b class="off">'+money(Math.abs(so.diff))+'</b>')+'</td></tr>':'')
+    +(est.actc?'<tr><td>Additional child tax credit (refundable, line 28)</td><td class="n num">'+money(est.actc)+'</td></tr>':'')
     +(est.held!=null?'<tr><td>'+(est.owed>0?'Would still owe':'Refund position')+'</td>'
       +'<td class="n num"><b>'+money(Math.abs(est.owed))+'</b></td></tr>':'')
     +'</tbody></table></div></div>';
@@ -16174,6 +16205,7 @@ const TAXWORK_FIELDS=[
   ['other','Other income (1099-NEC, misc)','8'],
   ['deduction','Deduction taken','12'],
   ['ctc','Child tax credit','19'],
+  ['care','Child and dependent care credit (Form 2441)','20'],
   ['held','Federal tax withheld','25'],
   ['estPaid','Estimated payments made','26'],
 ];
@@ -16210,7 +16242,7 @@ function taxWorkInputs(year){
     if(w[f]!=null){ out[f]=w[f]; out.src[f]='hand'; }
     else{ out[f]=r2v(sv); out.src[f]=f==='estPaid'?(logged!=null?'log':'none'):(seed.src[f]||'none'); }
   });
-  out.medWages=seed.medWages;
+  out.medWages=seed.medWages; out.ctcKids=seed.ctcKids; out.earned=seed.earned;
   return out;
 }
 function taxWorkEstimate(year){
@@ -16219,7 +16251,7 @@ function taxWorkEstimate(year){
   if(!est) return null;
   
 
-  const paid=r2v((inp.held||0)+(inp.estPaid||0));
+  const paid=r2v((inp.held||0)+(inp.estPaid||0)+(est.actc||0));
   return {inp,est,paid,owed:r2v(est.tax-paid)};
 }
 function taxBuildHtml(year){
@@ -16229,7 +16261,8 @@ function taxBuildHtml(year){
     +'nothing it cannot price correctly.</div></div>';
   const {inp,est}=W;
   const y=String(year).slice(0,4);
-  const srcLab={hand:'by hand',documents:'from the documents',sheet:'from the sheet',log:'from the payments log',none:'nothing seeded'};
+  const srcLab={hand:'by hand',documents:'from the documents',sheet:'from the sheet',log:'from the payments log',none:'nothing seeded',
+    itemized:'itemized: mortgage interest and state and local taxes',standard:'the standard deduction',answer:'your child care answer, Form 2441'};
   const fld=([f,label,line])=>{
     const hand=inp.src[f]==='hand';
     return '<tr><td class="mut" style="font-size:11px;width:34px">'+line+'</td>'
@@ -16262,6 +16295,7 @@ function taxBuildHtml(year){
       +(est.prefTax?', incl. '+money(est.prefTax)+' on the 0/15/20 stack':'')+')',r2v(est.ordTax+est.prefTax))
     +(surtax?out('23','Other taxes (8959 + 8960)',surtax):'')
     +out('24','Total tax',est.tax,true)
+    +(est.actc?out('28','Additional child tax credit (refundable)',est.actc):'')
     +out('33','Total payments',W.paid)
     +out(W.owed>0?'37':'34',W.owed>0?'AMOUNT YOU OWE':'REFUND',Math.abs(W.owed),true)
     +'</tbody></table></div></div>';
