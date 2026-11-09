@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-xSM7R3WgZ5y5macMg1ZgDLvEmJwEkbAGZlNNzwuG8KI=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-JTl3Cc5Jr46K6Pgq5IabGcghFWVzhrZiwG6NtVvGdo0=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2641,7 +2641,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.02";
+const APP_V="v29.03";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2655,7 +2655,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="a6d6032";
+const APP_BUILD="dbee630";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -12176,6 +12176,12 @@ function taxFacts(year,today){
   F.dueLater=DL.by;
   F.dueNextYear=DL.years.length?DL.years[0]:null;
   F.dueNext=DL.years.length?DL.by[DL.years[0]]:null;
+  
+
+  F.newDed=typeof taxNewDed==='function'?taxNewDed(y,magi,fil.filing):null;
+  
+  F.newBase=F.effItem!=null?F.effItem:(F.std!=null?F.std:null);
+  F.missedNew=F.newDed&&F.newDed.total>0&&F.taken!=null&&F.newBase!=null?Math.max(0,r2v(F.newBase+F.newDed.total-F.taken)):null;
   return Object.freeze(F);
 }
 
@@ -14338,7 +14344,7 @@ function taxAdvisorHtml(year){
     +(typeof taxSecondOpinionHtml==='function'?taxSecondOpinionHtml(year):'')
     +(typeof nyReturnHtml==='function'?nyReturnHtml(year):'')   
     +taxYoYHtml(year)
-    +dedHtml+cHtml
+    +dedHtml+(typeof taxNewDedHtml==='function'?taxNewDedHtml(year):'')+cHtml
     +(typeof taxDepCareHtml==='function'?taxDepCareHtml(year):'')
     +(typeof taxEnergyHtml==='function'?taxEnergyHtml(year):'')
     +profHtml;
@@ -14686,7 +14692,10 @@ function taxEstimateInputs(year){
   
 
   const _fil=taxFilingFor(year).filing;
-  const deduction=pick('deduction',null,ded!=null?ded:(C?C.std[_fil]:null));
+  
+
+  const _agi=r2v(wages+interest+ordDiv+ltcg+other), ND=ded==null&&typeof taxNewDed==='function'?taxNewDed(y,_agi,_fil):null;
+  const deduction=pick('deduction',null,ded!=null?ded:(C?r2v(C.std[_fil]+(ND?ND.total:0)):null));
   const cs=(typeof taxCreditScan==='function')?taxCreditScan(year,R,prof):null;
   const held=pick('held',
     docs.some(d=>d.boxes&&(d.boxes['2']!=null||d.boxes['4']!=null))
@@ -14694,7 +14703,7 @@ function taxEstimateInputs(year){
     R.sum.fedHeld);
   return {year:y,filing:_fil,wages,interest,ordDiv,qualDiv,ltcg,other,
     medWages:w2.length?(sum(w2,'5')||null):null,
-    deduction,ctc:cs?cs.amount:0,held,src};
+    deduction,newDed:ND&&ND.total>0?ND:null,ctc:cs?cs.amount:0,held,src};
 }
 function taxSecondOpinion(year){
   const inp=taxEstimateInputs(year);
@@ -14742,6 +14751,72 @@ function taxSecondOpinionHtml(year){
     +(est.held!=null?'<tr><td>'+(est.owed>0?'Would still owe':'Refund position')+'</td>'
       +'<td class="n num"><b>'+money(Math.abs(est.owed))+'</b></td></tr>':'')
     +'</tbody></table></div></div>';
+}
+
+
+
+function taxNewDedAnswers(){ const m=(DB.meta||{}).taxNewDed; return m&&typeof m==='object'?m:{}; }
+function taxNewDed(year,magi,filing){
+  const y=Number(String(year).slice(0,4)), out={year:y,total:0,parts:[],asked:false,applies:y>=2025&&y<=2028};
+  if(!out.applies) return out;
+  const A=taxNewDedAnswers(), born=A.born||{}, yr=((A.years||{})[y])||{};
+  const f=typeof taxFilingKey==='function'?taxFilingKey(filing):String(filing||'single'), j=f==='mfj', sep=f==='mfs';
+  const m=Math.max(0,Number(magi)||0), num=v=>Math.max(0,Number(v)||0);
+  out.asked=!!(born.you||born.spouse||yr.tips!=null||yr.ot!=null||yr.car!=null);
+  const add=(k,label,full,cut,note)=>{ const amt=r2v(Math.max(0,full-cut)); out.parts.push({k:k,label:label,full:r2v(full),cut:r2v(Math.min(full,cut)),amt:amt,note:note||''});
+    out.total=r2v(out.total+amt); };
+  
+  const old=[born.you].concat(j?[born.spouse]:[]).filter(b=>Number(b)>1900&&Number(b)<=y-65).length;
+  if(old) add('senior','65 or older'+(old>1?' (both of you)':''),sep?0:6000*old,0.06*Math.max(0,m-(j?150000:75000)),sep?'not on a separate return':'');
+  const whole=(over,per)=>Math.floor(Math.max(0,over)/1000)*per, part=(over,per)=>Math.ceil(Math.max(0,over)/1000)*per;
+  if(num(yr.tips)) add('tips','Qualified tips',sep?0:Math.min(num(yr.tips),25000),whole(m-(j?300000:150000),100),sep?'not on a separate return':'');
+  if(num(yr.ot)) add('ot','Qualified overtime premium',sep?0:Math.min(num(yr.ot),j?25000:12500),whole(m-(j?300000:150000),100),sep?'not on a separate return':'');
+  if(num(yr.car)) add('car','Car loan interest',Math.min(num(yr.car),10000),part(m-(j?200000:100000),200));
+  return out;
+}
+const TAX_PLAYS_NEWDED=[
+{ id:'new-2025-deductions', family:'deduction',
+  law:'§151(f) (65 or older), §224 (tips), §225 (overtime), §163(h)(4) (car loan interest), 2025-2028',
+  needs:['taxable','taken','filing'],
+  blind:'no deduction figure for this year to compare with',
+  hedge:function(){ return 'exact'; },
+  lv:function(F){ return F.open||F.amendable?'act':'note'; },
+  
+  when:function(F){ return !!(F.newDed&&F.newDed.total>0.5&&F.missedNew>0.5); },
+  dollars:function(F){ return taxDedWorth(F,F.missedNew); },
+  say:function(F){
+    const N=F.newDed;
+    return {what:'Take the '+F.year+' law’s new deductions — '+money(F.missedNew,0)+' this return does not show',
+      why:'The return deducted '+money(F.taken,0)+'. On top of '+(F.trueItem!=null&&F.trueItem>(F.std||0)?'itemising':'the standard deduction')
+        +', your answers give '+N.parts.filter(p=>p.amt>0).map(p=>p.label.toLowerCase()+' '+money(p.amt,0)
+          +(p.cut>0?' (after '+money(p.cut,0)+' phased out)':'')).join(', ')
+        +'. They lower taxable income whether you itemise or not, and are worth about <b>'+money(taxDedWorth(F,F.missedNew),0)+'</b> of federal tax.',
+      chip:'<code>'+money(F.newBase,0)+' + '+money(N.total,0)+' new − '+money(F.taken,0)+' taken = '+money(F.missedNew,0)+'</code>'};
+  },
+  guards:function(F){ return [
+    'Tips count only from a job the IRS lists as customarily tipped; overtime only the premium over the regular rate, as your W-2 or employer statement shows it; car interest only for a new car assembled in the U.S., with its VIN on the return.',
+    'New York does not allow these: its return starts from federal AGI, which they do not change.']; }
+}];
+
+
+function taxNewDedHtml(year){
+  const y=Number(String(year).slice(0,4)); if(!(y>=2025&&y<=2028)) return '';
+  const A=taxNewDedAnswers(), born=A.born||{}, yr=((A.years||{})[y])||{};
+  const R=typeof taxReturn==='function'?taxReturn(year):null, fil=typeof taxFilingFor==='function'?taxFilingFor(year).filing:'single';
+  const magi=R&&R.sum?(R.L&&R.L('8960','13')!=null?R.L('8960','13'):R.sum.agi):null;
+  const N=taxNewDed(y,magi,fil), j=fil==='mfj';
+  const inp=(id,label,val,ph)=>'<label>'+label+'<input id="'+id+'" inputmode="decimal" value="'+esc(val==null?'':String(val))+'" placeholder="'+esc(ph)+'"></label>';
+  return '<div class="sheet"><h3>New deductions, 2025–2028 <span class="r">'+(N.total>0?money(N.total,0):'none yet')+'</span></h3>'
+    +'<div class="mut" style="font-size:12px;margin-bottom:8px">From the July 2025 law, taken whether you itemise or not, and smaller as income rises'
+    +(magi!=null?' (this year’s income here: '+money(magi,0)+')':'')+'. New York does not allow them.</div>'
+    +(N.parts.length?'<div class="tblwrap"><table class="tbl tight"><tbody>'+N.parts.map(p=>'<tr><td>'+esc(p.label)+(p.note?' <span class="mut">— '+esc(p.note)+'</span>':'')+'</td>'
+      +'<td class="n num">'+money(p.amt,0)+'</td><td class="mut" style="font-size:11px">'+(p.cut>0?money(p.full,0)+' less '+money(p.cut,0)+' phased out':'in full')+'</td></tr>').join('')
+      +'</tbody></table></div>':'')
+    +'<div class="formrow" style="flex-wrap:wrap;gap:8px">'
+    +inp('tndBornYou','Your birth year',born.you,'e.g. 1960')+(j?inp('tndBornSp','Spouse’s birth year',born.spouse,'e.g. 1962'):'')
+    +inp('tndTips','Tips in '+y+' ($)',yr.tips,'0')+inp('tndOt','Overtime premium in '+y+' ($)',yr.ot,'0')
+    +inp('tndCar','New-car loan interest in '+y+' ($)',yr.car,'0')
+    +'<button class="btn sm" data-act="taxnewdedsave" data-y="'+y+'">Save</button></div></div>';
 }
 
 
@@ -16602,7 +16677,8 @@ function _taxPlayList(){
     typeof TAX_PLAYS_INVEST!=='undefined'?TAX_PLAYS_INVEST:[],
     typeof TAX_PLAYS_BANDS!=='undefined'?TAX_PLAYS_BANDS:[],
     typeof TAX_PLAYS_ACCOUNTS!=='undefined'?TAX_PLAYS_ACCOUNTS:[],
-    typeof TAX_PLAYS_BROKERAGE!=='undefined'?TAX_PLAYS_BROKERAGE:[]);
+    typeof TAX_PLAYS_BROKERAGE!=='undefined'?TAX_PLAYS_BROKERAGE:[],
+    typeof TAX_PLAYS_NEWDED!=='undefined'?TAX_PLAYS_NEWDED:[]);
 }
 function taxPlayById(id){
   const all=_taxPlayList();
@@ -40809,6 +40885,28 @@ function _imgLossOk(what){
 
   
 
+  if(act==='taxnewdedsave'){
+    const y=Number(b.dataset.y), v=id=>{ const e=document.getElementById(id); return e?String(e.value||'').trim():null; };
+    const yr=s=>s===''||s==null?null:/^(19|20)\d{2}$/.test(s)&&Number(s)<=new Date().getFullYear()?Number(s):NaN;
+    const amt=s=>{ if(s===''||s==null) return null; const n=pnum(s); return n!=null&&isFinite(n)&&n>=0?r2v(n):NaN; };
+    const by={you:yr(v('tndBornYou')),spouse:yr(v('tndBornSp'))}, ys={tips:amt(v('tndTips')),ot:amt(v('tndOt')),car:amt(v('tndCar'))};
+    const bad=Object.keys(by).filter(k=>Number.isNaN(by[k])).concat(Object.keys(ys).filter(k=>Number.isNaN(ys[k])));
+    if(!(y>=2025&&y<=2028)) return;
+    if(bad.length) return toast(bad.some(k=>k==='you'||k==='spouse')?'A birth year is four digits, like 1960':'An amount is a number of dollars, like 1,250','warn');
+    snap('the new deductions’ answers');
+    DB.meta=DB.meta||{}; const A=DB.meta.taxNewDed=Object.assign({},taxNewDedAnswers());
+    A.born=Object.assign({},A.born); ['you','spouse'].forEach(k=>{ if(v(k==='you'?'tndBornYou':'tndBornSp')===null) return; if(by[k]==null) delete A.born[k]; else A.born[k]=by[k]; });
+    A.years=Object.assign({},A.years); const Y=A.years[y]=Object.assign({},A.years[y]);
+    Object.keys(ys).forEach(k=>{ if(ys[k]==null) delete Y[k]; else Y[k]=ys[k]; });
+    if(!Object.keys(Y).length) delete A.years[y];
+    save(); render();
+    const fil=typeof taxFilingFor==='function'?taxFilingFor(y).filing:'single', R=typeof taxReturn==='function'?taxReturn(y):null;
+    const N=taxNewDed(y,R&&R.sum?R.sum.agi:null,fil);
+    toast(N.total>0?'New deductions for '+y+': '+money(N.total,0)+' · ⌘Z to undo':'Saved — none of the new deductions applies for '+y+' as answered','ok');
+  }
+
+  
+
   if(act==='storeper'){ S.stores=Object.assign({per:'y0',open:'',all:false},S.stores,{per:b.dataset.p}); render(); }
   else if(act==='storeopen'){
     const k=b.dataset.k||'', st=S.stores=Object.assign({per:'y0',open:'',all:false},S.stores);
@@ -47105,7 +47203,7 @@ function renderOnce(name,fn){
   },900);
   window.__PF={S,get DB(){return DB;},set DB(v){DB=v;},setBook,chargeId,chargeIdsFill,quickAdd,isTextEntry,cellTerms,setCellTerms,setCell,gridRestore,headFit,plateFit,fD,fDY,fDay,tapWord,mailSupplierOf,mailSuppWhy,mailSuppCheckAuto,mailCardProduct,mailAmounts,tabJoin,tabHold,tabOnStorage,get _tabStuck(){return _tabStuck;},set _tabStuck(v){_tabStuck=v;},_advStop,_hasPlain,blankMonthTmpl,emptyView,bioAfterReseal,APP_V,APP_BUILD,paintChrome,parseBillAlert,billRouteFor,parseBillAlert,seriesTaken,seriesDelete,seriesFreqAll,_pdfScan,_pdfStreamEnd,pdfDiag,parseRbsInvoices,_rbsCells,rbsToRows,rbsIsInvoice,rbsIsStatement,rbsIsRbs,vendorIsGeneral,suggestDest,rbsLineOff,rbsInvoiceOff,parseRbsStatement,rbsReconcile,rbsStmtPanel,rbsTakeFiles,rbsWireDrop,rbsAlreadyIn,r4DupeRows,r4VendorKey,rbsPanel,pdfRuns,billDupe,billPastePanel,_billToken,_billDate,save,saveFlush,saveSettled,imgPut,imgGet,imgDel,imgHave,imgBytes,imgCount,imgLoadAll,imgMigrate,imgGC,imgMissing,imgMissingCount,imgAdoptFrom,imgAdoptApply,_imgKeyOf,imgPushedRead,imgMarkPushed,imgAtRisk,imgAtRiskCount,imgWouldDrop,imgReady,imgWait,imgSettled,imgUnreadable,rcpImg,rcpHasImg,rcpImgBad,_imgSrcOK,imgSealAll,imgOpenAll,imgSealedCount,imgSealStat,imgSealCatchUp,imgRekey,imgClearAll,imgShutCount,imgBrokeCount,_imgIsEnv,bookWithImages,saveWhy,SAVE_WHY,saveWhere,storageAudit,storagePanel,appInstalled,fbChosen,fbStopOwn,roomForImage,lsBytes,lsHeadroom,lsCeiling,lsRefusedAt,lsNoteRefusal,LS_CEILING,saveWarnPaint,backupMark,backupLast,backupAgeDays,backupWords,backupKindOf,cfChaseParse,bankParse,TILE_SEL,TILE_MENUS,tileMenuFor,tileMenuItems,tileMenusWire,tileMenuOpen,tileMenuClose,tileMenuRates,rwCardsAll,rwOffersAll,rwClosedIds,rwIsClosed,CF_BANK_TYPES,cfBankList,cfMainBank,cfBanks,cfBankGet,cfBankId,cfBook,cfCur,cfBankAdd,cfBankSet,cfBankDel,cfBankState,cfBankBalance,cfBankPoints,cfBankSummaryParse,cfBankInterest,CF_XFER_DAYS,cfXferKey,cfXferWords,cfTransfers,cfXferSay,cfXferNoReset,cfImportXfers,cfProjectAll,reconCards,PLAID_ACCT_K,plaidAcct,MAIL_FILE_V,mailFileReady,mailFileBook,mailFileDest,mailFileQueue,mailFileLabels,mailFilePass,mailFileSheet,mailFileList,MAIL_ASSIST_V,mailAssistReady,mailAssistState,mailAssistFiling,mailAssistOp,mailWaitGate,_mpWhy,mailAssistCost,mailAssistSheet,mailRecapCard,mailFileOnRead,mailFileGuess,mailFileCatLabel,mailFileFind,mailFileSub,plaidAcctSet,plaidCfg,plaidCfgOnly,plaidSignIn,plaidSignOut,plaidBook,plaidTake,plaidMapSet,plaidFile,plaidInboxSettle,plaidWaiting,plaidReview,plaidRow,plaidGuess,plaidCatWord,plaidKeyNew,plaidOpen,plaidKid,plaidStatus,plaidEnsureKey,plaidConnect,plaidPull,plaidAuto,plaidRemove,plaidPanel,plaidLinkLoad,plaidOAuthOnBoot,PLAID_LINK_SRC,PLAID_SEAL_INFO,PLAID_TYPE,hhCfg,hhOn,hhBooksList,hhOpen,hhDocId,hhKeyNew,hhWrapPut,hhKeyFor,syncKeyPass,hhShare,hhInvite,hhLinkTake,hhJoin,hhMembers,hhInvites,hhRevoke,hhActivity,hhRemove,hhRekey,hhLeave,hhStop,hhGone,hhForget,bookPanel,hhInviteModal,hhJoinModal,hhLinkOnBoot,HH_WORDS,bookMerge,syncBaseSet,syncBaseGet,syncBaseForget,syncMergeWith,syncMergeDone,syncMergeAuto,syncMergeWords,syncManId,fsInit,syncBookId,syncBookOldId,syncBookV3,pfDerive3,pfSaltNew,pfSaltOk,BOOK_ID,syncEncOpt,bookSaltGet,bookSaltSet,syncBookMoved,PF_KDF_ITER3,_pkOpen,_unb64,rotatePlan,rotateState,rotateConfirmText,rotateDoneModal,pkDropSeals,_repassSecrets,syncRepass,syncNWrap,syncNUnwrap,syncSeenGet,syncSeenSet,syncIsOlder,syncNextN,cfReconWindows,cfReconDays,cfStmtBacked,mkey,monthByKey,r2v,ONCE_NAMES,ONCE_HITS,renderOnce,vpW,PDF_PARSERS,parseAnyInvoice,anyHeadRoles,anyLineOff,rbsAlreadyIn,zipStore,crc32,foldSheetLazy,zipBookText,ledgerFileText,exportAllFiles,exportAllZip,exportMint,EXPORT_EXTRA,_expGrid,aggParse,aggSniff,cfAggNear,aggToRecon,CF_AGG_DAYS,anyToInv,rbsReadRuns,rbsInvWord,aggDate,aggDateOrder,aggSuggest,cfImpStart,AGG_FORMATS,csvEsc,taxNyRules,taxStateNote,taxStatePaid,taxYearKey,taxYearEnd,taxYearEndOn,yearEndInsights,yearEndModal,YEAREND_FROM_MONTH,taxFileStateBlock,taxPlanState,cfBankGo,cfBankName,cfExpectNs,catHead,catRenamed,catRenameRcp,_cfXferLoose,catAddTo,catLineUp,catLineUpPlan,catRenameFwd,catLater,rcpOtherCats,rcpCatOk,rcpCatEnsure,rcpCatOptions,RCP_CASHBACK,RCP_CASHBACK_DAYS,rcpLooksCashback,rcpCashbackWords,rcpCashbackDest,rcpCashbackCard,rcpCashbackRedemptions,rcpCashbackFields,RW_PT_VAL,RW_PT_PILE,RW_PT_EXP_DAYS,rwPtVal,rwPoints,rwPointsAll,rwPointsLine,rwPointsNudges,rwPointsClosing,mailRedeemSubj,mailRedeemRead,mailRedeemCard,mailRedeemUse,mailRedeemDrop,mailRedeemActs,MAIL_REFUND_NEAR,mailRefundFind,mailRefundHave,mailRefundRecord,mailRefundUndo,mailRefundAuto,mailRefundChecks,mailRefundInsights,mailRefundActs,mailHandled,mailHandledText,mailHandledSheet,MAIL_SELF_DAYS,MAIL_SELF,mailIsPromo,mailSelfRun,mailSelfPass,mailSelfPreview,mailPreviewSheet,mailLessonFor,mailLessonApply,mailLessonHtml,mailSelfUndo,mailSelfChecks,mailSelfInsights,mailSelfActs,mailSelfSheet,CF_SELF_NEAR,MAIL_RCP_SEEN,mailCashBank,mailCashSureAccount,mailSelfCash,mailRcpCat,mailSelfReceipt,mailSelfUndoWhy,mailSelfMoneyUndo,MAIL_WEEK_DAYS,MAIL_WEEK_DUPE,MAIL_WEEK_KINDS,mailWeek,mailWeekSheet,cardPays,cardPayLines,cardPayWords,cardPayPoints,cardPayMissing,cardPayPanel,CARDPAY_BEFORE,CARDPAY_AFTER,cardsOpen,cfPayeeKeyV1,cfAllOn,cfAllPoints,cfAllSpan,cfAllTotal,cfAllMoves,cfXferSeries,cfComingAllPanel,cfImportCat,cfCatIndex,cfXferPanel,TAX_STATES,TAX_NO_WAGE_TAX,taxStateKey,taxStateName,taxStateTaxesWages,taxStateFor,taxIsNY,taxStateWord,taxProfileCard,_stubStateCode,BANKS,bankFrom,bankNamed,bankBody,bankTail,bankWho,bankDate,mailAttSniff,syncLegacyId,syncLegacyGone,cardClosedOn,cardIsClosed,cardClosedSet,cardCloseOpen,cardCloseSave,cardReopen,titleCase,seriesStats,seriesCycle,seriesArea,seriesTile,seriesCountUp,bankOfxParse,bankCsvParse,bankIsOfx,_cfFinish,cfAlertParse,cfAlertPanel,cfPayeeKey,cfMapGet,cfMapSet,cfGuessAccount,cfSugTokens,cfSuggestAccount,cfNewRows,cfBackfill,cfRowEntry,cfBankDays,cfBankDaysMerge,cfBankDaysNew,cfImportPlan,cfAccountAdd,cfAddDays,cfAddMonths,cfDaysBetween,cfSeriesKey,cfSeriesName,cfCadence,cfNextDate,cfNthDate,cfDatesAfter,cfAmountShape,cfCardFor,cfCardLinkGet,cfCardLinkSet,cfCardDue,cfCardDueOn,cfCardDueToggle,cfExpectGet,cfExpectSet,cfSeries,cfSeriesAll,cfSubSeries,taxPaySeries,taxPaydaysLeft,taxPerCheque,taxStubParse,taxStubDerive,taxStubGet,taxStubSave,taxDeferPace,taxWithheldPace,taxStubPanel,stubFileBtn,taxSubTabs,taxTabKey,taxYearNav,taxStamp,taxHomeData,taxHomeHtml,taxSteps,taxStepsHtml,taxDocNeeds,taxKeyDates,taxYoYWords,cfRemaining,cfForecast,cfOneStatement,cfProject,cfMovedSet,cfMovedToggle,cfIsMoved,cfSplit,cfBalancePoints,cfLatestBalance,cfStatedThrough,cfBalanceChartPts,CF_SPANS,cfSpanOk,cfSpanFrom,cfSpanPoints,cfSpanStats,CF_SECTION_ICO,cfHi,cfFresh,CF_TYPE_ICO,cfTypeIco,cfDir,cfFlowBar,SUB_KINDS,SUB_COMMON,subKind,subAvatar,subHi,subFresh,subRenew,subShareBar,BILL_KINDS,billKind,billFresh,cardMono,cardMini,cardStatus,cardFresh,RECON_SECTIONS,reconSheet,reconFresh,reconRing,NAVDEF,EMOJI,ico,ICON_STYLE,UI_WORDS,UI_ICO_DEFAULT,uiIcoFor,uiPageIco,uiPageIcoName,uiDecorate,uiEntered,macTint,macTrack,macBack,macFwd,macToolbar,macSideSet,macBadges,macPages,macGoKey,macMenuItems,macMenuShow,macMenuClose,TRIAL_WARN,TRIAL_GRACE,trialGet,trialSet,trialClear,trialState,trialsDue,trialWords,trialInsights,trialPill,trialKeep,trialCancel,trialNotify,STORE_ICO,storeLines,storePeriods,storeName,storeIco,storeTable,storeMonthly,storeCharges,storeInsights,storeDelta,WORTH_TYPES,WORTH_SPANS,worthType,worthBook,worthEnsure,worthAdd,worthSet,worthRemove,worthSources,worthAt,worthMonthly,worthInsights,worthLinkOk,rcpCardLinkGet,rcpCardLinkSet,cardTallyOpen,rcpCardOf,cardTallies,cardTally,cardTallyLostHtml,cardTallyNow,cfCardDue,cardStmtImported,cardStmtEmail,mailCardStmtSubj,mailCardStmtRead,mailCardStmtCard,mailCardStmtKeys,mailCardStmtTwins,mailCardStmtReading,mailCardStmtReadAll,seriesIsEmail,mailCardStmtUse,mailCardStmtActs,cardDueGet,stmtSummary,stmtSummaryApply,cardStmtDay,cardBillWord,cardBillNote,CARDBILL_DAYS,worthLinkSet,worthDue,WORTH_MONTHLY,RET_POLICY,retPolicy,retFor,warFor,returnsDue,warrantiesEnding,retWhen,returnsInsights,returnsSheet,returnsFields,returnsRead,returnsApply,ODD_DAYS,oddId,oddCharges,oddWords,oddInsights,oddOk,oddSheet,TAXPACK_HOME,taxPackAgi,taxPackYears,taxPack,taxPackCsv,GUARD_IDLE_CHOICES,GUARD_FREE,guardIdleMinutes,guardIdleSet,guardTouch,guardDue,guardLockNow,guardWaitFor,guardUnlockWait,guardUnlockFailed,guardUnlockPassed,guardWaitWords,guardRow,MAIL_DEPS,MAIL_GAS,MAIL_GAS_V,MAIL_GAS_MANIFEST,MAIL_FROM_DEFAULT,MAIL_KINDS,MAIL_ACT,mailKeyNew,mailKeyOk,mailSigned,mailOpen,mailScriptSource,mailAddr,mailDomain,mailName,mailFromIs,mailAmounts,MAIL_TOTAL_RES,mailTotal,mailRead,mailBook,mailEnsure,mailLinked,mailUrlOk,mailStale,mailAsk,mailMerge,mailPrune,mailPull,mailWaiting,mailItem,mailMark,mailDay,mailAsText,mailQueueReceipts,mailIsPuller,mailLocal,mailLocalSet,mailSenderOk,mailRewind,mailRefusedNew,MAIL_MAX,MAIL_TEXT_SHORT,mailSays,mailAuto,mailRwMatch,mailWhen,mailCursor,mailCovers,mailNoteRefused,mailRetired,mailRetire,mailLocalReset,mailLinkKeep,mailLinkPut,mailRefundAmt,MAIL_NOTE_DAYS,MAIL_REFUND_BACK,MAIL_LOOKBACK_DAYS,MAIL_MARKS,MAIL_PAGE,MAIL_HOLD,mailShape,mailRuleKey,mailRule,mailLearn,mailAmtAs,mailMarkAs,mailResort,mailXferDir,MAIL_XFER_RE,mailCashParse,mailCashOpen,mailSubGuess,mailSubOpen,mailSubPanel,mailLegacyKey,mailTwins,mailIgnore,mailUnignore,MAIL_ATT_AUTO,mailAttIsPdf,mailAttIsImg,mailAttsClean,mailAttTexts,mailAttCan,mailAttFetch,mailAttApply,mailAttRead,mailAttAuto,mailAttIsRbs,mailAttFile,mailAttWent,mailAttOpen,mailAttRow,CLOUD_K,LEDGER_CLOUD_URL,cloudCfg,cloudOn,cloudSet,cloudUrlOk,cloudCall,cloudFs,cloudSignUp,cloudSignIn,cloudSignOut,cloudSignedOut,cloudForget,syncStaleFor,syncOkMark,SYNC_OK_K,set _autoFails(v){_autoFails=v;},taxHeroGap,themeFollow,themeSystem,moneyShort,applyTheme,toggleTheme,errLog,errNote,errClear,errSay,errCardHtml,errPanel,errText,errOnError,errOnReject,ERRLOG_K,set _errSaid(v){_errSaid=v;},get CLOUD_OUT_WHY(){return CLOUD_OUT_WHY;},cloudMe,cloudDeleteAccount,cloudPanel,REC_ID,recKeyNew,recNorm,recFmt,recSeal,recOpen,recHas,recMake,recRecover,recRewrap,cloudUrlKnown,readEngine,cloudForgot,cloudReset,cloudVerify,cloudVerifySend,cloudPwChange,cloudLinkTake,cloudLinkOnBoot,cloudSessions,cloudSessionEnd,cloudSessionsEndOthers,cloudActivity,ACT_WORDS,actWords,actWhen,actPanel,pkSupported,pkAdd,pkSignIn,pkList,pkRemove,pkRewrap,_pkDocId,WEL_CATS,WEL_STEPS,welDraft,welList,welPlan,welApply,welWanted,MAIL_ATT_LOOK,mailAttTargets,cfReconPoints,cfReconDays,cfStmtBacked,cfReconWindows,cfReconSummary,cfReconBlame,cfImportPanel,cfComingPanel,cfOverdue,CF_STANDIN_DAYS,cfPaidNote,cfChipWord,cfChipKey,subPayGet,subPaySet,subPayer,subPayNote,subPayModal,SUBPAY_DAYS,cfSettled,cfSettledSummary,CF_SETTLED_BACK,cfSettledPanel,CF_ASSUMED,cfIsAssumed,cfLateSkipSet,cfAssumedSpent,get saveBlock(){return saveBlock;},get saveState(){return saveState;},render,Views,healFromSeed,mviewDefault,dayListHtml,calSumHtml,money,catSums,
     undo,undo,redo,snap,snapCancel,toast,palOpen,palClose,palSearch,palIsOpen,PAL,UNDO,REDO,
-    computeInsights,bookIntegrity,taxOpenMoney,taxOpenMoneyHtml,integrityHtml,_grpMonthly,chartW,chartBand,billMonths,billPerMonth,cfCadenceFromFreq,seriesMonthsPer,seriesFreqLabel,seriesPerMonth,seriesRate,seriesFreqGet,SERIES_FREQ_OPTS,SERIES_AUTO,seriesIsAuto,seriesAutoGet,seriesAutoWindow,seriesAutoDue,seriesAutoNext,seriesAutoRun,seriesRecord,seriesAutoSet,seriesAutoTick,seriesAutoAfterSync,workOverdue,workDepositKey,workReimbMatches,workPaidBy,workFollowInsights,WORK_LATE_DAYS,subsHistory,subsHistorySheet,SUBS_HIST_MONTHS,subsMerchantKey,subsDisplayName,subsFound,subsFoundAdd,subsFoundNot,subsFoundSheet,subsLineSeries,subsFromLine,subsLineUnlink,subsLineLink,subsLinePicker,seriesPriceChange,seriesPriceWatched,seriesPriceRecent,seriesCosts,RW_ALWAYS_FROM,RW_ALWAYS_TO,rwIsAlways,rwWhen,rwOfferAlways,rwCards,rwOffers,rwCard,rwOffer,rwCardAdd,rwCardSet,rwCardDel,rwOfferAdd,rwOfferDel,rwMax,rwSpent,rwStatus,rwDaysLeft,RW_TOPICS,rwTopicsOf,rwCovers,rwBest,rwEarnedYear,RW_PRESETS,rwPresetsOpen,rwCardFind,rwMerge,rwPresetApply,rwPrompt,rwRead,rwStmtCards,rwStmtGuess,rwStmtFor,rwCardForStmt,rwLineTopics,rwExcludes,rwLineCovered,rwLines,rwOfferSpend,rwRateFor,rwMissed,rwNudges,RW_NUDGE_MAX,rwIsRedemption,rwRedemptions,rwRedeemedYear,reconRewardsSettle,FOODSPLIT_WORDS,foodSplitGuess,foodSplitPlan,foodSplitApply,foodSplitOpen,closeYm,closeLabel,closeRange,closeShift,closeDefault,closeGet,closeSet,closeItems,closeSummary,closeInsights,RW_FLAT,rwStatementFees,rwCardYear,rwWorthAll,rwWorthInsights,rwWorthSheet,RW_ICO,rwIcoFor,rwFresh,rwCardColor,rwTier,rwPill,rwBar,seriesStaleAfter,seriesIsCold,computeAudit,audStmtReceipts,audRcpCards,csv,CSVSETS,focusCell,startCellEdit,catManager,CAT_SUGGEST,aliasGet,aliasSet,aliasReset,aliasWords,ALIAS_DEFAULT,grpManager,grp,gcolor,curMonth,dashPace,dashBudgetSplit,dashCatOrder,dashDaily,dashCash,budgetTotal,budgetPrevCol,budgetCached,budgetSync,catAugustColumns,catAugustAfterBook,dayDrawer,dayDrawerSave,calMonth,calendarHtml,txAll,txFiltered,txCsv,txReceiptIndex,dayCharges,dayMerchant,dayAddRow,dayRowsNow,dayAmt,dayCountHtml,dayRecount,catDropColumns,CAT_AUG_FLAG,CAT_DROP_FLAG,modal,closeModal,modalStale,get BOOKGEN(){return BOOKGEN;},
+    computeInsights,bookIntegrity,taxOpenMoney,taxOpenMoneyHtml,integrityHtml,_grpMonthly,chartW,chartBand,billMonths,billPerMonth,cfCadenceFromFreq,seriesMonthsPer,seriesFreqLabel,seriesPerMonth,seriesRate,seriesFreqGet,SERIES_FREQ_OPTS,SERIES_AUTO,seriesIsAuto,seriesAutoGet,seriesAutoWindow,seriesAutoDue,seriesAutoNext,seriesAutoRun,seriesRecord,seriesAutoSet,seriesAutoTick,seriesAutoAfterSync,workOverdue,workDepositKey,workReimbMatches,workPaidBy,workFollowInsights,WORK_LATE_DAYS,subsHistory,subsHistorySheet,SUBS_HIST_MONTHS,subsMerchantKey,subsDisplayName,subsFound,subsFoundAdd,subsFoundNot,subsFoundSheet,subsLineSeries,subsFromLine,subsLineUnlink,subsLineLink,subsLinePicker,seriesPriceChange,seriesPriceWatched,seriesPriceRecent,seriesCosts,RW_ALWAYS_FROM,RW_ALWAYS_TO,rwIsAlways,rwWhen,rwOfferAlways,rwCards,rwOffers,rwCard,rwOffer,rwCardAdd,rwCardSet,rwCardDel,rwOfferAdd,rwOfferDel,rwMax,rwSpent,rwStatus,rwDaysLeft,RW_TOPICS,rwTopicsOf,rwCovers,rwBest,rwEarnedYear,RW_PRESETS,rwPresetsOpen,rwCardFind,rwMerge,rwPresetApply,rwPrompt,rwRead,rwStmtCards,rwStmtGuess,rwStmtFor,rwCardForStmt,rwLineTopics,rwExcludes,rwLineCovered,rwLines,rwOfferSpend,rwRateFor,rwMissed,rwNudges,RW_NUDGE_MAX,rwIsRedemption,rwRedemptions,rwRedeemedYear,reconRewardsSettle,FOODSPLIT_WORDS,foodSplitGuess,foodSplitPlan,foodSplitApply,foodSplitOpen,closeYm,closeLabel,closeRange,closeShift,closeDefault,closeGet,closeSet,closeItems,closeSummary,closeInsights,RW_FLAT,rwStatementFees,rwCardYear,rwWorthAll,rwWorthInsights,rwWorthSheet,RW_ICO,rwIcoFor,rwFresh,rwCardColor,rwTier,rwPill,rwBar,seriesStaleAfter,seriesIsCold,computeAudit,audStmtReceipts,audRcpCards,taxNewDed,taxNewDedHtml,TAX_PLAYS_NEWDED,csv,CSVSETS,focusCell,startCellEdit,catManager,CAT_SUGGEST,aliasGet,aliasSet,aliasReset,aliasWords,ALIAS_DEFAULT,grpManager,grp,gcolor,curMonth,dashPace,dashBudgetSplit,dashCatOrder,dashDaily,dashCash,budgetTotal,budgetPrevCol,budgetCached,budgetSync,catAugustColumns,catAugustAfterBook,dayDrawer,dayDrawerSave,calMonth,calendarHtml,txAll,txFiltered,txCsv,txReceiptIndex,dayCharges,dayMerchant,dayAddRow,dayRowsNow,dayAmt,dayCountHtml,dayRecount,catDropColumns,CAT_AUG_FLAG,CAT_DROP_FLAG,modal,closeModal,modalStale,get BOOKGEN(){return BOOKGEN;},
     RCP,RCP_PROMPT,mailVouched,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
