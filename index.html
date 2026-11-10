@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-B1C4kG3CcUIAaCf465io9FRik63/PiIfa3T/8Fg0kp8=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-PHZctp5iPSQMA9KCMYUW20yVvQMlefx0iE9Uw77bB9E=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2239,6 +2239,127 @@ body.dark{--tr-line:#34A874}
 
 
 
+.tg{position:fixed;inset:0;z-index:900;pointer-events:none;opacity:0;transition:opacity .28s ease}
+.tg.tgShow{opacity:1}
+.tg.tgOut{opacity:0;transition:opacity .24s ease}
+.tgHole{position:fixed;left:0;top:0;width:0;height:0;border-radius:12px;opacity:0;
+  box-shadow:0 0 0 2px var(--accent),0 0 0 6px color-mix(in srgb,var(--accent) 22%,transparent),0 0 0 200vmax rgba(14,16,20,.42);
+  transition:transform .55s cubic-bezier(.2,.85,.25,1),width .55s cubic-bezier(.2,.85,.25,1),height .55s cubic-bezier(.2,.85,.25,1),opacity .3s ease}
+.tg.tgLit .tgHole{opacity:1}
+.tg:not(.tgLit){background:rgba(14,16,20,.18)}
+.tg.tgFollow .tgHole{transition:opacity .3s ease}
+.tgHole::after{content:"";position:absolute;inset:-2px;border-radius:inherit;border:2px solid var(--accent);opacity:0}
+.tgCard{position:fixed;right:20px;bottom:20px;width:min(380px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;
+  pointer-events:auto;background:var(--card);color:var(--ink);border:1px solid var(--hair);border-radius:16px;padding:14px 16px 12px;
+  box-shadow:0 18px 50px rgba(0,0,0,.28),0 2px 6px rgba(0,0,0,.12);
+  transition:left .5s cubic-bezier(.2,.85,.25,1),top .5s cubic-bezier(.2,.85,.25,1)}
+.tgCard[data-side]:not([data-side=""]){right:auto;bottom:auto}
+.tg.tgFollow .tgCard{transition:none}
+.tgArrow{position:absolute;width:14px;height:14px;background:var(--card);border:1px solid var(--hair);transform:rotate(45deg);display:none}
+.tgCard[data-side=right] .tgArrow{display:block;left:-8px;margin-top:-7px;border-right:0;border-top:0}
+.tgCard[data-side=left] .tgArrow{display:block;right:-8px;margin-top:-7px;border-left:0;border-bottom:0}
+.tgCard[data-side=below] .tgArrow{display:block;top:-8px;margin-left:-7px;border-right:0;border-bottom:0}
+.tgCard[data-side=above] .tgArrow{display:block;bottom:-8px;margin-left:-7px;border-left:0;border-top:0}
+.tgTop{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.tgRing{width:34px;height:34px;flex:none;transform:rotate(-90deg)}
+.tgRing circle{fill:none;stroke-width:3.2}
+.tgRingBg{stroke:var(--hair)}
+.tgRingFg{stroke:var(--accent);stroke-linecap:round;transition:stroke-dashoffset .8s cubic-bezier(.2,.85,.25,1)}
+.tgWhere{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.tgWhere b{font-size:13.5px}
+.tgWhere span{font-size:11.5px;color:var(--sub)}
+.tgPhases{display:flex;gap:4px;margin:2px 0 10px}
+.tgPhases i{flex:1;font-style:normal;position:relative;display:block;padding-top:7px}
+.tgPhases i b{display:block;font-size:10.5px;font-weight:600;color:var(--sub2);transition:color .3s}
+.tgPhases i::before,.tgPhases i u{content:"";position:absolute;left:0;top:0;height:4px;border-radius:99px}
+.tgPhases i::before{right:0;background:var(--hair)}
+.tgPhases i u{background:var(--meter);transition:width .7s cubic-bezier(.2,.85,.25,1)}
+.tgPhases i.on b{color:var(--accent)}
+.tgPhases i.on::before{background:color-mix(in srgb,var(--accent) 28%,var(--hair))}
+.tgX{flex:none;margin-left:auto;width:28px;height:28px;border-radius:50%;color:var(--sub);font-size:13px}
+.tgX:hover{background:var(--shelf);color:var(--ink)}
+.tgNum{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.tgBody h4{margin:2px 0 6px;font-size:17px;line-height:1.25;display:flex;align-items:center;gap:8px}
+.tgOk{width:22px;height:22px;flex:none;opacity:.25;transition:opacity .3s}
+.tgOk svg{width:22px;height:22px;display:block}
+.tgOk circle{fill:none;stroke:var(--sub2);stroke-width:1.6}
+.tgOk path{fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:16;stroke-dashoffset:16}
+.tgOk.on{opacity:1}
+.tgOk.on circle{fill:var(--meter);stroke:var(--meter)}
+.tgOk.on path{stroke-dashoffset:0}
+.tgText{font-size:13px;line-height:1.55;color:var(--ink)}
+.tgText p{margin:0 0 7px}
+.tgList{margin:2px 0 8px;padding-left:20px}
+.tgList li{margin:0 0 5px;padding-left:2px}
+.tgList li::marker{color:var(--accent);font-weight:700}
+.tgActs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 2px}
+.tgActs a.btn{text-decoration:none}
+.tgCheck{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:5px 9px;border-radius:8px;background:var(--shelf);cursor:pointer}
+.tgCheck input{width:16px;height:16px;accent-color:var(--meter)}
+.tgDots{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 8px}
+.tgDot{width:9px;height:9px;padding:0;border-radius:99px;background:var(--hair);transition:all .3s cubic-bezier(.2,.85,.25,1)}
+.tgDot.ok{background:var(--meter)}
+.tgDot.on{width:24px;background:var(--accent)}
+.tgDot:hover{transform:scale(1.3)}
+.tgNav{display:flex;align-items:center;gap:8px;border-top:1px solid var(--hair);padding-top:9px}
+.tgNav .tgNext,.tgNav .btn:last-child{margin-left:auto}
+.tgKeys{font-size:10.5px;color:var(--sub2);margin:0 auto}
+.tg.tgPhone .tgKeys{display:none}
+@media (hover:none){.tgKeys{display:none}}
+
+.tg.tgPhone .tgCard{left:8px!important;right:8px;top:auto!important;bottom:calc(8px + var(--sab));width:auto;max-height:46vh;border-radius:18px;
+  padding:10px 13px 9px;display:flex;flex-direction:column}
+.tg.tgPhone .tgIn{display:flex;flex-direction:column;min-height:0;flex:1}
+.tg.tgPhone .tgBody{overflow:auto;min-height:0;flex:1;overscroll-behavior:contain}
+.tg.tgPhone .tgTop{margin-bottom:2px}
+.tg.tgPhone .tgRing{width:28px;height:28px}
+.tg.tgPhone .tgPhases{margin:0 0 6px}
+.tg.tgPhone .tgBody h4{font-size:15.5px;margin:1px 0 4px}
+.tg.tgPhone .tgText{font-size:12.5px;line-height:1.45}
+.tg.tgPhone .tgDots{margin:6px 0 6px;gap:4px}
+.tg.tgPhone .tgDot{width:7px;height:7px}
+.tg.tgPhone .tgDot.on{width:18px}
+.tg.tgPhone .tgNav{padding-top:7px}
+
+html.tgPad #page{padding-bottom:48vh}
+.tg.tgPhone .tgArrow{display:none!important}
+.tgTarget{scroll-margin-top:84px;scroll-margin-bottom:56vh}
+.tgConfetti{position:fixed;left:50%;top:55%;width:0;height:0;pointer-events:none}
+.tgConfetti i{--dx:0px;--dy:0px;--r:0deg;position:absolute;width:8px;height:12px;border-radius:2px;opacity:0}
+
+.tgLaunch{position:fixed;right:22px;bottom:22px;z-index:40;display:inline-flex;align-items:center;gap:7px;padding:10px 16px;border-radius:99px;
+  background:var(--btnbg);color:#fff;font-weight:650;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.22)}
+.tgLaunch:hover{background:var(--btnbg-h)}
+@media (max-width:639px){.tgLaunch{bottom:calc(76px + var(--sab));right:14px}}
+@media (prefers-reduced-motion:no-preference){
+  .tg.tgLit .tgHole::after{animation:tgBreathe 2.2s ease-out infinite}
+  @keyframes tgBreathe{0%{opacity:.85;transform:scale(1)}70%{opacity:0;transform:scale(1.06)}100%{opacity:0}}
+  .tg.tgShow .tgCard{animation:tgPop .42s cubic-bezier(.2,1.3,.4,1)}
+  @keyframes tgPop{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+  .tgFromR{animation:tgInR .38s cubic-bezier(.2,.85,.25,1)}
+  .tgFromL{animation:tgInL .38s cubic-bezier(.2,.85,.25,1)}
+  .tgFade{animation:tgInF .3s ease}
+  @keyframes tgInR{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
+  @keyframes tgInL{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:none}}
+  @keyframes tgInF{from{opacity:0}to{opacity:1}}
+  .tgOk path{transition:stroke-dashoffset .5s .1s cubic-bezier(.3,.9,.3,1)}
+  .tgYay .tgOk{animation:tgYay .7s cubic-bezier(.2,1.6,.4,1)}
+  @keyframes tgYay{0%{transform:scale(.4)}60%{transform:scale(1.35)}100%{transform:scale(1)}}
+  .tgYay .tgOk.on path{animation:tgDraw .55s .1s both}
+  @keyframes tgDraw{from{stroke-dashoffset:16}to{stroke-dashoffset:0}}
+  .tgBeckon{animation:tgBeckon 1.6s ease-in-out infinite}
+  @keyframes tgBeckon{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 45%,transparent)}50%{box-shadow:0 0 0 7px transparent}}
+  .tgConfetti i{animation:tgBurst 1.6s cubic-bezier(.15,.7,.3,1) forwards}
+  @keyframes tgBurst{0%{opacity:1;transform:translate(0,0) rotate(0)}70%{opacity:1}100%{opacity:0;transform:translate(var(--dx),calc(var(--dy) + 340px)) rotate(var(--r))}}
+  .tgLaunch{animation:tgLaunchIn .5s cubic-bezier(.2,1.4,.4,1) .3s both}
+  @keyframes tgLaunchIn{from{opacity:0;transform:translateY(16px) scale(.9)}to{opacity:1;transform:none}}
+}
+@media (prefers-reduced-motion:reduce){
+  .tgHole,.tgCard,.tgRingFg,.tgDot,.tg{transition:none!important}
+}
+@media print{.tg,.tgLaunch{display:none!important}}
+
+
 #tabbar{display:none}
 @media(max-width:900px){
   
@@ -2641,7 +2762,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.08";
+const APP_V="v29.09";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2655,7 +2776,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="f213259";
+const APP_BUILD="dde882d";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -7334,6 +7455,8 @@ function _render(){
   tileMenusWire();
   if(typeof seriesCountUp==='function') seriesCountUp(document.getElementById('page'));
   if(S.view==='receipts'){ rcpWireDrop(); rcpWireDraw(); }
+  
+  if(typeof taxGuideSync==='function'){ try{ taxGuideSync(); }catch(e){ if(typeof errNote==='function') errNote(e,'filing guide'); } }
   if(S.view==='renos') rbsWireDrop();
   
 
@@ -15053,6 +15176,343 @@ function taxFilePackWorked(year){
 
 
 
+function taxGuideYear(){
+  const g=S.tax&&S.tax.guide;
+  if(g&&g.y) return g.y;
+  const now=new Date();
+  
+  return now.getMonth()<4?now.getFullYear()-1:now.getFullYear();
+}
+function taxGuideMeta(y){
+  DB.meta=DB.meta||{};
+  const all=DB.meta.taxGuide&&typeof DB.meta.taxGuide==='object'?DB.meta.taxGuide:(DB.meta.taxGuide={});
+  const g=all[y]&&typeof all[y]==='object'?all[y]:(all[y]={});
+  g.seen=g.seen||{}; g.skip=g.skip||{};
+  return g;
+}
+
+
+function taxGuideCtx(y){
+  const K=y+' Taxes', t=function(f){ try{ return f(); }catch(e){ return null; } };
+  const prof=taxProfile(), has=!!(DB.taxes&&DB.taxes[K]);
+  const docs=t(function(){ return taxDocsFor(y); })||[];
+  const kids13=prof.deps.filter(function(d){ const a=y-d.born; return a>=0&&a<13; }).length;
+  return {y:y,K:K,has:has,prof:prof,docs:docs,kids13:kids13,
+    F:has?t(function(){ return taxFacts(K); }):null,
+    needs:has?(t(function(){ return taxDocNeeds(K); })||[]):[],
+    pack:has?t(function(){ return taxFilePack(K); }):null,
+    asks:has&&typeof taxIntakeSummary==='function'?t(function(){ return taxIntakeSummary(K); }):null,
+    filed:typeof taxFiledRead==='function'?(t(function(){ return taxFiledRead(K); })||{}):{},
+    key:typeof getKey==='function'&&!!t(getKey),
+    ny:(t(function(){ return taxStateFor(K).state; })||prof.state||'')==='NY',
+    G:taxGuideMeta(y)};
+}
+const _tgH=function(t){ return '<p>'+t+'</p>'; };
+const _tgSteps=function(items){ return '<ol class="tgList">'+items.map(function(i){ return '<li>'+i+'</li>'; }).join('')+'</ol>'; };
+function _tgSecond(){ const h=[].slice.call(document.querySelectorAll('#page .sheet h3')).find(function(x){ return /The second opinion/.test(x.textContent); });
+  return h?h.closest('.sheet'):null; }
+const TAX_GUIDE=[
+{id:'year',phase:'Set up',title:function(c){ return 'Open your '+c.y+' return'; },
+  where:{view:'taxes',tab:'home'},target:['[data-act=taxyr].on','.taxnav'],
+  text:function(c){ return _tgH('Everything that follows works on <b>'+c.y+'</b>, the return you file between late January and <b>April 15, '+(c.y+1)+'</b>.')
+    +(c.has?_tgH('Its year button is lit on the Taxes page. The guide keeps it selected for you.')
+      :_tgH('The Ledger has no '+c.y+' sheet yet. Start one and every tab can work on it: nothing is typed in for you.')); },
+  act:function(c){ return c.has?null:{act:'guidestart',label:'Start the '+c.y+' return'}; },
+  done:function(c){ return c.has; }},
+{id:'who',phase:'Set up',title:function(){ return 'Say who is filing'; },
+  where:{view:'taxes',tab:'advisor'},target:['#taxProfFiling'],wrap:'.formrow',
+  text:function(){ return _tgSteps(['<b>Filing status</b>: married filing jointly, single, head of household…',
+    '<b>State</b>: New York, for the IT-201.',
+    '<b>Dependents</b>: one per child as <i>Name YYYY</i> (their birth year), e.g. <i>Alex 2015, Sam 2019</i>. Add <i>student</i> after a full-time student aged 19 to 23.',
+    'Press <b>Save</b>. Every credit for the children is priced from this one box.']); },
+  done:function(c){ return !!(c.prof.set&&c.prof.state); }},
+{id:'key',phase:'Gather',title:function(){ return 'Switch on reading your tax forms'; },
+  where:{view:'receipts'},target:['#apiKeyIn','#apiKeyTop'],wrap:'.keyrow',
+  text:function(){ return _tgH('The Ledger reads a photo of a W-2, 1099 or 1098 with Claude, the same engine that reads your receipts.')
+    +_tgSteps(['Paste your Anthropic API key here and press <b>Save key</b>. It stays on this device.',
+      'No key? Skip this step and type the figures on the <b>File it</b> tab instead.']); },
+  done:function(c){ return c.key||c.docs.length>0||!!c.G.skip.key; },skip:'key'},
+{id:'w2',phase:'Gather',title:function(){ return 'Photograph your W-2s'; },
+  where:{view:'taxes',tab:'file'},target:['.tsteps label.tcam','input[data-act=taxdocfiles]'],
+  text:function(c){ return _tgSteps(['Employers send W-2s by <b>January 31, '+(c.y+1)+'</b>: one from each job, yours and your spouse’s.',
+    'Press <b>Photograph a form</b> and take one photo per W-2, flat and square-on. Several at once is fine.',
+    'Each box is read and kept with the book, then checked against the year (Check-up › Documents).']); },
+  done:function(c){ return c.docs.some(function(d){ return d.kind==='W-2'; }); }},
+{id:'forms',phase:'Gather',title:function(){ return 'And every other form'; },
+  where:{view:'taxes',tab:'file'},target:['.tneeds','.tsteps label.tcam'],
+  text:function(c){ const miss=c.needs.filter(function(n){ return n.have===0; }).map(function(n){ return '<b>'+esc(n.kind)+'</b>'; });
+    return _tgH('The list under the steps is read off <i>your</i> return: a 1099-INT for bank interest, 1099-DIV and 1099-B from a brokerage, and the <b>1098</b> from your mortgage lender.')
+      +(miss.length?_tgH('Still to photograph: '+miss.join(', ')+'.'):_tgH('Nothing is missing that the Ledger can see.'))
+      +_tgH('Photograph them the same way. A brokerage’s consolidated 1099 can arrive as late as mid-February.'); },
+  done:function(c){ return c.has&&c.needs.every(function(n){ return n.have!==0; }); }},
+{id:'home',phase:'Gather',title:function(){ return 'Your mortgage and property tax'; },
+  where:{view:'worth'},target:['[data-act=loanedit]','.wadd'],
+  text:function(){ return _tgSteps(['Add the mortgage here as an account of kind <b>Mortgage</b>, if it is not on the list.',
+    'Press <b>Loan terms</b> and enter the amount, rate, years, first payment and the escrow.',
+    'The Ledger then works out the year’s interest, the share the IRS limit allows ($750,000 of debt from after 2017) and the property tax the escrow paid. Your 1098 confirms them.']); },
+  done:function(c){ return !!(c.F&&(c.F.mort>0||c.F.prop>0))||c.docs.some(function(d){ return d.kind==='1098'; })||!!c.G.skip.home; },skip:'home',skipLabel:'No mortgage'},
+{id:'care',phase:'Gather',title:function(){ return 'Child care and New York’s questions'; },
+  where:{view:'taxes',tab:'advisor'},target:['[data-act=nyset][data-field=careExp]','#nyReturn'],wrap:'tr',
+  text:function(c){ return _tgH('In <b>New York, worked out</b>, answer what only you know:')
+    +_tgSteps(['<b>Child care</b> you paid so you could work (daycare, camp, after-school) for children under 13. It prices both the federal Form 2441 credit and New York’s IT-216.',
+      'What went into New York’s <b>529</b> plan: up to $10,000 joint comes off New York income.',
+      'Whether you lived in <b>New York City</b>.'])
+    +(c.kids13?'':_tgH('No child under 13 is on file, so the care box can stay empty.')); },
+  done:function(c){ return !c.kids13||(typeof nyAnswers==='function'&&nyAnswers(c.y).careExp!=null)||!!c.G.skip.care; },skip:'care',skipLabel:'No child care'},
+{id:'newded',phase:'Gather',title:function(){ return 'The 2025 law’s new deductions'; },
+  where:{view:'taxes',tab:'advisor'},target:['#tndBornYou'],wrap:'.sheet',
+  text:function(){ return _tgH('For 2025 to 2028: an extra $6,000 each at 65 or older, tips, overtime pay (the extra half of time-and-a-half) and interest on a loan for a new US-built car.')
+    +_tgSteps(['Enter both birth years, and any tips, overtime premium or car-loan interest for the year.','Press <b>Save</b>. Whatever applies goes on Schedule 1-A.']); },
+  done:function(c){ return c.y<2025||c.y>2028||(typeof taxNewDed==='function'&&taxNewDed(c.y,0,'mfj').asked)||!!c.G.skip.newded; },skip:'newded',skipLabel:'None apply'},
+{id:'asks',phase:'Gather',title:function(){ return 'Answer the interview'; },
+  where:{view:'taxes',tab:'plan'},target:['.qsel[data-act=taxintakeset]'],wrap:'.sheet',
+  text:function(){ return _tgH('A handful of yes-or-no questions a preparer would ask: an HSA, an IRA, gifts to charity, medical bills, estimated tax payments, a second earner.')
+    +_tgH('A <b>yes</b> opens what it needs right under the question: the gifts log, the medical log, the payments you sent the IRS and New York.'); },
+  done:function(c){ return !!(c.asks&&c.asks.total&&!c.asks.open); }},
+{id:'review',phase:'Check',title:function(){ return 'Check it'; },
+  where:{view:'taxes',tab:'advisor'},target:[_tgSecond],
+  text:function(c){ const n=c.pack?c.pack.flags.length:null;
+    return _tgH('<b>Check-up</b> reads like a preparer’s review: the withholding, your W-2s against the return, this <b>second opinion</b> (the whole federal return worked from the tax tables), and New York worked out below it.')
+      +(n?_tgH('<b class="off">'+n+' thing'+(n===1?'':'s')+' to resolve</b>, listed on the File it tab.'):n===0?_tgH('Nothing stands in the way.'):''); },
+  done:function(c){ return !!(c.pack&&!c.pack.flags.length); }},
+{id:'build',phase:'Check',title:function(){ return 'Correct any line'; },
+  where:{view:'taxes',tab:'file'},target:['input[data-act=taxworkset]'],wrap:'.sheet',
+  text:function(){ return _tgSteps(['Every line of the 1040 is seeded from your documents, or from the sheet where there is none.',
+    'If a form says otherwise, type the right figure over it: the refund at the top moves as you type.','Clear a box to go back to the seed.']); },
+  done:function(c){ return !!c.G.seen.build; },seen:true},
+{id:'pack',phase:'File',title:function(){ return 'Print or copy the filing pack'; },
+  where:{view:'taxes',tab:'file'},target:['[data-act=packprint]'],wrap:'.formrow',
+  text:function(){ return _tgH('Every box the official forms ask for: Form 1040, Schedule A, Form 2441, Schedule 8812 and New York’s IT-201, with their line numbers.')
+    +_tgSteps(['<b>Print</b> it (or save it as a PDF) to have beside you, or <b>Copy the whole pack</b> to paste anywhere.']); },
+  done:function(c){ return !!c.G.seen.pack; },seen:true},
+{id:'irs',phase:'File',title:function(){ return 'File federal, free, with the IRS'; },
+  text:function(c){ return _tgH('<b>Free File Fillable Forms</b> is the IRS’s own: the blank forms online, free at any income. It opens in <b>January '+(c.y+1)+'</b> and wants a computer rather than a phone.')
+    +_tgSteps(['Open it (the button below), create an account and choose Form 1040.',
+      'Fill page 1 by hand: names, Social Security numbers, address and dependents. The Ledger keeps none of those.',
+      'Type each line from the pack. Use <b>Add/View Forms</b> to add Schedule A, Form 2441 and Schedule 8812, then <b>Do the Math</b>.',
+      'Sign with last year’s AGI, e-file, and keep the acceptance email. Tick the box below when it is accepted.']); },
+  link:{href:'https://www.irs.gov/filing/free-file-fillable-forms',label:'Open Free File Fillable Forms ↗'},
+  check:{k:'fed',label:'Federal return accepted'},
+  done:function(c){ return !!c.G.fed||c.filed.status==='filed'; }},
+{id:'ny',phase:'File',title:function(c){ return c.ny?'File New York':'File your state'; },
+  text:function(c){ if(!c.ny) return _tgH('The Ledger works out New York’s return only. File your state with its own forms or software, using the federal figures in the pack.');
+    const agi=c.pack&&c.pack.forms[0]?((c.pack.forms[0].lines.find(function(l){ return /^11/.test(l.box); })||{}).v):null;
+    return _tgH('Free File Fillable Forms does federal only. For New York:')
+      +_tgSteps([(agi!=null&&agi<=89000?'<b>Your AGI is under $89,000</b>: e-file free through New York’s Free File partners.'
+          :'Over $89,000 of federal AGI: download New York’s <b>fill-in IT-201</b> from tax.ny.gov, or use paid software.'),
+        'Type the pack’s <b>IT-201</b> lines into it. The fill-in form works the arithmetic and prints a barcode.',
+        'Print, sign, attach your W-2s and mail it to the address in the IT-201 instructions. There is one address for refunds and another if you owe.',
+        'Tick the box below once it is sent.']); },
+  link:{href:'https://www.tax.ny.gov/pit/efile/',label:'New York’s filing options ↗'},
+  check:{k:'ny',label:'State return sent'},
+  done:function(c){ return !!c.G.ny; }},
+{id:'record',phase:'File',title:function(){ return 'Record it, then the money'; },
+  where:{view:'taxes',tab:'file'},target:['.tstep.wait [data-act=taxfiledset]','[data-act=taxfiledset]','.tsteps'],wrap:'.tstep',
+  text:function(c){ return _tgSteps(['Mark the return <b>filed</b> with the date it went. Every tab then treats '+c.y+' as filed.',
+    'A refund: track it at <b>irs.gov/refunds</b> and New York’s <b>Check your refund</b>.',
+    'A balance: pay it by <b>April 15, '+(c.y+1)+'</b> at irs.gov/payments and through New York’s Online Services, whenever you filed.']); },
+  done:function(c){ return c.filed.status==='filed'; }}];
+function taxGuideStates(c){
+  return TAX_GUIDE.map(function(s){ let d=false; try{ d=!!s.done(c); }catch(e){ d=false; } return d; });
+}
+
+
+
+const TG={key:'',i:-1,states:null,el:null,want:false,follow:0,wired:false,anim:0};
+const TG_LS='ledger.taxguide';
+function _tgSave(){ try{ localStorage.setItem(TG_LS,JSON.stringify(S.tax.guide||{})); }catch(e){} }
+function _tgLoad(){ try{ const g=JSON.parse(localStorage.getItem(TG_LS)||'null'); return g&&typeof g==='object'?g:null; }catch(e){ return null; } }
+function taxGuideOn(){ if(!S.tax) return false; if(S.tax.guide===undefined){ S.tax.guide=_tgLoad(); } return !!(S.tax.guide&&S.tax.guide.on); }
+function taxGuideOpen(i){
+  const y=taxGuideYear(), c=taxGuideCtx(y), st=taxGuideStates(c);
+  const first=st.indexOf(false);
+  S.tax.guide={on:true,y:y,i:i!=null?i:(first<0?TAX_GUIDE.length-1:first)};
+  TG.key=''; _tgSave(); taxGuideGo(S.tax.guide.i,0);
+}
+function taxGuideClose(){
+  if(S.tax.guide) S.tax.guide.on=false; _tgSave();
+  const r=document.getElementById('tgRoot');
+  if(r){ r.classList.add('tgOut'); setTimeout(function(){ if(!taxGuideOn()&&r.parentNode) r.parentNode.removeChild(r); },260); }
+  document.querySelectorAll('.tgTarget').forEach(function(e){ e.classList.remove('tgTarget'); });
+  render();
+}
+
+function taxGuideGo(i,dir){
+  const g=S.tax.guide; if(!g) return;
+  const was=TAX_GUIDE[g.i];
+  if(was&&was.seen&&dir>0){ taxGuideMeta(g.y).seen[was.id]=true; save(); }
+  g.i=Math.max(0,Math.min(TAX_GUIDE.length-1,i)); g.dir=dir||0; _tgSave();
+  const s=TAX_GUIDE[g.i];
+  if(s.where){
+    S.view=s.where.view;
+    if(s.where.view==='taxes'){ const K=g.y+' Taxes'; if(DB.taxes&&DB.taxes[K]) S.tax.year=K; if(s.where.tab) S.tax.tab=s.where.tab; }
+  }
+  TG.want=true; TG.glide=Date.now()+650; render();
+}
+function _tgFind(s){
+  if(!s||!s.target||(s.where&&S.view!==s.where.view)) return null;
+  for(const t of s.target){
+    let el=null; try{ el=typeof t==='function'?t():document.querySelector('#page '+t); }catch(e){ el=null; }
+    if(!el) continue;
+    if(el.tagName==='INPUT'&&el.type==='file'&&el.parentElement) el=el.parentElement;
+    return s.wrap?(el.closest(s.wrap)||el):el;
+  }
+  return null;
+}
+
+function _tgReveal(el){
+  const sh=el.closest('.sheet.shut'), h3=sh&&sh.querySelector('h3.fold');
+  if(!h3||typeof tileSet!=='function') return false;
+  tileSet(h3.dataset.fold,true);
+  if(sh.dataset.lazy){ render(); return true; }
+  if(typeof tileApply==='function') tileApply(sh,h3);
+  return false;
+}
+function _tgCardHtml(c,st){
+  const g=S.tax.guide, s=TAX_GUIDE[g.i], n=TAX_GUIDE.length, done=st.filter(Boolean).length, ok=st[g.i];
+  const R=15.5, C=2*Math.PI*R, off=C*(1-done/n);
+  const act=s.act?s.act(c):null, phases=[];
+  TAX_GUIDE.forEach(function(x){ if(phases.indexOf(x.phase)<0) phases.push(x.phase); });
+  const dots=TAX_GUIDE.map(function(x,k){ return '<button class="tgDot'+(st[k]?' ok':'')+(k===g.i?' on':'')+'" data-act="guidego" data-i="'+k+'" aria-label="Step '+(k+1)+': '+esc(x.title(c))+(st[k]?', done':'')+'"></button>'; }).join('');
+  return '<div class="tgTop"><svg class="tgRing" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="'+R+'" class="tgRingBg"/>'
+      +'<circle cx="18" cy="18" r="'+R+'" class="tgRingFg" style="stroke-dasharray:'+C.toFixed(2)+';stroke-dashoffset:'+off.toFixed(2)+'"/></svg>'
+      +'<div class="tgWhere"><b>Filing your '+g.y+' taxes</b><span>'+done+' of '+n+' steps done</span></div>'
+      +'<button class="tgX" data-act="guideclose" aria-label="Close the guide" title="Close (Esc)">✕</button></div>'
+    +'<div class="tgPhases">'+phases.map(function(p){ const ks=TAX_GUIDE.map(function(x,k){ return x.phase===p?k:-1; }).filter(function(k){ return k>=0; });
+      const d=ks.filter(function(k){ return st[k]; }).length;
+      return '<i class="'+(p===s.phase?'on':'')+(d===ks.length?' ok':'')+'"><b>'+esc(p)+'</b><u style="width:'+Math.round(d/ks.length*100)+'%"></u></i>'; }).join('')+'</div>'
+    +'<div class="tgBody '+(g.dir>0?'tgFromR':g.dir<0?'tgFromL':'tgFade')+'" aria-live="polite">'
+      +'<div class="tgNum">Step '+(g.i+1)+'</div>'
+      +'<h4>'+esc(s.title(c))+'<span class="tgOk'+(ok?' on':'')+'" aria-label="'+(ok?'done':'not done yet')+'">'
+        +'<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9"/><path d="M5.5 10.4l3 3 6-6.6"/></svg></span></h4>'
+      +'<div class="tgText">'+s.text(c)+'</div>'
+      +'<div class="tgActs">'
+        +(s.target?'<button class="btn ghost sm" data-act="guideshow">'+(_tgFind(s)?'◎ Show me again':'◎ Take me there')+'</button>':'')
+        +(act?'<button class="btn sm" data-act="'+act.act+'">'+esc(act.label)+'</button>':'')
+        +(s.link?'<a class="btn sm" href="'+s.link.href+'" target="_blank" rel="noopener">'+esc(s.link.label)+'</a>':'')
+        +(s.check?'<label class="tgCheck"><input type="checkbox" data-act="guidemark" data-k="'+s.check.k+'"'+(c.G[s.check.k]?' checked':'')+'> '+esc(s.check.label)+'</label>':'')
+        +(s.skip&&!ok?'<button class="btn ghost sm" data-act="guideskip" data-k="'+s.skip+'">'+esc(s.skipLabel||'Skip')+'</button>':'')
+      +'</div></div>'
+    +'<div class="tgDots">'+dots+'</div>'
+    +'<div class="tgNav"><button class="btn ghost sm" data-act="guideprev"'+(g.i?'':' disabled')+'>‹ Back</button>'
+      +'<span class="tgKeys">← → to move · Esc to close</span>'
+      +(g.i<n-1?'<button class="btn sm tgNext'+(ok?' tgBeckon':'')+'" data-act="guidenext">Next ›</button>'
+        :'<button class="btn sm" data-act="guideclose">'+(ok?'Finish 🎉':'Close')+'</button>')+'</div>';
+}
+function _tgWire(){
+  if(TG.wired) return; TG.wired=true;
+  const later=function(){ if(TG.anim) return; TG.anim=requestAnimationFrame(function(){ TG.anim=0; _tgPlace(true); }); };
+  window.addEventListener('scroll',later,{capture:true,passive:true});
+  window.addEventListener('resize',later,{passive:true});
+  document.addEventListener('keydown',function(ev){
+    if(!taxGuideOn()) return;
+    const t=ev.target; if(t&&(/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)||t.isContentEditable)) return;
+    const g=S.tax.guide;
+    if(ev.key==='ArrowRight'){ ev.preventDefault(); taxGuideGo(g.i+1,1); }
+    else if(ev.key==='ArrowLeft'){ ev.preventDefault(); taxGuideGo(g.i-1,-1); }
+    else if(ev.key==='Escape'){ taxGuideClose(); }
+  });
+  let x0=null, y0=null;
+  document.addEventListener('touchstart',function(ev){ const c=ev.target.closest&&ev.target.closest('.tgCard'); if(!c){ x0=null; return; }
+    x0=ev.touches[0].clientX; y0=ev.touches[0].clientY; },{passive:true});
+  document.addEventListener('touchend',function(ev){ if(x0==null||!taxGuideOn()) return;
+    const dx=ev.changedTouches[0].clientX-x0, dy=ev.changedTouches[0].clientY-y0; x0=null;
+    if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5){ const g=S.tax.guide; taxGuideGo(g.i+(dx<0?1:-1),dx<0?1:-1); } },{passive:true});
+}
+
+function _tgPlace(follow){
+  const root=document.getElementById('tgRoot'); if(!root) return;
+  
+  follow=!!follow&&Date.now()>(TG.glide||0);
+  const hole=root.querySelector('.tgHole'), card=root.querySelector('.tgCard');
+  let el=TG.el&&TG.el.isConnected?TG.el:null;
+  root.classList.toggle('tgFollow',!!follow);
+  const W=window.innerWidth||1024, H=window.innerHeight||768, phone=W<640;
+  root.classList.toggle('tgPhone',phone); document.documentElement.classList.toggle('tgPad',phone);
+  const r=el&&el.getBoundingClientRect?el.getBoundingClientRect():null;
+  const seen=!!(r&&r.width+r.height>0&&r.bottom>0&&r.top<H);
+  root.classList.toggle('tgLit',!!el);
+  if(el&&r){ const p=8;
+    const f=function(v){ return (Math.round(v*10)/10)+'px'; };
+    hole.style.transform='translate('+f(r.left-p)+','+f(r.top-p)+')'; hole.style.width=f(r.width+2*p); hole.style.height=f(r.height+2*p); }
+  if(phone||!seen){ card.style.left=''; card.style.top=''; card.dataset.side=''; return; }
+  const cw=card.offsetWidth||360, ch=card.offsetHeight||320, gap=18;
+  let side='', left, top;
+  if(r.right+gap+cw<W-12){ side='right'; left=r.right+gap; top=r.top+r.height/2-ch/2; }
+  else if(r.left-gap-cw>12){ side='left'; left=r.left-gap-cw; top=r.top+r.height/2-ch/2; }
+  else if(r.bottom+gap+ch<H-12){ side='below'; left=r.left; top=r.bottom+gap; }
+  else if(r.top-gap-ch>12){ side='above'; left=r.left; top=r.top-gap-ch; }
+  else { side=''; left=W-cw-16; top=H-ch-16; }
+  left=Math.max(12,Math.min(W-cw-12,left)); top=Math.max(12,Math.min(H-ch-12,top));
+  card.style.left=Math.round(left)+'px'; card.style.top=Math.round(top)+'px'; card.dataset.side=side;
+  const ar=card.querySelector('.tgArrow');
+  if(ar){ if(side==='right'||side==='left') ar.style.top=Math.max(16,Math.min(ch-16,r.top+r.height/2-top))+'px', ar.style.left='';
+    else if(side) ar.style.left=Math.max(18,Math.min(cw-18,r.left+Math.min(r.width,60)/2-left))+'px', ar.style.top=''; }
+}
+
+
+function _tgWatch(){
+  if(TG.watching) return; TG.watching=true; let last='';
+  const tick=function(){
+    if(!taxGuideOn()||!document.getElementById('tgRoot')){ TG.watching=false; return; }
+    const el=TG.el&&TG.el.isConnected?TG.el:null, r=el?el.getBoundingClientRect():null;
+    const k=r?[r.left,r.top,r.width,r.height].map(Math.round).join(','):'-';
+    if(k!==last){ last=k; _tgPlace(true); }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+function _tgConfetti(root){
+  const box=document.createElement('div'); box.className='tgConfetti';
+  const hues=['var(--accent)','var(--steel)','var(--amber)','var(--meter)','var(--ember)'];
+  for(let k=0;k<36;k++){ const b=document.createElement('i');
+    b.style.setProperty('--dx',(Math.random()*2-1)*260+'px'); b.style.setProperty('--dy',(-140-Math.random()*240)+'px');
+    b.style.setProperty('--r',(Math.random()*720-360)+'deg'); b.style.background=hues[k%hues.length];
+    b.style.animationDelay=(Math.random()*120)+'ms'; box.appendChild(b); }
+  root.appendChild(box); setTimeout(function(){ if(box.parentNode) box.parentNode.removeChild(box); },1900);
+}
+
+function _tgLauncher(show){
+  let b=document.getElementById('tgLaunch');
+  if(!show){ if(b) b.parentNode.removeChild(b); return; }
+  if(b) return;
+  
+  b=document.createElement('button'); b.id='tgLaunch'; b.className='tgLaunch'; b.dataset.act='guideopen';
+  b.setAttribute('aria-label','Walk me through filing'); b.textContent='🧭 Walk me through filing';
+  document.body.appendChild(b);
+}
+function taxGuideSync(){
+  let root=document.getElementById('tgRoot');
+  const on=taxGuideOn();
+  
+  _tgLauncher(!on&&S.view==='taxes'&&!bookShut());
+  if(!on){ document.documentElement.classList.remove('tgPad'); if(root&&!root.classList.contains('tgOut')) root.parentNode.removeChild(root); return; }
+  _tgWire();
+  const g=S.tax.guide, c=taxGuideCtx(g.y), st=taxGuideStates(c), s=TAX_GUIDE[g.i];
+  if(!root){ root=document.createElement('div'); root.id='tgRoot'; root.className='tg';
+    root.innerHTML='<div class="tgHole" aria-hidden="true"></div><div class="tgCard" role="dialog" aria-label="Filing guide"><span class="tgArrow"></span><div class="tgIn"></div></div>';
+    document.body.appendChild(root); requestAnimationFrame(function(){ root.classList.add('tgShow'); }); }
+  const card=root.querySelector('.tgCard'), inner=card.querySelector('.tgIn');
+  const key=g.y+'|'+g.i+'|'+st.join('')+'|'+(c.G.fed?1:0)+(c.G.ny?1:0)+'|'+(c.pack?c.pack.flags.length:'-')+'|'+c.needs.map(function(n){ return n.have; }).join('')+'|'+S.view+(_tgFind(s)?1:0);
+  const was=TG.states, sameStep=TG.i===g.i;
+  if(key!==TG.key){ inner.innerHTML=_tgCardHtml(c,st); TG.key=key; }
+  
+  if(sameStep&&was&&!was[g.i]&&st[g.i]){ card.classList.remove('tgYay'); void card.offsetWidth; card.classList.add('tgYay');
+    if(st.every(Boolean)) _tgConfetti(root); }
+  TG.states=st; TG.i=g.i;
+  document.querySelectorAll('.tgTarget').forEach(function(e){ e.classList.remove('tgTarget'); });
+  let el=_tgFind(s);
+  if(el&&TG.want&&_tgReveal(el)) return;
+  el=_tgFind(s); TG.el=el;
+  if(el) el.classList.add('tgTarget');
+  if(el&&TG.want){ TG.want=false; _tgPlace(false);
+    try{ el.scrollIntoView({block:(window.innerWidth||1024)<640?'start':'center',behavior:'smooth'}); }catch(e){ try{ el.scrollIntoView(); }catch(e2){} }
+    _tgWatch();
+  } else { TG.want=false; _tgPlace(false); _tgWatch(); }
+}
+
+
+
 const NY_TABLES={"2021":{"local/ny/nyc/tax/income/credits/household/flat_amount":{"b":[],"k":"s"},"local/ny/nyc/tax/income/credits/household/other_per_dependent":{"b":[],"k":"s"},"local/ny/nyc/tax/income/credits/household/separate_per_dependent":{"b":[],"k":"s"},"local/ny/nyc/tax/income/credits/school/fixed/amount":{"hoh":null,"mfj":null,"mfs":null,"qss":null,"single":null},"local/ny/nyc/tax/income/credits/school/fixed/income_limit":null,"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/head_of_household":{"b":[],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/joint":{"b":[],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/separate":{"b":[],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/single":{"b":[],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/surviving_spouse":{"b":[],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/income_limit":null,"local/ny/nyc/tax/income/credits/school/rate_reduction/taxable_income_limit":null,"local/ny/nyc/tax/income/rates/head_of_household":{"b":[[0,0.03078],[14400,0.03762],[30000,0.03819],[60000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/joint":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/separate":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/single":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/surviving_spouse":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"states/ny/tax/income/credits/cdcc/decoupled/expense_cap":{"b":[],"k":"s"},"states/ny/tax/income/credits/cdcc/decoupled/in_effect":false,"states/ny/tax/income/credits/cdcc/decoupled/rate/max":null,"states/ny/tax/income/credits/cdcc/decoupled/rate/min":null,"states/ny/tax/income/credits/cdcc/decoupled/rate/phase_down_rate":null,"states/ny/tax/income/credits/cdcc/decoupled/rate/phase_down_threshold":null,"states/ny/tax/income/credits/cdcc/decoupled/reduction/amount":null,"states/ny/tax/income/credits/cdcc/decoupled/reduction/increment":null,"states/ny/tax/income/credits/cdcc/decoupled/reduction/threshold":null,"states/ny/tax/income/credits/cdcc/federal_rate/increment":2000,"states/ny/tax/income/credits/cdcc/federal_rate/max":0.35,"states/ny/tax/income/credits/cdcc/federal_rate/min":0.2,"states/ny/tax/income/credits/cdcc/federal_rate/start":15000,"states/ny/tax/income/credits/cdcc/federal_rate/step":0.01,"states/ny/tax/income/credits/cdcc/max":{"b":[[1,3000],[2,6000],[3,7500],[4,8500],[5,9000]],"k":"s"},"states/ny/tax/income/credits/cdcc/percentage/alternate/base_percentage":1.0,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/denominator":15000,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/numerator/min":15000,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/numerator/top":40000,"states/ny/tax/income/credits/cdcc/percentage/alternate/max_agi":40000,"states/ny/tax/income/credits/cdcc/percentage/alternate/multiplier":0.1,"states/ny/tax/income/credits/cdcc/percentage/main/base_percentage":0.2,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/denominator":15000,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/numerator/min":15000,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/numerator/top":65000,"states/ny/tax/income/credits/cdcc/percentage/main/multiplier":0.8,"states/ny/tax/income/credits/cdcc/percentage/multiplier":{"b":[[0,1.0],[50000,1.1682],[55000,1.2733],[60000,2.322],[65000,3.0],[150000,1.0]],"k":"s"},"states/ny/tax/income/credits/college_tuition/applicable_percentage":1,"states/ny/tax/income/credits/college_tuition/rate":{"b":[[0,1],[200,0],[5000,0.04]],"k":"m"},"states/ny/tax/income/credits/ctc/amount/minimum":100,"states/ny/tax/income/credits/ctc/amount/percent":0.33,"states/ny/tax/income/credits/ctc/minimum_age":4,"states/ny/tax/income/credits/ctc/post_2024/amount":{"b":[[0,0],[4,0],[17,0]],"k":"s"},"states/ny/tax/income/credits/ctc/post_2024/in_effect":false,"states/ny/tax/income/credits/ctc/post_2024/phase_out/increment":1,"states/ny/tax/income/credits/ctc/post_2024/phase_out/rate":0,"states/ny/tax/income/credits/ctc/post_2024/phase_out/threshold":{"hoh":0,"mfj":0,"mfs":0,"qss":0,"single":0},"states/ny/tax/income/credits/eitc/match":0.3,"states/ny/tax/income/credits/household_credit/non_single/additional":{"b":[[-1e+308,15],[20000,10],[25000,5],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/non_single/base":{"b":[[-1e+308,90],[5000,75],[6000,65],[7000,60],[22000,50],[25000,40],[28000,20],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/single":{"b":[[-1e+308,75],[5000,60],[6000,50],[7000,45],[20000,40],[25000,20],[28000,0]],"k":"s"},"states/ny/tax/income/deductions/itemized/medical/floor":0.1,"states/ny/tax/income/deductions/itemized/phase_out/agi_excess_rate":0.03,"states/ny/tax/income/deductions/itemized/phase_out/deduction_limited_rate":0.8,"states/ny/tax/income/deductions/itemized/phase_out/start":{"hoh":310600,"mfj":338850,"mfs":169400,"qss":338850,"single":282400},"states/ny/tax/income/deductions/itemized/reduction/charitable_deduction_rate":{"b":[[0,0],[1000000,0.5],[10000000,0.25]],"k":"s"},"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/income_threshold":475000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/rate":0.25,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/income_threshold":{"hoh":150000,"mfj":200000,"mfs":100000,"qss":200000,"single":100000},"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/rate":0.25,"states/ny/tax/income/deductions/standard/amount":{"hoh":11200,"mfj":16050,"mfs":8000,"qss":16050,"single":8000},"states/ny/tax/income/exemptions/dependent":1000,"states/ny/tax/income/main/head_of_household":{"b":[[0,0.04],[12800,0.045],[17650,0.0525],[20900,0.059],[32200,0.0597],[107650,0.0633],[269300,0.0685],[1616450,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/joint":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.059],[43000,0.0597],[161550,0.0633],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/separate":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.059],[21400,0.0597],[80650,0.0633],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/single":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.059],[21400,0.0597],[80650,0.0633],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/surviving_spouse":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.059],[43000,0.0597],[161550,0.0633],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/supplemental/in_effect":true,"states/ny/tax/income/supplemental/min_agi":107650,"states/ny/tax/income/supplemental/phase_in_length":50000,"states/ny/tax/income/supplemental/recapture_base/head_of_household":{"b":[[0,0],[269300,742],[1616450,2143],[5000000,47403]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/joint":{"b":[[0,0],[161550,474],[323200,1056],[2155350,2736],[5000000,63086]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/separate":{"b":[[0,0],[215400,526],[1077550,1646],[5000000,31817]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/single":{"b":[[0,0],[215400,526],[1077550,1646],[5000000,31817]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/surviving_spouse":{"b":[[0,0],[161550,474],[323200,1056],[2155350,2736],[5000000,63086]],"k":"s"}},"2022":{"local/ny/nyc/tax/income/credits/household/flat_amount":{"b":[[-1,15],[10000,10],[12500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/other_per_dependent":{"b":[[-1,30],[15000,25],[17500,15],[20000,10],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/separate_per_dependent":{"b":[[-1,15],[15000,13],[17500,8],[20000,5],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/school/fixed/amount":{"hoh":63,"mfj":125,"mfs":63,"qss":125,"single":63},"local/ny/nyc/tax/income/credits/school/fixed/income_limit":250000,"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/head_of_household":{"b":[[0,0.00171],[14400,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/joint":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/separate":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/single":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/surviving_spouse":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/income_limit":500000,"local/ny/nyc/tax/income/credits/school/rate_reduction/taxable_income_limit":500000,"local/ny/nyc/tax/income/rates/head_of_household":{"b":[[0,0.03078],[14400,0.03762],[30000,0.03819],[60000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/joint":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/separate":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/single":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/surviving_spouse":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"states/ny/tax/income/credits/cdcc/decoupled/expense_cap":{"b":[],"k":"s"},"states/ny/tax/income/credits/cdcc/decoupled/in_effect":false,"states/ny/tax/income/credits/cdcc/decoupled/rate/max":null,"states/ny/tax/income/credits/cdcc/decoupled/rate/min":null,"states/ny/tax/income/credits/cdcc/decoupled/rate/phase_down_rate":null,"states/ny/tax/income/credits/cdcc/decoupled/rate/phase_down_threshold":null,"states/ny/tax/income/credits/cdcc/decoupled/reduction/amount":null,"states/ny/tax/income/credits/cdcc/decoupled/reduction/increment":null,"states/ny/tax/income/credits/cdcc/decoupled/reduction/threshold":null,"states/ny/tax/income/credits/cdcc/federal_rate/increment":2000,"states/ny/tax/income/credits/cdcc/federal_rate/max":0.35,"states/ny/tax/income/credits/cdcc/federal_rate/min":0.2,"states/ny/tax/income/credits/cdcc/federal_rate/start":15000,"states/ny/tax/income/credits/cdcc/federal_rate/step":0.01,"states/ny/tax/income/credits/cdcc/max":{"b":[[1,3000],[2,6000],[3,7500],[4,8500],[5,9000]],"k":"s"},"states/ny/tax/income/credits/cdcc/percentage/alternate/base_percentage":1.0,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/denominator":15000,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/numerator/min":15000,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/numerator/top":40000,"states/ny/tax/income/credits/cdcc/percentage/alternate/max_agi":40000,"states/ny/tax/income/credits/cdcc/percentage/alternate/multiplier":0.1,"states/ny/tax/income/credits/cdcc/percentage/main/base_percentage":0.2,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/denominator":15000,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/numerator/min":15000,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/numerator/top":65000,"states/ny/tax/income/credits/cdcc/percentage/main/multiplier":0.8,"states/ny/tax/income/credits/cdcc/percentage/multiplier":{"b":[[0,1.0],[50000,1.1682],[55000,1.2733],[60000,2.322],[65000,3.0],[150000,1.0]],"k":"s"},"states/ny/tax/income/credits/college_tuition/applicable_percentage":1,"states/ny/tax/income/credits/college_tuition/rate":{"b":[[0,1],[200,0],[5000,0.04]],"k":"m"},"states/ny/tax/income/credits/ctc/amount/minimum":100,"states/ny/tax/income/credits/ctc/amount/percent":0.33,"states/ny/tax/income/credits/ctc/minimum_age":4,"states/ny/tax/income/credits/ctc/post_2024/amount":{"b":[[0,0],[4,0],[17,0]],"k":"s"},"states/ny/tax/income/credits/ctc/post_2024/in_effect":false,"states/ny/tax/income/credits/ctc/post_2024/phase_out/increment":1,"states/ny/tax/income/credits/ctc/post_2024/phase_out/rate":0,"states/ny/tax/income/credits/ctc/post_2024/phase_out/threshold":{"hoh":0,"mfj":0,"mfs":0,"qss":0,"single":0},"states/ny/tax/income/credits/eitc/match":0.3,"states/ny/tax/income/credits/household_credit/non_single/additional":{"b":[[-1e+308,15],[20000,10],[25000,5],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/non_single/base":{"b":[[-1e+308,90],[5000,75],[6000,65],[7000,60],[22000,50],[25000,40],[28000,20],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/single":{"b":[[-1e+308,75],[5000,60],[6000,50],[7000,45],[20000,40],[25000,20],[28000,0]],"k":"s"},"states/ny/tax/income/deductions/itemized/medical/floor":0.1,"states/ny/tax/income/deductions/itemized/phase_out/agi_excess_rate":0.03,"states/ny/tax/income/deductions/itemized/phase_out/deduction_limited_rate":0.8,"states/ny/tax/income/deductions/itemized/phase_out/start":{"hoh":319950,"mfj":349000,"mfs":174500,"qss":349000,"single":290850},"states/ny/tax/income/deductions/itemized/reduction/charitable_deduction_rate":{"b":[[0,0],[1000000,0.5],[10000000,0.25]],"k":"s"},"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/income_threshold":475000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/rate":0.25,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/income_threshold":{"hoh":150000,"mfj":200000,"mfs":100000,"qss":200000,"single":100000},"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/rate":0.25,"states/ny/tax/income/deductions/standard/amount":{"hoh":11200,"mfj":16050,"mfs":8000,"qss":16050,"single":8000},"states/ny/tax/income/exemptions/dependent":1000,"states/ny/tax/income/main/head_of_household":{"b":[[0,0.04],[12800,0.045],[17650,0.0525],[20900,0.0585],[107650,0.0625],[269300,0.0685],[1616450,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/joint":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.0585],[161550,0.0625],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/separate":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.0585],[80650,0.0625],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/single":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.0585],[80650,0.0625],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/surviving_spouse":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.0585],[161550,0.0625],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/supplemental/in_effect":true,"states/ny/tax/income/supplemental/min_agi":107650,"states/ny/tax/income/supplemental/phase_in_length":50000,"states/ny/tax/income/supplemental/recapture_base/head_of_household":{"b":[[0,0],[269300,752],[1616450,2368],[5000000,47629]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/joint":{"b":[[0,0],[161550,430],[323200,1076],[2155350,3016],[5000000,63365]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/separate":{"b":[[0,0],[215400,536],[1077550,1829],[5000000,32000]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/single":{"b":[[0,0],[215400,536],[1077550,1829],[5000000,32000]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/surviving_spouse":{"b":[[0,0],[161550,430],[323200,1076],[2155350,3016],[5000000,63365]],"k":"s"}},"2023":{"local/ny/nyc/tax/income/credits/household/flat_amount":{"b":[[-1,15],[10000,10],[12500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/other_per_dependent":{"b":[[-1,30],[15000,25],[17500,15],[20000,10],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/separate_per_dependent":{"b":[[-1,15],[15000,13],[17500,8],[20000,5],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/school/fixed/amount":{"hoh":63,"mfj":125,"mfs":63,"qss":125,"single":63},"local/ny/nyc/tax/income/credits/school/fixed/income_limit":250000,"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/head_of_household":{"b":[[0,0.00171],[14400,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/joint":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/separate":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/single":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/surviving_spouse":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/income_limit":500000,"local/ny/nyc/tax/income/credits/school/rate_reduction/taxable_income_limit":500000,"local/ny/nyc/tax/income/rates/head_of_household":{"b":[[0,0.03078],[14400,0.03762],[30000,0.03819],[60000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/joint":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/separate":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/single":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/surviving_spouse":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"states/ny/tax/income/credits/cdcc/decoupled/expense_cap":{"b":[],"k":"s"},"states/ny/tax/income/credits/cdcc/decoupled/in_effect":false,"states/ny/tax/income/credits/cdcc/decoupled/rate/max":null,"states/ny/tax/income/credits/cdcc/decoupled/rate/min":null,"states/ny/tax/income/credits/cdcc/decoupled/rate/phase_down_rate":null,"states/ny/tax/income/credits/cdcc/decoupled/rate/phase_down_threshold":null,"states/ny/tax/income/credits/cdcc/decoupled/reduction/amount":null,"states/ny/tax/income/credits/cdcc/decoupled/reduction/increment":null,"states/ny/tax/income/credits/cdcc/decoupled/reduction/threshold":null,"states/ny/tax/income/credits/cdcc/federal_rate/increment":2000,"states/ny/tax/income/credits/cdcc/federal_rate/max":0.35,"states/ny/tax/income/credits/cdcc/federal_rate/min":0.2,"states/ny/tax/income/credits/cdcc/federal_rate/start":15000,"states/ny/tax/income/credits/cdcc/federal_rate/step":0.01,"states/ny/tax/income/credits/cdcc/max":{"b":[[1,3000],[2,6000],[3,7500],[4,8500],[5,9000]],"k":"s"},"states/ny/tax/income/credits/cdcc/percentage/alternate/base_percentage":1.0,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/denominator":15000,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/numerator/min":15000,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/numerator/top":40000,"states/ny/tax/income/credits/cdcc/percentage/alternate/max_agi":40000,"states/ny/tax/income/credits/cdcc/percentage/alternate/multiplier":0.1,"states/ny/tax/income/credits/cdcc/percentage/main/base_percentage":0.2,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/denominator":15000,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/numerator/min":15000,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/numerator/top":65000,"states/ny/tax/income/credits/cdcc/percentage/main/multiplier":0.8,"states/ny/tax/income/credits/cdcc/percentage/multiplier":{"b":[[0,1.0],[50000,1.1682],[55000,1.2733],[60000,2.322],[65000,3.0],[150000,1.0]],"k":"s"},"states/ny/tax/income/credits/college_tuition/applicable_percentage":1,"states/ny/tax/income/credits/college_tuition/rate":{"b":[[0,1],[200,0],[5000,0.04]],"k":"m"},"states/ny/tax/income/credits/ctc/amount/minimum":100,"states/ny/tax/income/credits/ctc/amount/percent":0.33,"states/ny/tax/income/credits/ctc/minimum_age":0,"states/ny/tax/income/credits/ctc/post_2024/amount":{"b":[[0,0],[4,0],[17,0]],"k":"s"},"states/ny/tax/income/credits/ctc/post_2024/in_effect":false,"states/ny/tax/income/credits/ctc/post_2024/phase_out/increment":1,"states/ny/tax/income/credits/ctc/post_2024/phase_out/rate":0,"states/ny/tax/income/credits/ctc/post_2024/phase_out/threshold":{"hoh":0,"mfj":0,"mfs":0,"qss":0,"single":0},"states/ny/tax/income/credits/eitc/match":0.3,"states/ny/tax/income/credits/household_credit/non_single/additional":{"b":[[-1e+308,15],[20000,10],[25000,5],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/non_single/base":{"b":[[-1e+308,90],[5000,75],[6000,65],[7000,60],[22000,50],[25000,40],[28000,20],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/single":{"b":[[-1e+308,75],[5000,60],[6000,50],[7000,45],[20000,40],[25000,20],[28000,0]],"k":"s"},"states/ny/tax/income/deductions/itemized/medical/floor":0.1,"states/ny/tax/income/deductions/itemized/phase_out/agi_excess_rate":0.03,"states/ny/tax/income/deductions/itemized/phase_out/deduction_limited_rate":0.8,"states/ny/tax/income/deductions/itemized/phase_out/start":{"hoh":344500,"mfj":375850,"mfs":187900,"qss":375850,"single":313200},"states/ny/tax/income/deductions/itemized/reduction/charitable_deduction_rate":{"b":[[0,0],[1000000,0.5],[10000000,0.25]],"k":"s"},"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/income_threshold":475000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/rate":0.25,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/income_threshold":{"hoh":150000,"mfj":200000,"mfs":100000,"qss":200000,"single":100000},"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/rate":0.25,"states/ny/tax/income/deductions/standard/amount":{"hoh":11200,"mfj":16050,"mfs":8000,"qss":16050,"single":8000},"states/ny/tax/income/exemptions/dependent":1000,"states/ny/tax/income/main/head_of_household":{"b":[[0,0.04],[12800,0.045],[17650,0.0525],[20900,0.055],[107650,0.06],[269300,0.0685],[1616450,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/joint":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.055],[161550,0.06],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/separate":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.055],[80650,0.06],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/single":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.055],[80650,0.06],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/surviving_spouse":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.055],[161550,0.06],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/supplemental/in_effect":true,"states/ny/tax/income/supplemental/min_agi":107650,"states/ny/tax/income/supplemental/phase_in_length":50000,"states/ny/tax/income/supplemental/recapture_base/head_of_household":{"b":[[0,0],[269300,787],[1616450,3076],[5000000,48337]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/joint":{"b":[[0,0],[161550,333],[323200,1140],[2155350,3887],[5000000,64237]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/separate":{"b":[[0,0],[215400,568],[1077550,2399],[5000000,32571]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/single":{"b":[[0,0],[215400,568],[1077550,2399],[5000000,32571]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/surviving_spouse":{"b":[[0,0],[161550,333],[323200,1140],[2155350,3887],[5000000,64237]],"k":"s"}},"2024":{"local/ny/nyc/tax/income/credits/household/flat_amount":{"b":[[-1,15],[10000,10],[12500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/other_per_dependent":{"b":[[-1,30],[15000,25],[17500,15],[20000,10],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/separate_per_dependent":{"b":[[-1,15],[15000,13],[17500,8],[20000,5],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/school/fixed/amount":{"hoh":63,"mfj":125,"mfs":63,"qss":125,"single":63},"local/ny/nyc/tax/income/credits/school/fixed/income_limit":250000,"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/head_of_household":{"b":[[0,0.00171],[14400,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/joint":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/separate":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/single":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/surviving_spouse":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/income_limit":500000,"local/ny/nyc/tax/income/credits/school/rate_reduction/taxable_income_limit":500000,"local/ny/nyc/tax/income/rates/head_of_household":{"b":[[0,0.03078],[14400,0.03762],[30000,0.03819],[60000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/joint":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/separate":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/single":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/surviving_spouse":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"states/ny/tax/income/credits/cdcc/decoupled/expense_cap":{"b":[],"k":"s"},"states/ny/tax/income/credits/cdcc/decoupled/in_effect":false,"states/ny/tax/income/credits/cdcc/decoupled/rate/max":null,"states/ny/tax/income/credits/cdcc/decoupled/rate/min":null,"states/ny/tax/income/credits/cdcc/decoupled/rate/phase_down_rate":null,"states/ny/tax/income/credits/cdcc/decoupled/rate/phase_down_threshold":null,"states/ny/tax/income/credits/cdcc/decoupled/reduction/amount":null,"states/ny/tax/income/credits/cdcc/decoupled/reduction/increment":null,"states/ny/tax/income/credits/cdcc/decoupled/reduction/threshold":null,"states/ny/tax/income/credits/cdcc/federal_rate/increment":2000,"states/ny/tax/income/credits/cdcc/federal_rate/max":0.35,"states/ny/tax/income/credits/cdcc/federal_rate/min":0.2,"states/ny/tax/income/credits/cdcc/federal_rate/start":15000,"states/ny/tax/income/credits/cdcc/federal_rate/step":0.01,"states/ny/tax/income/credits/cdcc/max":{"b":[[1,3000],[2,6000],[3,7500],[4,8500],[5,9000]],"k":"s"},"states/ny/tax/income/credits/cdcc/percentage/alternate/base_percentage":1.0,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/denominator":15000,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/numerator/min":15000,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/numerator/top":40000,"states/ny/tax/income/credits/cdcc/percentage/alternate/max_agi":40000,"states/ny/tax/income/credits/cdcc/percentage/alternate/multiplier":0.1,"states/ny/tax/income/credits/cdcc/percentage/main/base_percentage":0.2,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/denominator":15000,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/numerator/min":15000,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/numerator/top":65000,"states/ny/tax/income/credits/cdcc/percentage/main/multiplier":0.8,"states/ny/tax/income/credits/cdcc/percentage/multiplier":{"b":[[0,1.0],[50000,1.1682],[55000,1.2733],[60000,2.322],[65000,3.0],[150000,1.0]],"k":"s"},"states/ny/tax/income/credits/college_tuition/applicable_percentage":1,"states/ny/tax/income/credits/college_tuition/rate":{"b":[[0,1],[200,0],[5000,0.04]],"k":"m"},"states/ny/tax/income/credits/ctc/amount/minimum":100,"states/ny/tax/income/credits/ctc/amount/percent":0.33,"states/ny/tax/income/credits/ctc/minimum_age":0,"states/ny/tax/income/credits/ctc/post_2024/amount":{"b":[[0,0],[4,0],[17,0]],"k":"s"},"states/ny/tax/income/credits/ctc/post_2024/in_effect":false,"states/ny/tax/income/credits/ctc/post_2024/phase_out/increment":1,"states/ny/tax/income/credits/ctc/post_2024/phase_out/rate":0,"states/ny/tax/income/credits/ctc/post_2024/phase_out/threshold":{"hoh":0,"mfj":0,"mfs":0,"qss":0,"single":0},"states/ny/tax/income/credits/eitc/match":0.3,"states/ny/tax/income/credits/household_credit/non_single/additional":{"b":[[-1e+308,15],[20000,10],[25000,5],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/non_single/base":{"b":[[-1e+308,90],[5000,75],[6000,65],[7000,60],[22000,50],[25000,40],[28000,20],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/single":{"b":[[-1e+308,75],[5000,60],[6000,50],[7000,45],[20000,40],[25000,20],[28000,0]],"k":"s"},"states/ny/tax/income/deductions/itemized/medical/floor":0.1,"states/ny/tax/income/deductions/itemized/phase_out/agi_excess_rate":0.03,"states/ny/tax/income/deductions/itemized/phase_out/deduction_limited_rate":0.8,"states/ny/tax/income/deductions/itemized/phase_out/start":{"hoh":363250,"mfj":396250,"mfs":198100,"qss":396250,"single":330200},"states/ny/tax/income/deductions/itemized/reduction/charitable_deduction_rate":{"b":[[0,0],[1000000,0.5],[10000000,0.25]],"k":"s"},"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/income_threshold":475000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/rate":0.25,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/income_threshold":{"hoh":150000,"mfj":200000,"mfs":100000,"qss":200000,"single":100000},"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/rate":0.25,"states/ny/tax/income/deductions/standard/amount":{"hoh":11200,"mfj":16050,"mfs":8000,"qss":16050,"single":8000},"states/ny/tax/income/exemptions/dependent":1000,"states/ny/tax/income/main/head_of_household":{"b":[[0,0.04],[12800,0.045],[17650,0.0525],[20900,0.055],[107650,0.06],[269300,0.0685],[1616450,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/joint":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.055],[161550,0.06],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/separate":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.055],[80650,0.06],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/single":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.055],[80650,0.06],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/surviving_spouse":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.055],[161550,0.06],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/supplemental/in_effect":true,"states/ny/tax/income/supplemental/min_agi":107650,"states/ny/tax/income/supplemental/phase_in_length":50000,"states/ny/tax/income/supplemental/recapture_base/head_of_household":{"b":[[0,0],[269300,787],[1616450,3076],[5000000,48337]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/joint":{"b":[[0,0],[161550,333],[323200,1140],[2155350,3887],[5000000,64237]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/separate":{"b":[[0,0],[215400,568],[1077550,2399],[5000000,32571]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/single":{"b":[[0,0],[215400,568],[1077550,2399],[5000000,32571]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/surviving_spouse":{"b":[[0,0],[161550,333],[323200,1140],[2155350,3887],[5000000,64237]],"k":"s"}},"2025":{"local/ny/nyc/tax/income/credits/household/flat_amount":{"b":[[-1,15],[10000,10],[12500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/other_per_dependent":{"b":[[-1,30],[15000,25],[17500,15],[20000,10],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/separate_per_dependent":{"b":[[-1,15],[15000,13],[17500,8],[20000,5],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/school/fixed/amount":{"hoh":63,"mfj":125,"mfs":63,"qss":125,"single":63},"local/ny/nyc/tax/income/credits/school/fixed/income_limit":250000,"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/head_of_household":{"b":[[0,0.00171],[14400,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/joint":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/separate":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/single":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/surviving_spouse":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/income_limit":500000,"local/ny/nyc/tax/income/credits/school/rate_reduction/taxable_income_limit":500000,"local/ny/nyc/tax/income/rates/head_of_household":{"b":[[0,0.03078],[14400,0.03762],[30000,0.03819],[60000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/joint":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/separate":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/single":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/surviving_spouse":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"states/ny/tax/income/credits/cdcc/decoupled/expense_cap":{"b":[],"k":"s"},"states/ny/tax/income/credits/cdcc/decoupled/in_effect":false,"states/ny/tax/income/credits/cdcc/decoupled/rate/max":null,"states/ny/tax/income/credits/cdcc/decoupled/rate/min":null,"states/ny/tax/income/credits/cdcc/decoupled/rate/phase_down_rate":null,"states/ny/tax/income/credits/cdcc/decoupled/rate/phase_down_threshold":null,"states/ny/tax/income/credits/cdcc/decoupled/reduction/amount":null,"states/ny/tax/income/credits/cdcc/decoupled/reduction/increment":null,"states/ny/tax/income/credits/cdcc/decoupled/reduction/threshold":null,"states/ny/tax/income/credits/cdcc/federal_rate/increment":2000,"states/ny/tax/income/credits/cdcc/federal_rate/max":0.35,"states/ny/tax/income/credits/cdcc/federal_rate/min":0.2,"states/ny/tax/income/credits/cdcc/federal_rate/start":15000,"states/ny/tax/income/credits/cdcc/federal_rate/step":0.01,"states/ny/tax/income/credits/cdcc/max":{"b":[[1,3000],[2,6000],[3,7500],[4,8500],[5,9000]],"k":"s"},"states/ny/tax/income/credits/cdcc/percentage/alternate/base_percentage":1.0,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/denominator":15000,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/numerator/min":15000,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/numerator/top":40000,"states/ny/tax/income/credits/cdcc/percentage/alternate/max_agi":40000,"states/ny/tax/income/credits/cdcc/percentage/alternate/multiplier":0.1,"states/ny/tax/income/credits/cdcc/percentage/main/base_percentage":0.2,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/denominator":15000,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/numerator/min":15000,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/numerator/top":65000,"states/ny/tax/income/credits/cdcc/percentage/main/multiplier":0.8,"states/ny/tax/income/credits/cdcc/percentage/multiplier":{"b":[[0,1.0],[50000,1.1682],[55000,1.2733],[60000,2.322],[65000,3.0],[150000,1.0]],"k":"s"},"states/ny/tax/income/credits/college_tuition/applicable_percentage":1,"states/ny/tax/income/credits/college_tuition/rate":{"b":[[0,1],[200,0],[5000,0.04]],"k":"m"},"states/ny/tax/income/credits/ctc/amount/minimum":100,"states/ny/tax/income/credits/ctc/amount/percent":0.33,"states/ny/tax/income/credits/ctc/minimum_age":0,"states/ny/tax/income/credits/ctc/post_2024/amount":{"b":[[0,1000],[4,330],[17,0]],"k":"s"},"states/ny/tax/income/credits/ctc/post_2024/in_effect":true,"states/ny/tax/income/credits/ctc/post_2024/phase_out/increment":1000,"states/ny/tax/income/credits/ctc/post_2024/phase_out/rate":16.5,"states/ny/tax/income/credits/ctc/post_2024/phase_out/threshold":{"hoh":75000,"mfj":110000,"mfs":55000,"qss":75000,"single":75000},"states/ny/tax/income/credits/eitc/match":0.3,"states/ny/tax/income/credits/household_credit/non_single/additional":{"b":[[-1e+308,15],[20000,10],[25000,5],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/non_single/base":{"b":[[-1e+308,90],[5000,75],[6000,65],[7000,60],[22000,50],[25000,40],[28000,20],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/single":{"b":[[-1e+308,75],[5000,60],[6000,50],[7000,45],[20000,40],[25000,20],[28000,0]],"k":"s"},"states/ny/tax/income/deductions/itemized/medical/floor":0.1,"states/ny/tax/income/deductions/itemized/phase_out/agi_excess_rate":0.03,"states/ny/tax/income/deductions/itemized/phase_out/deduction_limited_rate":0.8,"states/ny/tax/income/deductions/itemized/phase_out/start":{"hoh":374800,"mfj":408850,"mfs":204400,"qss":408850,"single":340700},"states/ny/tax/income/deductions/itemized/reduction/charitable_deduction_rate":{"b":[[0,0],[1000000,0.5],[10000000,0.25]],"k":"s"},"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/income_threshold":475000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/rate":0.25,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/income_threshold":{"hoh":150000,"mfj":200000,"mfs":100000,"qss":200000,"single":100000},"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/rate":0.25,"states/ny/tax/income/deductions/standard/amount":{"hoh":11200,"mfj":16050,"mfs":8000,"qss":16050,"single":8000},"states/ny/tax/income/exemptions/dependent":1000,"states/ny/tax/income/main/head_of_household":{"b":[[0,0.04],[12800,0.045],[17650,0.0525],[20900,0.055],[107650,0.06],[269300,0.0685],[1616450,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/joint":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.055],[161550,0.06],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/separate":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.055],[80650,0.06],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/single":{"b":[[0,0.04],[8500,0.045],[11700,0.0525],[13900,0.055],[80650,0.06],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/surviving_spouse":{"b":[[0,0.04],[17150,0.045],[23600,0.0525],[27900,0.055],[161550,0.06],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/supplemental/in_effect":true,"states/ny/tax/income/supplemental/min_agi":107650,"states/ny/tax/income/supplemental/phase_in_length":50000,"states/ny/tax/income/supplemental/recapture_base/head_of_household":{"b":[[0,0],[269300,787],[1616450,3076],[5000000,48337]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/joint":{"b":[[0,0],[161550,333],[323200,1140],[2155350,3887],[5000000,64237]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/separate":{"b":[[0,0],[215400,568],[1077550,2399],[5000000,32571]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/single":{"b":[[0,0],[215400,568],[1077550,2399],[5000000,32571]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/surviving_spouse":{"b":[[0,0],[161550,333],[323200,1140],[2155350,3887],[5000000,64237]],"k":"s"}},"2026":{"local/ny/nyc/tax/income/credits/household/flat_amount":{"b":[[-1,15],[10000,10],[12500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/other_per_dependent":{"b":[[-1,30],[15000,25],[17500,15],[20000,10],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/household/separate_per_dependent":{"b":[[-1,15],[15000,13],[17500,8],[20000,5],[22500,0]],"k":"s"},"local/ny/nyc/tax/income/credits/school/fixed/amount":{"hoh":63,"mfj":125,"mfs":63,"qss":125,"single":63},"local/ny/nyc/tax/income/credits/school/fixed/income_limit":250000,"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/head_of_household":{"b":[[0,0.00171],[14400,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/joint":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/separate":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/single":{"b":[[0,0.00171],[12000,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/amount/surviving_spouse":{"b":[[0,0.00171],[21600,0.00228]],"k":"m"},"local/ny/nyc/tax/income/credits/school/rate_reduction/income_limit":500000,"local/ny/nyc/tax/income/credits/school/rate_reduction/taxable_income_limit":500000,"local/ny/nyc/tax/income/rates/head_of_household":{"b":[[0,0.03078],[14400,0.03762],[30000,0.03819],[60000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/joint":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/separate":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/single":{"b":[[0,0.03078],[12000,0.03762],[25000,0.03819],[50000,0.03876]],"k":"m"},"local/ny/nyc/tax/income/rates/surviving_spouse":{"b":[[0,0.03078],[21600,0.03762],[45000,0.03819],[90000,0.03876]],"k":"m"},"states/ny/tax/income/credits/cdcc/decoupled/expense_cap":{"b":[[1,3000],[2,6000],[3,7500],[4,8500],[5,9000]],"k":"s"},"states/ny/tax/income/credits/cdcc/decoupled/in_effect":true,"states/ny/tax/income/credits/cdcc/decoupled/rate/max":0.55,"states/ny/tax/income/credits/cdcc/decoupled/rate/min":0.04,"states/ny/tax/income/credits/cdcc/decoupled/rate/phase_down_rate":2.5e-06,"states/ny/tax/income/credits/cdcc/decoupled/rate/phase_down_threshold":15000,"states/ny/tax/income/credits/cdcc/decoupled/reduction/amount":20,"states/ny/tax/income/credits/cdcc/decoupled/reduction/increment":1000,"states/ny/tax/income/credits/cdcc/decoupled/reduction/threshold":750000,"states/ny/tax/income/credits/cdcc/federal_rate/increment":2000,"states/ny/tax/income/credits/cdcc/federal_rate/max":0.35,"states/ny/tax/income/credits/cdcc/federal_rate/min":0.2,"states/ny/tax/income/credits/cdcc/federal_rate/start":15000,"states/ny/tax/income/credits/cdcc/federal_rate/step":0.01,"states/ny/tax/income/credits/cdcc/max":{"b":[[1,3000],[2,6000],[3,7500],[4,8500],[5,9000]],"k":"s"},"states/ny/tax/income/credits/cdcc/percentage/alternate/base_percentage":1.0,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/denominator":15000,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/numerator/min":15000,"states/ny/tax/income/credits/cdcc/percentage/alternate/fraction/numerator/top":40000,"states/ny/tax/income/credits/cdcc/percentage/alternate/max_agi":40000,"states/ny/tax/income/credits/cdcc/percentage/alternate/multiplier":0.1,"states/ny/tax/income/credits/cdcc/percentage/main/base_percentage":0.2,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/denominator":15000,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/numerator/min":15000,"states/ny/tax/income/credits/cdcc/percentage/main/fraction/numerator/top":65000,"states/ny/tax/income/credits/cdcc/percentage/main/multiplier":0.8,"states/ny/tax/income/credits/cdcc/percentage/multiplier":{"b":[[0,1.0],[50000,1.1682],[55000,1.2733],[60000,2.322],[65000,3.0],[150000,1.0]],"k":"s"},"states/ny/tax/income/credits/college_tuition/applicable_percentage":1,"states/ny/tax/income/credits/college_tuition/rate":{"b":[[0,1],[200,0],[5000,0.04]],"k":"m"},"states/ny/tax/income/credits/ctc/amount/minimum":100,"states/ny/tax/income/credits/ctc/amount/percent":0.33,"states/ny/tax/income/credits/ctc/minimum_age":0,"states/ny/tax/income/credits/ctc/post_2024/amount":{"b":[[0,1000],[4,500],[17,0]],"k":"s"},"states/ny/tax/income/credits/ctc/post_2024/in_effect":true,"states/ny/tax/income/credits/ctc/post_2024/phase_out/increment":1000,"states/ny/tax/income/credits/ctc/post_2024/phase_out/rate":16.5,"states/ny/tax/income/credits/ctc/post_2024/phase_out/threshold":{"hoh":75000,"mfj":110000,"mfs":55000,"qss":75000,"single":75000},"states/ny/tax/income/credits/eitc/match":0.3,"states/ny/tax/income/credits/household_credit/non_single/additional":{"b":[[-1e+308,15],[20000,10],[25000,5],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/non_single/base":{"b":[[-1e+308,90],[5000,75],[6000,65],[7000,60],[22000,50],[25000,40],[28000,20],[32000,0]],"k":"s"},"states/ny/tax/income/credits/household_credit/single":{"b":[[-1e+308,75],[5000,60],[6000,50],[7000,45],[20000,40],[25000,20],[28000,0]],"k":"s"},"states/ny/tax/income/deductions/itemized/medical/floor":0.1,"states/ny/tax/income/deductions/itemized/phase_out/agi_excess_rate":0.03,"states/ny/tax/income/deductions/itemized/phase_out/deduction_limited_rate":0.8,"states/ny/tax/income/deductions/itemized/phase_out/start":{"hoh":374800,"mfj":408850,"mfs":204400,"qss":408850,"single":340700},"states/ny/tax/income/deductions/itemized/reduction/charitable_deduction_rate":{"b":[[0,0],[1000000,0.5],[10000000,0.25]],"k":"s"},"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/income_threshold":475000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/higher/rate":0.25,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/denominator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/income_threshold":{"hoh":150000,"mfj":200000,"mfs":100000,"qss":200000,"single":100000},"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/numerator":50000,"states/ny/tax/income/deductions/itemized/reduction/incremental/lower/rate":0.25,"states/ny/tax/income/deductions/standard/amount":{"hoh":11200,"mfj":16050,"mfs":8000,"qss":16050,"single":8000},"states/ny/tax/income/exemptions/dependent":1000,"states/ny/tax/income/main/head_of_household":{"b":[[0,0.039],[12800,0.044],[17650,0.0515],[20900,0.054],[107650,0.059],[269300,0.0685],[1616450,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/joint":{"b":[[0,0.039],[17150,0.044],[23600,0.0515],[27900,0.054],[161550,0.059],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/separate":{"b":[[0,0.039],[8500,0.044],[11700,0.0515],[13900,0.054],[80650,0.059],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/single":{"b":[[0,0.039],[8500,0.044],[11700,0.0515],[13900,0.054],[80650,0.059],[215400,0.0685],[1077550,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/main/surviving_spouse":{"b":[[0,0.039],[17150,0.044],[23600,0.0515],[27900,0.054],[161550,0.059],[323200,0.0685],[2155350,0.0965],[5000000,0.103],[25000000,0.109]],"k":"m"},"states/ny/tax/income/supplemental/in_effect":true,"states/ny/tax/income/supplemental/min_agi":107650,"states/ny/tax/income/supplemental/phase_in_length":50000,"states/ny/tax/income/supplemental/recapture_base/head_of_household":{"b":[[0,0],[269300,787],[1616450,3346],[5000000,48606]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/joint":{"b":[[0,0],[161550,333],[323200,1140],[2155350,4211],[5000000,64561]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/separate":{"b":[[0,0],[215400,567],[1077550,2614],[5000000,32786]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/single":{"b":[[0,0],[215400,567],[1077550,2614],[5000000,32786]],"k":"s"},"states/ny/tax/income/supplemental/recapture_base/surviving_spouse":{"b":[[0,0],[161550,333],[323200,1140],[2155350,4211],[5000000,64561]],"k":"s"}}};
 const NY_TABLE_SOURCE={sha:"f7db273e9110a3d5312dd2cf42d85bd8ef6808b7",years:[2021, 2022, 2023, 2024, 2025, 2026]};
 
@@ -19095,7 +19555,8 @@ Views.taxes=function(){
     +'<div class="taxnav">'+(order.length?taxYearNav(order,cur,now):'')+taxSubTabs(tab)+'</div>'
     +taxTabLede(tab)
     
-    +(tab==='file'?'<div class="formrow" style="margin:-2px 0 10px"><button class="btn ghost sm" data-act="go" data-view="taxpack">🗂️ Year-end tax pack ›</button></div>':'');
+    +(tab==='file'?'<div class="formrow" style="margin:-2px 0 10px"><button class="btn ghost sm" data-act="go" data-view="taxpack">🗂️ Year-end tax pack ›</button></div>':'')
+;
   
 
   if(tab==='stub') return top+taxStubPanel();
@@ -41161,6 +41622,25 @@ function _imgLossOk(what){
 
   
 
+  if(act==='guideopen'){ taxGuideOpen(); return; }
+  if(act==='guideclose'){ taxGuideClose(); return; }
+  if(act==='guidenext'||act==='guideprev'){ const g=S.tax.guide; if(g) taxGuideGo(g.i+(act==='guidenext'?1:-1),act==='guidenext'?1:-1); return; }
+  if(act==='guidego'){ const g=S.tax.guide, i=Number(b.dataset.i); if(g&&isFinite(i)) taxGuideGo(i,i>g.i?1:i<g.i?-1:0); return; }
+  if(act==='guideshow'){ const g=S.tax.guide; if(g) taxGuideGo(g.i,0); return; }
+  
+  if(act==='guidestart'){
+    const g=S.tax.guide; if(!g) return; const K=g.y+' Taxes';
+    if(!(DB.taxes&&DB.taxes[K])){ snap('start the '+g.y+' return'); DB.taxes=DB.taxes||{}; DB.taxes[K]=[]; save(); }
+    S.tax.year=K; render(); toast('The '+g.y+' return is started · ⌘Z to undo','ok'); return;
+  }
+  if(act==='guidemark'){ const g=S.tax.guide; if(!g) return; const k=b.dataset.k;
+    if(k!=='fed'&&k!=='ny') return; taxGuideMeta(g.y)[k]=!!b.checked; save(); render(); return; }
+  if(act==='guideskip'){ const g=S.tax.guide; if(!g) return; const k=b.dataset.k;
+    if(!TAX_GUIDE.some(function(s){ return s.skip===k; })) return;
+    taxGuideMeta(g.y).skip[k]=true; save(); render(); return; }
+
+  
+
   if(act==='storeper'){ S.stores=Object.assign({per:'y0',open:'',all:false},S.stores,{per:b.dataset.p}); render(); }
   else if(act==='storeopen'){
     const k=b.dataset.k||'', st=S.stores=Object.assign({per:'y0',open:'',all:false},S.stores);
@@ -47457,7 +47937,7 @@ function renderOnce(name,fn){
   },900);
   window.__PF={S,get DB(){return DB;},set DB(v){DB=v;},setBook,chargeId,chargeIdsFill,quickAdd,isTextEntry,cellTerms,setCellTerms,setCell,gridRestore,headFit,plateFit,fD,fDY,fDay,tapWord,mailSupplierOf,mailSuppWhy,mailSuppCheckAuto,mailCardProduct,mailAmounts,tabJoin,tabHold,tabOnStorage,get _tabStuck(){return _tabStuck;},set _tabStuck(v){_tabStuck=v;},_advStop,_hasPlain,blankMonthTmpl,emptyView,bioAfterReseal,APP_V,APP_BUILD,paintChrome,parseBillAlert,billRouteFor,parseBillAlert,seriesTaken,seriesDelete,seriesFreqAll,_pdfScan,_pdfStreamEnd,pdfDiag,parseRbsInvoices,_rbsCells,rbsToRows,rbsIsInvoice,rbsIsStatement,rbsIsRbs,vendorIsGeneral,suggestDest,rbsLineOff,rbsInvoiceOff,parseRbsStatement,rbsReconcile,rbsStmtPanel,rbsTakeFiles,rbsWireDrop,rbsAlreadyIn,r4DupeRows,r4VendorKey,rbsPanel,pdfRuns,billDupe,billPastePanel,_billToken,_billDate,save,saveFlush,saveSettled,imgPut,imgGet,imgDel,imgHave,imgBytes,imgCount,imgLoadAll,imgMigrate,imgGC,imgMissing,imgMissingCount,imgAdoptFrom,imgAdoptApply,_imgKeyOf,imgPushedRead,imgMarkPushed,imgAtRisk,imgAtRiskCount,imgWouldDrop,imgReady,imgWait,imgSettled,imgUnreadable,rcpImg,rcpHasImg,rcpImgBad,_imgSrcOK,imgSealAll,imgOpenAll,imgSealedCount,imgSealStat,imgSealCatchUp,imgRekey,imgClearAll,imgShutCount,imgBrokeCount,_imgIsEnv,bookWithImages,saveWhy,SAVE_WHY,saveWhere,storageAudit,storagePanel,appInstalled,fbChosen,fbStopOwn,roomForImage,lsBytes,lsHeadroom,lsCeiling,lsRefusedAt,lsNoteRefusal,LS_CEILING,saveWarnPaint,backupMark,backupLast,backupAgeDays,backupWords,backupKindOf,cfChaseParse,bankParse,TILE_SEL,TILE_MENUS,tileMenuFor,tileMenuItems,tileMenusWire,tileMenuOpen,tileMenuClose,tileMenuRates,rwCardsAll,rwOffersAll,rwClosedIds,rwIsClosed,CF_BANK_TYPES,cfBankList,cfMainBank,cfBanks,cfBankGet,cfBankId,cfBook,cfCur,cfBankAdd,cfBankSet,cfBankDel,cfBankState,cfBankBalance,cfBankPoints,cfBankSummaryParse,cfBankInterest,CF_XFER_DAYS,cfXferKey,cfXferWords,cfTransfers,cfXferSay,cfXferNoReset,cfImportXfers,cfProjectAll,reconCards,PLAID_ACCT_K,plaidAcct,MAIL_FILE_V,mailFileReady,mailFileBook,mailFileDest,mailFileQueue,mailFileLabels,mailFilePass,mailFileSheet,mailFileList,MAIL_ASSIST_V,mailAssistReady,mailAssistState,mailAssistFiling,mailAssistOp,mailWaitGate,_mpWhy,mailAssistCost,mailAssistSheet,mailRecapCard,mailFileOnRead,mailFileGuess,mailFileCatLabel,mailFileFind,mailFileSub,plaidAcctSet,plaidCfg,plaidCfgOnly,plaidSignIn,plaidSignOut,plaidBook,plaidTake,plaidMapSet,plaidFile,plaidInboxSettle,plaidWaiting,plaidReview,plaidRow,plaidGuess,plaidCatWord,plaidKeyNew,plaidOpen,plaidKid,plaidStatus,plaidEnsureKey,plaidConnect,plaidPull,plaidAuto,plaidRemove,plaidPanel,plaidLinkLoad,plaidOAuthOnBoot,PLAID_LINK_SRC,PLAID_SEAL_INFO,PLAID_TYPE,hhCfg,hhOn,hhBooksList,hhOpen,hhDocId,hhKeyNew,hhWrapPut,hhKeyFor,syncKeyPass,hhShare,hhInvite,hhLinkTake,hhJoin,hhMembers,hhInvites,hhRevoke,hhActivity,hhRemove,hhRekey,hhLeave,hhStop,hhGone,hhForget,bookPanel,hhInviteModal,hhJoinModal,hhLinkOnBoot,HH_WORDS,bookMerge,syncBaseSet,syncBaseGet,syncBaseForget,syncMergeWith,syncMergeDone,syncMergeAuto,syncMergeWords,syncManId,fsInit,syncBookId,syncBookOldId,syncBookV3,pfDerive3,pfSaltNew,pfSaltOk,BOOK_ID,syncEncOpt,bookSaltGet,bookSaltSet,syncBookMoved,PF_KDF_ITER3,_pkOpen,_unb64,rotatePlan,rotateState,rotateConfirmText,rotateDoneModal,pkDropSeals,_repassSecrets,syncRepass,syncNWrap,syncNUnwrap,syncSeenGet,syncSeenSet,syncIsOlder,syncNextN,cfReconWindows,cfReconDays,cfStmtBacked,mkey,monthByKey,r2v,ONCE_NAMES,ONCE_HITS,renderOnce,vpW,PDF_PARSERS,parseAnyInvoice,anyHeadRoles,anyLineOff,rbsAlreadyIn,zipStore,crc32,foldSheetLazy,zipBookText,ledgerFileText,exportAllFiles,exportAllZip,exportMint,EXPORT_EXTRA,_expGrid,aggParse,aggSniff,cfAggNear,aggToRecon,CF_AGG_DAYS,anyToInv,rbsReadRuns,rbsInvWord,aggDate,aggDateOrder,aggSuggest,cfImpStart,AGG_FORMATS,csvEsc,taxNyRules,taxStateNote,taxStatePaid,taxYearKey,taxYearEnd,taxYearEndOn,yearEndInsights,yearEndModal,YEAREND_FROM_MONTH,taxFileStateBlock,taxPlanState,cfBankGo,cfBankName,cfExpectNs,catHead,catRenamed,catRenameRcp,_cfXferLoose,catAddTo,catLineUp,catLineUpPlan,catRenameFwd,catLater,rcpOtherCats,rcpCatOk,rcpCatEnsure,rcpCatOptions,RCP_CASHBACK,RCP_CASHBACK_DAYS,rcpLooksCashback,rcpCashbackWords,rcpCashbackDest,rcpCashbackCard,rcpCashbackRedemptions,rcpCashbackFields,RW_PT_VAL,RW_PT_PILE,RW_PT_EXP_DAYS,rwPtVal,rwPoints,rwPointsAll,rwPointsLine,rwPointsNudges,rwPointsClosing,mailRedeemSubj,mailRedeemRead,mailRedeemCard,mailRedeemUse,mailRedeemDrop,mailRedeemActs,MAIL_REFUND_NEAR,mailRefundFind,mailRefundHave,mailRefundRecord,mailRefundUndo,mailRefundAuto,mailRefundChecks,mailRefundInsights,mailRefundActs,mailHandled,mailHandledText,mailHandledSheet,MAIL_SELF_DAYS,MAIL_SELF,mailIsPromo,mailSelfRun,mailSelfPass,mailSelfPreview,mailPreviewSheet,mailLessonFor,mailLessonApply,mailLessonHtml,mailSelfUndo,mailSelfChecks,mailSelfInsights,mailSelfActs,mailSelfSheet,CF_SELF_NEAR,MAIL_RCP_SEEN,mailCashBank,mailCashSureAccount,mailSelfCash,mailRcpCat,mailSelfReceipt,mailSelfUndoWhy,mailSelfMoneyUndo,MAIL_WEEK_DAYS,MAIL_WEEK_DUPE,MAIL_WEEK_KINDS,mailWeek,mailWeekSheet,cardPays,cardPayLines,cardPayWords,cardPayPoints,cardPayMissing,cardPayPanel,CARDPAY_BEFORE,CARDPAY_AFTER,cardsOpen,cfPayeeKeyV1,cfAllOn,cfAllPoints,cfAllSpan,cfAllTotal,cfAllMoves,cfXferSeries,cfComingAllPanel,cfImportCat,cfCatIndex,cfXferPanel,TAX_STATES,TAX_NO_WAGE_TAX,taxStateKey,taxStateName,taxStateTaxesWages,taxStateFor,taxIsNY,taxStateWord,taxProfileCard,_stubStateCode,BANKS,bankFrom,bankNamed,bankBody,bankTail,bankWho,bankDate,mailAttSniff,syncLegacyId,syncLegacyGone,cardClosedOn,cardIsClosed,cardClosedSet,cardCloseOpen,cardCloseSave,cardReopen,titleCase,seriesStats,seriesCycle,seriesArea,seriesTile,seriesCountUp,bankOfxParse,bankCsvParse,bankIsOfx,_cfFinish,cfAlertParse,cfAlertPanel,cfPayeeKey,cfMapGet,cfMapSet,cfGuessAccount,cfSugTokens,cfSuggestAccount,cfNewRows,cfBackfill,cfRowEntry,cfBankDays,cfBankDaysMerge,cfBankDaysNew,cfImportPlan,cfAccountAdd,cfAddDays,cfAddMonths,cfDaysBetween,cfSeriesKey,cfSeriesName,cfCadence,cfNextDate,cfNthDate,cfDatesAfter,cfAmountShape,cfCardFor,cfCardLinkGet,cfCardLinkSet,cfCardDue,cfCardDueOn,cfCardDueToggle,cfExpectGet,cfExpectSet,cfSeries,cfSeriesAll,cfSubSeries,taxPaySeries,taxPaydaysLeft,taxPerCheque,taxStubParse,taxStubDerive,taxStubGet,taxStubSave,taxDeferPace,taxWithheldPace,taxStubPanel,stubFileBtn,taxSubTabs,taxTabKey,taxYearNav,taxStamp,taxHomeData,taxHomeHtml,taxSteps,taxStepsHtml,taxDocNeeds,taxKeyDates,taxYoYWords,cfRemaining,cfForecast,cfOneStatement,cfProject,cfMovedSet,cfMovedToggle,cfIsMoved,cfSplit,cfBalancePoints,cfLatestBalance,cfStatedThrough,cfBalanceChartPts,CF_SPANS,cfSpanOk,cfSpanFrom,cfSpanPoints,cfSpanStats,CF_SECTION_ICO,cfHi,cfFresh,CF_TYPE_ICO,cfTypeIco,cfDir,cfFlowBar,SUB_KINDS,SUB_COMMON,subKind,subAvatar,subHi,subFresh,subRenew,subShareBar,BILL_KINDS,billKind,billFresh,cardMono,cardMini,cardStatus,cardFresh,RECON_SECTIONS,reconSheet,reconFresh,reconRing,NAVDEF,EMOJI,ico,ICON_STYLE,UI_WORDS,UI_ICO_DEFAULT,uiIcoFor,uiPageIco,uiPageIcoName,uiDecorate,uiEntered,macTint,macTrack,macBack,macFwd,macToolbar,macSideSet,macBadges,macPages,macGoKey,macMenuItems,macMenuShow,macMenuClose,TRIAL_WARN,TRIAL_GRACE,trialGet,trialSet,trialClear,trialState,trialsDue,trialWords,trialInsights,trialPill,trialKeep,trialCancel,trialNotify,STORE_ICO,storeLines,storePeriods,storeName,storeIco,storeTable,storeMonthly,storeCharges,storeInsights,storeDelta,WORTH_TYPES,WORTH_SPANS,worthType,worthBook,worthEnsure,worthAdd,worthSet,worthRemove,worthSources,worthAt,worthMonthly,worthInsights,worthLinkOk,rcpCardLinkGet,rcpCardLinkSet,cardTallyOpen,rcpCardOf,cardTallies,cardTally,cardTallyLostHtml,cardTallyNow,cfCardDue,cardStmtImported,cardStmtEmail,mailCardStmtSubj,mailCardStmtRead,mailCardStmtCard,mailCardStmtKeys,mailCardStmtTwins,mailCardStmtReading,mailCardStmtReadAll,seriesIsEmail,mailCardStmtUse,mailCardStmtActs,cardDueGet,stmtSummary,stmtSummaryApply,cardStmtDay,cardBillWord,cardBillNote,CARDBILL_DAYS,worthLinkSet,worthDue,WORTH_MONTHLY,RET_POLICY,retPolicy,retFor,warFor,returnsDue,warrantiesEnding,retWhen,returnsInsights,returnsSheet,returnsFields,returnsRead,returnsApply,ODD_DAYS,oddId,oddCharges,oddWords,oddInsights,oddOk,oddSheet,TAXPACK_HOME,taxPackAgi,taxPackYears,taxPack,taxPackCsv,GUARD_IDLE_CHOICES,GUARD_FREE,guardIdleMinutes,guardIdleSet,guardTouch,guardDue,guardLockNow,guardWaitFor,guardUnlockWait,guardUnlockFailed,guardUnlockPassed,guardWaitWords,guardRow,MAIL_DEPS,MAIL_GAS,MAIL_GAS_V,MAIL_GAS_MANIFEST,MAIL_FROM_DEFAULT,MAIL_KINDS,MAIL_ACT,mailKeyNew,mailKeyOk,mailSigned,mailOpen,mailScriptSource,mailAddr,mailDomain,mailName,mailFromIs,mailAmounts,MAIL_TOTAL_RES,mailTotal,mailRead,mailBook,mailEnsure,mailLinked,mailUrlOk,mailStale,mailAsk,mailMerge,mailPrune,mailPull,mailWaiting,mailItem,mailMark,mailDay,mailAsText,mailQueueReceipts,mailIsPuller,mailLocal,mailLocalSet,mailSenderOk,mailRewind,mailRefusedNew,MAIL_MAX,MAIL_TEXT_SHORT,mailSays,mailAuto,mailRwMatch,mailWhen,mailCursor,mailCovers,mailNoteRefused,mailRetired,mailRetire,mailLocalReset,mailLinkKeep,mailLinkPut,mailRefundAmt,MAIL_NOTE_DAYS,MAIL_REFUND_BACK,MAIL_LOOKBACK_DAYS,MAIL_MARKS,MAIL_PAGE,MAIL_HOLD,mailShape,mailRuleKey,mailRule,mailLearn,mailAmtAs,mailMarkAs,mailResort,mailXferDir,MAIL_XFER_RE,mailCashParse,mailCashOpen,mailSubGuess,mailSubOpen,mailSubPanel,mailLegacyKey,mailTwins,mailIgnore,mailUnignore,MAIL_ATT_AUTO,mailAttIsPdf,mailAttIsImg,mailAttsClean,mailAttTexts,mailAttCan,mailAttFetch,mailAttApply,mailAttRead,mailAttAuto,mailAttIsRbs,mailAttFile,mailAttWent,mailAttOpen,mailAttRow,CLOUD_K,LEDGER_CLOUD_URL,cloudCfg,cloudOn,cloudSet,cloudUrlOk,cloudCall,cloudFs,cloudSignUp,cloudSignIn,cloudSignOut,cloudSignedOut,cloudForget,syncStaleFor,syncOkMark,SYNC_OK_K,set _autoFails(v){_autoFails=v;},taxHeroGap,themeFollow,themeSystem,moneyShort,applyTheme,toggleTheme,errLog,errNote,errClear,errSay,errCardHtml,errPanel,errText,errOnError,errOnReject,ERRLOG_K,set _errSaid(v){_errSaid=v;},get CLOUD_OUT_WHY(){return CLOUD_OUT_WHY;},cloudMe,cloudDeleteAccount,cloudPanel,REC_ID,recKeyNew,recNorm,recFmt,recSeal,recOpen,recHas,recMake,recRecover,recRewrap,cloudUrlKnown,readEngine,cloudForgot,cloudReset,cloudVerify,cloudVerifySend,cloudPwChange,cloudLinkTake,cloudLinkOnBoot,cloudSessions,cloudSessionEnd,cloudSessionsEndOthers,cloudActivity,ACT_WORDS,actWords,actWhen,actPanel,pkSupported,pkAdd,pkSignIn,pkList,pkRemove,pkRewrap,_pkDocId,WEL_CATS,WEL_STEPS,welDraft,welList,welPlan,welApply,welWanted,MAIL_ATT_LOOK,mailAttTargets,cfReconPoints,cfReconDays,cfStmtBacked,cfReconWindows,cfReconSummary,cfReconBlame,cfImportPanel,cfComingPanel,cfOverdue,CF_STANDIN_DAYS,cfPaidNote,cfChipWord,cfChipKey,subPayGet,subPaySet,subPayer,subPayNote,subPayModal,SUBPAY_DAYS,cfSettled,cfSettledSummary,CF_SETTLED_BACK,cfSettledPanel,CF_ASSUMED,cfIsAssumed,cfLateSkipSet,cfAssumedSpent,get saveBlock(){return saveBlock;},get saveState(){return saveState;},render,Views,healFromSeed,mviewDefault,dayListHtml,calSumHtml,money,catSums,
     undo,undo,redo,snap,snapCancel,toast,palOpen,palClose,palSearch,palIsOpen,PAL,UNDO,REDO,
-    computeInsights,bookIntegrity,taxOpenMoney,taxOpenMoneyHtml,integrityHtml,_grpMonthly,chartW,chartBand,billMonths,billPerMonth,cfCadenceFromFreq,seriesMonthsPer,seriesFreqLabel,seriesPerMonth,seriesRate,seriesFreqGet,SERIES_FREQ_OPTS,SERIES_AUTO,seriesIsAuto,seriesAutoGet,seriesAutoWindow,seriesAutoDue,seriesAutoNext,seriesAutoRun,seriesRecord,seriesAutoSet,seriesAutoTick,seriesAutoAfterSync,workOverdue,workDepositKey,workReimbMatches,workPaidBy,workFollowInsights,WORK_LATE_DAYS,subsHistory,subsHistorySheet,SUBS_HIST_MONTHS,subsMerchantKey,subsDisplayName,subsFound,subsFoundAdd,subsFoundNot,subsFoundSheet,subsLineSeries,subsFromLine,subsLineUnlink,subsLineLink,subsLinePicker,seriesPriceChange,seriesPriceWatched,seriesPriceRecent,seriesCosts,RW_ALWAYS_FROM,RW_ALWAYS_TO,rwIsAlways,rwWhen,rwOfferAlways,rwCards,rwOffers,rwCard,rwOffer,rwCardAdd,rwCardSet,rwCardDel,rwOfferAdd,rwOfferDel,rwMax,rwSpent,rwStatus,rwDaysLeft,RW_TOPICS,rwTopicsOf,rwCovers,rwBest,rwEarnedYear,RW_PRESETS,rwPresetsOpen,rwCardFind,rwMerge,rwPresetApply,rwPrompt,rwRead,rwStmtCards,rwStmtGuess,rwStmtFor,rwCardForStmt,rwLineTopics,rwExcludes,rwLineCovered,rwLines,rwOfferSpend,rwRateFor,rwMissed,rwNudges,RW_NUDGE_MAX,rwIsRedemption,rwRedemptions,rwRedeemedYear,reconRewardsSettle,FOODSPLIT_WORDS,foodSplitGuess,foodSplitPlan,foodSplitApply,foodSplitOpen,closeYm,closeLabel,closeRange,closeShift,closeDefault,closeGet,closeSet,closeItems,closeSummary,closeInsights,RW_FLAT,rwStatementFees,rwCardYear,rwWorthAll,rwWorthInsights,rwWorthSheet,RW_ICO,rwIcoFor,rwFresh,rwCardColor,rwTier,rwPill,rwBar,seriesStaleAfter,seriesIsCold,computeAudit,audStmtReceipts,audRcpCards,taxNewDed,taxNewDedHtml,TAX_PLAYS_NEWDED,taxCareRate,taxCare2441,taxCareLost,taxTrumpKids,TAX_PLAYS_KIDS,taxMortTable1,taxMortLimit,taxFilePackWorked,csv,CSVSETS,focusCell,startCellEdit,catManager,CAT_SUGGEST,aliasGet,aliasSet,aliasReset,aliasWords,ALIAS_DEFAULT,grpManager,grp,gcolor,curMonth,dashPace,dashBudgetSplit,dashCatOrder,dashDaily,dashCash,budgetTotal,budgetPrevCol,budgetCached,budgetSync,catAugustColumns,catAugustAfterBook,dayDrawer,dayDrawerSave,calMonth,calendarHtml,txAll,txFiltered,txCsv,txReceiptIndex,dayCharges,dayMerchant,dayAddRow,dayRowsNow,dayAmt,dayCountHtml,dayRecount,catDropColumns,CAT_AUG_FLAG,CAT_DROP_FLAG,modal,closeModal,modalStale,get BOOKGEN(){return BOOKGEN;},
+    computeInsights,bookIntegrity,taxOpenMoney,taxOpenMoneyHtml,integrityHtml,_grpMonthly,chartW,chartBand,billMonths,billPerMonth,cfCadenceFromFreq,seriesMonthsPer,seriesFreqLabel,seriesPerMonth,seriesRate,seriesFreqGet,SERIES_FREQ_OPTS,SERIES_AUTO,seriesIsAuto,seriesAutoGet,seriesAutoWindow,seriesAutoDue,seriesAutoNext,seriesAutoRun,seriesRecord,seriesAutoSet,seriesAutoTick,seriesAutoAfterSync,workOverdue,workDepositKey,workReimbMatches,workPaidBy,workFollowInsights,WORK_LATE_DAYS,subsHistory,subsHistorySheet,SUBS_HIST_MONTHS,subsMerchantKey,subsDisplayName,subsFound,subsFoundAdd,subsFoundNot,subsFoundSheet,subsLineSeries,subsFromLine,subsLineUnlink,subsLineLink,subsLinePicker,seriesPriceChange,seriesPriceWatched,seriesPriceRecent,seriesCosts,RW_ALWAYS_FROM,RW_ALWAYS_TO,rwIsAlways,rwWhen,rwOfferAlways,rwCards,rwOffers,rwCard,rwOffer,rwCardAdd,rwCardSet,rwCardDel,rwOfferAdd,rwOfferDel,rwMax,rwSpent,rwStatus,rwDaysLeft,RW_TOPICS,rwTopicsOf,rwCovers,rwBest,rwEarnedYear,RW_PRESETS,rwPresetsOpen,rwCardFind,rwMerge,rwPresetApply,rwPrompt,rwRead,rwStmtCards,rwStmtGuess,rwStmtFor,rwCardForStmt,rwLineTopics,rwExcludes,rwLineCovered,rwLines,rwOfferSpend,rwRateFor,rwMissed,rwNudges,RW_NUDGE_MAX,rwIsRedemption,rwRedemptions,rwRedeemedYear,reconRewardsSettle,FOODSPLIT_WORDS,foodSplitGuess,foodSplitPlan,foodSplitApply,foodSplitOpen,closeYm,closeLabel,closeRange,closeShift,closeDefault,closeGet,closeSet,closeItems,closeSummary,closeInsights,RW_FLAT,rwStatementFees,rwCardYear,rwWorthAll,rwWorthInsights,rwWorthSheet,RW_ICO,rwIcoFor,rwFresh,rwCardColor,rwTier,rwPill,rwBar,seriesStaleAfter,seriesIsCold,computeAudit,audStmtReceipts,audRcpCards,taxNewDed,taxNewDedHtml,TAX_PLAYS_NEWDED,taxCareRate,taxCare2441,taxCareLost,taxTrumpKids,TAX_PLAYS_KIDS,taxMortTable1,taxMortLimit,taxFilePackWorked,TAX_GUIDE,taxGuideCtx,taxGuideStates,taxGuideYear,taxGuideOpen,taxGuideClose,taxGuideGo,taxGuideSync,taxGuideMeta,csv,CSVSETS,focusCell,startCellEdit,catManager,CAT_SUGGEST,aliasGet,aliasSet,aliasReset,aliasWords,ALIAS_DEFAULT,grpManager,grp,gcolor,curMonth,dashPace,dashBudgetSplit,dashCatOrder,dashDaily,dashCash,budgetTotal,budgetPrevCol,budgetCached,budgetSync,catAugustColumns,catAugustAfterBook,dayDrawer,dayDrawerSave,calMonth,calendarHtml,txAll,txFiltered,txCsv,txReceiptIndex,dayCharges,dayMerchant,dayAddRow,dayRowsNow,dayAmt,dayCountHtml,dayRecount,catDropColumns,CAT_AUG_FLAG,CAT_DROP_FLAG,modal,closeModal,modalStale,get BOOKGEN(){return BOOKGEN;},
     RCP,RCP_PROMPT,mailVouched,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
