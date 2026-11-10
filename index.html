@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-PHZctp5iPSQMA9KCMYUW20yVvQMlefx0iE9Uw77bB9E=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-3bY4tvOPUcDJX1bfKMq1T/5RqMkNZoW6UbboHv7jfZw=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2359,6 +2359,38 @@ html.tgPad #page{padding-bottom:48vh}
 }
 @media print{.tg,.tgLaunch{display:none!important}}
 
+.pktbl .pkt{width:30px;text-align:center}
+.pktbl .pkt input{width:24px;height:24px;accent-color:var(--meter);cursor:pointer}
+.pktbl tr.typed td{color:var(--sub2)}
+.pktbl tr.typed td b{color:var(--meter)}
+.pktbl tr.moved td{background:color-mix(in srgb,var(--amber) 9%,transparent)}
+.pkmoved{font-size:11.5px;color:var(--amber);margin-top:3px;font-weight:600}
+.pkcopy{margin-left:7px;width:26px;height:24px;border-radius:6px;border:1px solid var(--hair);color:var(--sub);font-size:13px;line-height:1;vertical-align:middle}
+.pkcopy:hover{border-color:var(--accent);color:var(--accent)}
+@media (prefers-reduced-motion:no-preference){
+  .pktbl tr.pkflash td{animation:pkFlash .9s ease}
+  @keyframes pkFlash{0%{background:color-mix(in srgb,var(--accent) 22%,transparent)}100%{background:transparent}}
+  .pktbl tr.typed td b{transition:color .3s}
+}
+@media print{.pkcopy,.pktbl .pkt{display:none}}
+.tgTyped{font-size:12.5px}
+.tgBar{display:block;height:6px;border-radius:99px;background:var(--hair);margin-top:5px;overflow:hidden}
+.tgBar i{display:block;height:100%;background:var(--meter);border-radius:99px;transition:width .6s cubic-bezier(.2,.85,.25,1)}
+.tgLine{margin:8px 0 6px;padding:10px 12px;border-radius:12px;background:var(--shelf);border:1px solid var(--hair)}
+.tgLine.done{font-size:13px;font-weight:600;color:var(--meter)}
+.tgLnForm{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--sub)}
+.tgLnRow{display:flex;gap:9px;align-items:baseline;margin:3px 0 7px}
+.tgLnBox{font-size:15px;font-weight:800;color:var(--accent);min-width:34px}
+.tgLnLab{font-size:13.5px;font-weight:600}
+.tgLnAct{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.tgLnVal{font-size:21px;font-variant-numeric:tabular-nums;letter-spacing:.01em;margin-right:auto}
+.tgHow{margin-top:6px}
+.tgHow summary{cursor:pointer;font-size:12.5px;font-weight:650;color:var(--accent);padding:3px 0}
+.tgHow .tgText{margin-top:5px}
+@media (prefers-reduced-motion:no-preference){
+  .tgLine{animation:tgInF .35s ease}
+}
+
 
 #tabbar{display:none}
 @media(max-width:900px){
@@ -2762,7 +2794,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.09";
+const APP_V="v29.10";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2776,7 +2808,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="dde882d";
+const APP_BUILD="ba00379";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -12770,7 +12802,7 @@ function taxGiftsHtml(year){
     +'<label class="ckl"><input id="gfAck" type="checkbox"'+(D.ack?' checked':'')+'> letter in hand</label>'
     +'<button class="btn sm" data-act="giftadd">Add the gift</button>'
     +'<label class="btn ghost sm" style="display:inline-block">Photograph a charity’s letter'
-    +'<input type="file" accept="image/*" multiple data-act="taxdocfiles" style="display:none"></label>'
+    +'<input type="file" accept="image/*,application/pdf,.pdf" multiple data-act="taxdocfiles" style="display:none"></label>'
     +(T.busy?' <span class="mut">reading '+(T.done+1)+' of '+T.total+'…</span>':'')+'</div>'
     
 
@@ -13974,6 +14006,8 @@ function taxFileHtml(){
    +'whole dollars.</div>'
    +(pack.worked?'<br><br><b>Nothing for '+esc(py.slice(0,4))+' is worked on the sheet yet</b>, so this pack is the return the Ledger works '
      +'out itself — the Build tab’s 1040, with whatever you have typed over it, and New York’s IT-201 as computed.':'')
+   +'<br><br><b>Typing it in:</b> each line has <b>⧉</b> to copy just its figure (whole dollars) and a box to tick once it is on the form. '
+   +'The ticks are kept, so you can stop and come back; a figure that changes after you ticked it is unticked and says what it was.'
    +'<div class="formrow packbar" style="margin-top:11px"><button class="btn" data-act="packcopy">Copy the whole pack</button>'
    +'<button class="btn ghost" data-act="packprint">🖨️ Print</button></div>'
    +'</div>';
@@ -13989,12 +14023,12 @@ function taxFileHtml(){
      +pack.notes.map(f=>'<div class="secrow mid"><span class="dot"></span><div><b>'+esc(f.what)+'</b>'
        
        +'<div class="mut">'+(f.text?esc(f.why):f.why)+'</div></div></div>').join('')+'</div></div>':'';
-  const formHtml=pack.forms.map(f=>foldSheet('tax.pack.'+f.form,esc(f.form),'',
+  
+  const formHtml=pack.forms.map(f=>foldSheet('tax.pack.'+f.form,esc(f.form),typeof taxPackTypedLabel==='function'?taxPackTypedLabel(pack,f):'',
     (f.note?'<div class="mut" style="font-size:11.5px;margin:-2px 0 9px">'+esc(f.note)+'</div>':'')
-    +'<div class="tblwrap"><table class="tbl tight"><thead><tr><th style="width:64px">Box</th><th>On the form</th>'
-    +'<th class="n" style="width:130px">Type this</th></tr></thead><tbody>'
-    +f.lines.map(l=>'<tr><td class="mut">'+esc(l.box)+'</td><td>'+esc(l.label)+'</td>'
-      +'<td class="n num"><b>'+(l.dec?Number(l.v).toFixed(2):money(l.v))+'</b></td></tr>').join('')
+    +'<div class="tblwrap"><table class="tbl tight pktbl"><thead><tr><th class="pkt" title="Typed onto the form">✓</th><th style="width:64px">Box</th><th>On the form</th>'
+    +'<th class="n" style="width:150px">Type this</th></tr></thead><tbody>'
+    +(typeof taxPackRowsHtml==='function'?taxPackRowsHtml(pack,f):'')
     +'</tbody></table></div>')).join('');
   return '<div class="taxviz">'+intro+flags+notesHtml+formHtml
    +'<div class="mut" style="font-size:11.5px;line-height:1.55;margin:2px 4px 0">'
@@ -14579,24 +14613,31 @@ function taxDocParse(raw){
   if(locality) doc.locality=locality;
   return doc;
 }
+
+const TAXDOC_PDF_MAX=10*1048576;
 async function taxDocRead(files){
-  const list=[...files].filter(f=>/^image\//.test(f.type));
-  const pdfs=[...files].filter(f=>/pdf$/i.test(f.type)||/\.pdf$/i.test(f.name||''));
-  if(pdfs.length&&!list.length){
-    toast('Photograph the form for now — the PDF grid layouts read unreliably as text','warn'); return;
-  }
-  if(!list.length){ toast('Those aren’t photos','warn'); return; }
+  
+
+  const isPdf=f=>/pdf$/i.test(f.type)||/\.pdf$/i.test(f.name||'');
+  const list=[...files].filter(f=>/^image\//.test(f.type)||isPdf(f));
+  if(!list.length){ toast('Those aren’t photos or PDFs','warn'); return; }
   const T=S.tax.docs=S.tax.docs||{errs:[],busy:false,total:0,done:0,got:[]};
   T.busy=true; T.total+=list.length; render();
   for(const f of list){
     try{
-      const im=await fileToImg(f);
-      
+      let part;
+      if(isPdf(f)){
+        if(f.size>TAXDOC_PDF_MAX) throw new Error('That PDF is over '+Math.round(TAXDOC_PDF_MAX/1048576)+' MB — save just the form’s pages and add that.');
+        const buf=await f.arrayBuffer(), head=new Uint8Array(buf.slice(0,5));
+        if(String.fromCharCode.apply(null,head)!=='%PDF-') throw new Error('That file is not a PDF inside, whatever its name says.');
+        part={type:'document',source:{type:'base64',media_type:'application/pdf',data:_b64(buf)}};
+      } else {
+        const im=await fileToImg(f);
+        
 
-      const b64=imgToData(im,2200,0.92).split(',')[1];
-      const raw=parseJSONish(await callClaude([
-        {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
-        {type:'text',text:TAXDOC_PROMPT}],4000));
+        part={type:'image',source:{type:'base64',media_type:'image/jpeg',data:imgToData(im,2200,0.92).split(',')[1]}};
+      }
+      const raw=parseJSONish(await callClaude([part,{type:'text',text:TAXDOC_PROMPT}],4000));
       if(raw&&raw.error) throw new Error(String(raw.error));
       const doc=taxDocParse(raw);
       if(!doc) throw new Error('Could not tell what that document is — a straight-on, well-lit photo of the whole form reads best.');
@@ -14663,11 +14704,11 @@ function taxDocsHtml(year){
   const checks=taxDocCheck(year);
   const waiting=taxDocExpected(year);
   const mut=t=>'<div class="mut" style="font-size:12px;margin-bottom:8px">'+t+'</div>';
-  let body=mut('Photograph a W-2, 1099 or 1098 and its boxes are read, kept with the book, and '
+  let body=mut('Add a W-2, 1099 or 1098 — a photo, or the PDF you downloaded — and its boxes are read, kept with the book, and '
     +'checked against the year’s sheet — the first evidence from OUTSIDE the spreadsheet. '
     +'Nothing here writes into the return. A brokerage’s consolidated 1099 is read on its account under Net worth.')
-   +'<label class="btn sm" style="display:inline-block">Photograph a form'
-   +'<input type="file" accept="image/*" multiple data-act="taxdocfiles" style="display:none"></label>'
+   +'<label class="btn sm" style="display:inline-block">Add a form — photo or PDF'
+   +'<input type="file" accept="image/*,application/pdf,.pdf" multiple data-act="taxdocfiles" style="display:none"></label>'
    +(T.busy?' <span class="mut">reading '+(T.done+1)+' of '+T.total+'…</span>':'');
   if(T.errs&&T.errs.length) body+='<div class="off" style="font-size:12px;margin-top:6px">'
     +T.errs.map(esc).join('<br>')+'</div>';
@@ -15176,6 +15217,40 @@ function taxFilePackWorked(year){
 
 
 
+function taxPackLineKey(form,l){ return form+'|'+l.box+'|'+l.label; }
+function taxPackLineVal(l){ return l.dec?Number(l.v).toFixed(2):String(Math.round(Number(l.v))); }
+function taxPackIsState(form){ return !/^(Form |Schedule )/.test(form); }
+function taxPackTyped(pack,state){
+  const out={n:0,done:0,moved:0,next:null};
+  if(!pack) return out;
+  const T=taxGuideRead(Number(String(pack.year).slice(0,4))).typed;
+  pack.forms.forEach(function(f){ if(taxPackIsState(f.form)!==!!state) return;
+    f.lines.forEach(function(l){ const k=taxPackLineKey(f.form,l), v=taxPackLineVal(l); out.n++;
+      if(T[k]===v) out.done++; else { if(T[k]!=null) out.moved++;
+        if(!out.next){ out.next=k; out.line={form:f.form,box:l.box,label:l.label,v:v,shown:l.dec?Number(l.v).toFixed(2):money(l.v),was:T[k]!=null?T[k]:null}; } } }); });
+  return out;
+}
+function taxPackRowsHtml(pack,f){
+  const y=Number(String(pack.year).slice(0,4)), T=taxGuideRead(y).typed, st=taxPackIsState(f.form)?'st':'fed';
+  return f.lines.map(function(l){
+    const k=taxPackLineKey(f.form,l), v=taxPackLineVal(l), t=T[k], typed=t===v, moved=t!=null&&!typed;
+    return '<tr class="pkrow'+(typed?' typed':'')+(moved?' moved':'')+'" data-k="'+esc(k)+'" data-st="'+st+'">'
+      +'<td class="pkt"><input type="checkbox" data-act="packtick" data-y="'+y+'" data-k="'+esc(k)+'" data-v="'+esc(v)+'"'+(typed?' checked':'')
+        +' aria-label="Typed line '+esc(l.box)+' onto the form"></td>'
+      +'<td class="mut">'+esc(l.box)+'</td><td>'+esc(l.label)
+        +(moved?'<div class="pkmoved">Changed since you typed it: it was '+esc(t)+'. Correct it on the form, then tick it again.</div>':'')+'</td>'
+      +'<td class="n num"><b>'+(l.dec?Number(l.v).toFixed(2):money(l.v))+'</b>'
+        +'<button class="pkcopy" data-act="packlinecopy" data-v="'+esc(v)+'" title="Copy '+esc(v)+'" aria-label="Copy '+esc(v)+' for line '+esc(l.box)+'">⧉</button></td></tr>';
+  }).join('');
+}
+function taxPackTypedLabel(pack,f){
+  const y=Number(String(pack.year).slice(0,4)), T=taxGuideRead(y).typed;
+  const d=f.lines.filter(function(l){ return T[taxPackLineKey(f.form,l)]===taxPackLineVal(l); }).length;
+  return d?(d===f.lines.length?'✓ all '+d+' typed':d+' of '+f.lines.length+' typed'):'';
+}
+
+
+
 function taxGuideYear(){
   const g=S.tax&&S.tax.guide;
   if(g&&g.y) return g.y;
@@ -15187,8 +15262,14 @@ function taxGuideMeta(y){
   DB.meta=DB.meta||{};
   const all=DB.meta.taxGuide&&typeof DB.meta.taxGuide==='object'?DB.meta.taxGuide:(DB.meta.taxGuide={});
   const g=all[y]&&typeof all[y]==='object'?all[y]:(all[y]={});
-  g.seen=g.seen||{}; g.skip=g.skip||{};
+  g.seen=g.seen||{}; g.skip=g.skip||{}; g.typed=g.typed||{};
   return g;
+}
+
+function taxGuideRead(y){
+  const all=(DB.meta&&DB.meta.taxGuide&&typeof DB.meta.taxGuide==='object')?DB.meta.taxGuide:{};
+  const g=all[y]&&typeof all[y]==='object'?all[y]:{};
+  return Object.assign({},g,{seen:g.seen||{},skip:g.skip||{},typed:g.typed||{}});
 }
 
 
@@ -15203,12 +15284,14 @@ function taxGuideCtx(y){
     pack:has?t(function(){ return taxFilePack(K); }):null,
     asks:has&&typeof taxIntakeSummary==='function'?t(function(){ return taxIntakeSummary(K); }):null,
     filed:typeof taxFiledRead==='function'?(t(function(){ return taxFiledRead(K); })||{}):{},
-    key:typeof getKey==='function'&&!!t(getKey),
+    key:typeof getKey==='function'&&!!t(getKey), cloud:typeof readEngine==='function'&&t(readEngine)==='cloud',
     ny:(t(function(){ return taxStateFor(K).state; })||prof.state||'')==='NY',
-    G:taxGuideMeta(y)};
+    G:taxGuideRead(y)};
 }
 const _tgH=function(t){ return '<p>'+t+'</p>'; };
 const _tgSteps=function(items){ return '<ol class="tgList">'+items.map(function(i){ return '<li>'+i+'</li>'; }).join('')+'</ol>'; };
+
+function _tgNextLine(st){ return function(){ return document.querySelector('#page tr.pkrow[data-st='+st+']:not(.typed)'); }; }
 function _tgSecond(){ const h=[].slice.call(document.querySelectorAll('#page .sheet h3')).find(function(x){ return /The second opinion/.test(x.textContent); });
   return h?h.closest('.sheet'):null; }
 const TAX_GUIDE=[
@@ -15228,14 +15311,15 @@ const TAX_GUIDE=[
   done:function(c){ return !!(c.prof.set&&c.prof.state); }},
 {id:'key',phase:'Gather',title:function(){ return 'Switch on reading your tax forms'; },
   where:{view:'receipts'},target:['#apiKeyIn','#apiKeyTop'],wrap:'.keyrow',
-  text:function(){ return _tgH('The Ledger reads a photo of a W-2, 1099 or 1098 with Claude, the same engine that reads your receipts.')
-    +_tgSteps(['Paste your Anthropic API key here and press <b>Save key</b>. It stays on this device.',
-      'No key? Skip this step and type the figures on the <b>File it</b> tab instead.']); },
-  done:function(c){ return c.key||c.docs.length>0||!!c.G.skip.key; },skip:'key'},
+  text:function(c){ return _tgH('The Ledger reads a W-2, 1099 or 1098 (a PDF or a photo) with Claude, the same engine that reads your receipts.')
+    +(c.cloud?_tgH('<b>You are signed in to Ledger Cloud, which reads them for you</b>: nothing to set here.')
+      :_tgSteps(['Paste your Anthropic API key here and press <b>Save key</b>. It stays on this device. (Signed in to Ledger Cloud, nothing is needed.)',
+        'No key? Skip this step and type the figures on the <b>File it</b> tab instead.'])); },
+  done:function(c){ return c.key||c.cloud||c.docs.length>0||!!c.G.skip.key; },skip:'key'},
 {id:'w2',phase:'Gather',title:function(){ return 'Photograph your W-2s'; },
   where:{view:'taxes',tab:'file'},target:['.tsteps label.tcam','input[data-act=taxdocfiles]'],
   text:function(c){ return _tgSteps(['Employers send W-2s by <b>January 31, '+(c.y+1)+'</b>: one from each job, yours and your spouse’s.',
-    'Press <b>Photograph a form</b> and take one photo per W-2, flat and square-on. Several at once is fine.',
+    'Press <b>Add a form</b> and choose the <b>PDF</b> your payroll site lets you download, or take one photo per W-2, flat and square-on. Several at once is fine.',
     'Each box is read and kept with the book, then checked against the year (Check-up › Documents).']); },
   done:function(c){ return c.docs.some(function(d){ return d.kind==='W-2'; }); }},
 {id:'forms',phase:'Gather',title:function(){ return 'And every other form'; },
@@ -15243,7 +15327,7 @@ const TAX_GUIDE=[
   text:function(c){ const miss=c.needs.filter(function(n){ return n.have===0; }).map(function(n){ return '<b>'+esc(n.kind)+'</b>'; });
     return _tgH('The list under the steps is read off <i>your</i> return: a 1099-INT for bank interest, 1099-DIV and 1099-B from a brokerage, and the <b>1098</b> from your mortgage lender.')
       +(miss.length?_tgH('Still to photograph: '+miss.join(', ')+'.'):_tgH('Nothing is missing that the Ledger can see.'))
-      +_tgH('Photograph them the same way. A brokerage’s consolidated 1099 can arrive as late as mid-February.'); },
+      +_tgH('Add them the same way: the PDF from each bank’s or lender’s website, or a photo. A brokerage’s consolidated 1099 can arrive as late as mid-February.'); },
   done:function(c){ return c.has&&c.needs.every(function(n){ return n.have!==0; }); }},
 {id:'home',phase:'Gather',title:function(){ return 'Your mortgage and property tax'; },
   where:{view:'worth'},target:['[data-act=loanedit]','.wadd'],
@@ -15286,21 +15370,23 @@ const TAX_GUIDE=[
     +_tgSteps(['<b>Print</b> it (or save it as a PDF) to have beside you, or <b>Copy the whole pack</b> to paste anywhere.']); },
   done:function(c){ return !!c.G.seen.pack; },seen:true},
 {id:'irs',phase:'File',title:function(){ return 'File federal, free, with the IRS'; },
+  where:{view:'taxes',tab:'file'},target:[_tgNextLine('fed')],line:'fed',how:'How to file at the IRS',
   text:function(c){ return _tgH('<b>Free File Fillable Forms</b> is the IRS’s own: the blank forms online, free at any income. It opens in <b>January '+(c.y+1)+'</b> and wants a computer rather than a phone.')
     +_tgSteps(['Open it (the button below), create an account and choose Form 1040.',
       'Fill page 1 by hand: names, Social Security numbers, address and dependents. The Ledger keeps none of those.',
-      'Type each line from the pack. Use <b>Add/View Forms</b> to add Schedule A, Form 2441 and Schedule 8812, then <b>Do the Math</b>.',
+      'Type each line from the pack: the light sits on the next one. Press <b>⧉</b> to copy its figure, paste it into the same line there, and tick it here. Use <b>Add/View Forms</b> for Schedule A, Form 2441 and Schedule 8812, then <b>Do the Math</b>.',
       'Sign with last year’s AGI, e-file, and keep the acceptance email. Tick the box below when it is accepted.']); },
   link:{href:'https://www.irs.gov/filing/free-file-fillable-forms',label:'Open Free File Fillable Forms ↗'},
   check:{k:'fed',label:'Federal return accepted'},
   done:function(c){ return !!c.G.fed||c.filed.status==='filed'; }},
 {id:'ny',phase:'File',title:function(c){ return c.ny?'File New York':'File your state'; },
+  where:{view:'taxes',tab:'file'},target:[_tgNextLine('st')],line:'st',how:'How to file New York',
   text:function(c){ if(!c.ny) return _tgH('The Ledger works out New York’s return only. File your state with its own forms or software, using the federal figures in the pack.');
     const agi=c.pack&&c.pack.forms[0]?((c.pack.forms[0].lines.find(function(l){ return /^11/.test(l.box); })||{}).v):null;
     return _tgH('Free File Fillable Forms does federal only. For New York:')
       +_tgSteps([(agi!=null&&agi<=89000?'<b>Your AGI is under $89,000</b>: e-file free through New York’s Free File partners.'
           :'Over $89,000 of federal AGI: download New York’s <b>fill-in IT-201</b> from tax.ny.gov, or use paid software.'),
-        'Type the pack’s <b>IT-201</b> lines into it. The fill-in form works the arithmetic and prints a barcode.',
+        'Type the pack’s <b>IT-201</b> lines into it, ticking each here as you go: the light walks down them. The fill-in form works the arithmetic and prints a barcode.',
         'Print, sign, attach your W-2s and mail it to the address in the IT-201 instructions. There is one address for refunds and another if you owe.',
         'Tick the box below once it is sent.']); },
   link:{href:'https://www.tax.ny.gov/pit/efile/',label:'New York’s filing options ↗'},
@@ -15385,7 +15471,7 @@ function _tgCardHtml(c,st){
       +'<div class="tgNum">Step '+(g.i+1)+'</div>'
       +'<h4>'+esc(s.title(c))+'<span class="tgOk'+(ok?' on':'')+'" aria-label="'+(ok?'done':'not done yet')+'">'
         +'<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9"/><path d="M5.5 10.4l3 3 6-6.6"/></svg></span></h4>'
-      +'<div class="tgText">'+s.text(c)+'</div>'
+      +(s.line?_tgLineHtml(c,s):'<div class="tgText">'+s.text(c)+'</div>')
       +'<div class="tgActs">'
         +(s.target?'<button class="btn ghost sm" data-act="guideshow">'+(_tgFind(s)?'◎ Show me again':'◎ Take me there')+'</button>':'')
         +(act?'<button class="btn sm" data-act="'+act.act+'">'+esc(act.label)+'</button>':'')
@@ -15398,6 +15484,22 @@ function _tgCardHtml(c,st){
       +'<span class="tgKeys">← → to move · Esc to close</span>'
       +(g.i<n-1?'<button class="btn sm tgNext'+(ok?' tgBeckon':'')+'" data-act="guidenext">Next ›</button>'
         :'<button class="btn sm" data-act="guideclose">'+(ok?'Finish 🎉':'Close')+'</button>')+'</div>';
+}
+
+
+function _tgLineHtml(c,s){
+  const T=typeof taxPackTyped==='function'?taxPackTyped(c.pack,s.line==='st'):null, L=T&&T.line, y=c.y;
+  const how='<details class="tgHow"'+(T&&T.done?'':' open')+'><summary>'+esc(s.how||'How to do it')+'</summary><div class="tgText">'+s.text(c)+'</div></details>';
+  if(!T||!T.n) return '<div class="tgText">'+s.text(c)+'</div>';
+  const prog='<div class="tgTyped"><b>'+T.done+' of '+T.n+'</b> lines typed'+(T.moved?' · <b class="off">'+T.moved+' changed since</b>':'')+'</div>'
+    +'<span class="tgBar"><i style="width:'+Math.round(T.done/T.n*100)+'%"></i></span>';
+  if(!L) return prog+'<div class="tgLine done">Every line is typed. Check the totals the form works out against the pack, then file it.</div>'+how;
+  return prog+'<div class="tgLine"><div class="tgLnForm">Next · '+esc(L.form)+'</div>'
+    +'<div class="tgLnRow"><span class="tgLnBox">'+esc(L.box)+'</span><span class="tgLnLab">'+esc(L.label)+'</span></div>'
+    +(L.was!=null?'<div class="pkmoved">Changed since you typed it: it was '+esc(L.was)+'.</div>':'')
+    +'<div class="tgLnAct"><b class="tgLnVal">'+esc(L.v)+'</b>'
+    +'<button class="btn ghost sm" data-act="packlinecopy" data-v="'+esc(L.v)+'">⧉ Copy</button>'
+    +'<button class="btn sm" data-act="packtickbtn" data-y="'+y+'" data-k="'+esc(T.next)+'" data-v="'+esc(L.v)+'">Typed it ✓</button></div></div>'+how;
 }
 function _tgWire(){
   if(TG.wired) return; TG.wired=true;
@@ -15493,7 +15595,9 @@ function taxGuideSync(){
     root.innerHTML='<div class="tgHole" aria-hidden="true"></div><div class="tgCard" role="dialog" aria-label="Filing guide"><span class="tgArrow"></span><div class="tgIn"></div></div>';
     document.body.appendChild(root); requestAnimationFrame(function(){ root.classList.add('tgShow'); }); }
   const card=root.querySelector('.tgCard'), inner=card.querySelector('.tgIn');
-  const key=g.y+'|'+g.i+'|'+st.join('')+'|'+(c.G.fed?1:0)+(c.G.ny?1:0)+'|'+(c.pack?c.pack.flags.length:'-')+'|'+c.needs.map(function(n){ return n.have; }).join('')+'|'+S.view+(_tgFind(s)?1:0);
+  const key=g.y+'|'+g.i+'|'+st.join('')+'|'+(c.G.fed?1:0)+(c.G.ny?1:0)+'|'+(c.pack?c.pack.flags.length:'-')+'|'+c.needs.map(function(n){ return n.have; }).join('')+'|'+S.view+(_tgFind(s)?1:0)
+    
+    +(s.line&&typeof taxPackTyped==='function'?(function(){ const T=taxPackTyped(c.pack,s.line==='st'); return '|'+T.done+'/'+T.n+'/'+T.moved+'/'+T.next+'/'+(T.line?T.line.v:''); })():'');
   const was=TG.states, sameStep=TG.i===g.i;
   if(key!==TG.key){ inner.innerHTML=_tgCardHtml(c,st); TG.key=key; }
   
@@ -15504,6 +15608,10 @@ function taxGuideSync(){
   let el=_tgFind(s);
   if(el&&TG.want&&_tgReveal(el)) return;
   el=_tgFind(s); TG.el=el;
+  
+  const tk=el?(el.dataset.k||el.id||el.className):'';
+  if(el&&sameStep&&TG.tk&&tk!==TG.tk&&!TG.want){ TG.glide=Date.now()+650; TG.want=true; }
+  TG.tk=tk;
   if(el) el.classList.add('tgTarget');
   if(el&&TG.want){ TG.want=false; _tgPlace(false);
     try{ el.scrollIntoView({block:(window.innerWidth||1024)<640?'start':'center',behavior:'smooth'}); }catch(e){ try{ el.scrollIntoView(); }catch(e2){} }
@@ -19361,7 +19469,7 @@ function taxSteps(year,today){
   const got=counted.filter(function(n){ return n.have>0; }).length;
   step('docs','Documents',
     !counted.length?'todo':got===counted.length?'done':got?'part':'todo',
-    counted.length?got+' of '+counted.length+' photographed — '+counted.filter(function(n){ return !n.have; }).map(function(n){ return n.kind; }).join(', ')
+    counted.length?got+' of '+counted.length+' in — '+counted.filter(function(n){ return !n.have; }).map(function(n){ return n.kind; }).join(', ')
       .replace(/^$/,'all in'):'nothing to collect that this app can see',
     'advisor');
   
@@ -19448,8 +19556,8 @@ function taxStepsHtml(year,today){
 
   const D=S.tax.docs||{};
   const inRow=function(s){
-    if(s.id==='docs') return ' <label class="btn ghost sm tcam">Photograph a form'
-      +'<input type="file" accept="image/*" multiple data-act="taxdocfiles" style="display:none"></label>'
+    if(s.id==='docs') return ' <label class="btn ghost sm tcam">Add a form — photo or PDF'
+      +'<input type="file" accept="image/*,application/pdf,.pdf" multiple data-act="taxdocfiles" style="display:none"></label>'
       +(D.busy?' <span class="mut">reading '+(D.done+1)+' of '+D.total+'…</span>':'')
       +(D.errs&&D.errs.length?'<div class="off" style="font-size:11.5px;margin-top:4px">'+D.errs.map(esc).join('<br>')+'</div>':'');
     if(s.id==='file'&&s.state!=='wait'&&typeof _taxFiledForm==='function'){
@@ -41638,6 +41746,22 @@ function _imgLossOk(what){
   if(act==='guideskip'){ const g=S.tax.guide; if(!g) return; const k=b.dataset.k;
     if(!TAX_GUIDE.some(function(s){ return s.skip===k; })) return;
     taxGuideMeta(g.y).skip[k]=true; save(); render(); return; }
+  
+  if(act==='packlinecopy'){
+    const v=String(b.dataset.v||''), row=b.closest('tr');
+    const done=function(){ toast('Copied '+v+' — paste it on the form','ok'); if(row){ row.classList.remove('pkflash'); void row.offsetWidth; row.classList.add('pkflash'); } };
+    (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(v):Promise.reject())
+      .then(done).catch(function(){ const ta=document.createElement('textarea'); ta.value=v; document.body.appendChild(ta); ta.select();
+        try{ document.execCommand('copy'); done(); }catch(e){ toast('Could not copy','warn'); } ta.remove(); });
+    return;
+  }
+  if(act==='packtick'||act==='packtickbtn'){
+    const y=Number(b.dataset.y), k=String(b.dataset.k||''), v=String(b.dataset.v||'');
+    if(!(y>1900)||!k) return;
+    const T=taxGuideMeta(y).typed;
+    if(act==='packtickbtn'||b.checked) T[k]=v; else delete T[k];
+    save(); render(); return;
+  }
 
   
 
