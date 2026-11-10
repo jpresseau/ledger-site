@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-7twKbTiQewVryciDzHHjT7hMztF+Iq86DY/KB7abnjY=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-oOyfpk2a1w4bVgb3y7CaQ/SC9xHwMwoNpWv98oTLDok=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -1690,6 +1690,35 @@ body.dark .subpage .subpill.trial{color:#c4a3f0}
 }
 
 
+.emptyhero{text-align:center;padding:28px 18px 24px}
+.emptyhero .ehEmo{font-size:44px;line-height:1;font-family:var(--emoji,system-ui);margin-bottom:10px}
+.emptyhero .ehT{font-size:17px;font-weight:650;color:var(--ink);margin-bottom:6px}
+.emptyhero .ehX{font-size:13.5px;color:var(--sub);max-width:520px;margin:0 auto;line-height:1.5}
+.emptyhero .ehActs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
+.emptyhero .ehF{font-size:12px;color:var(--sub2);margin-top:12px}
+
+.plate.win{background:color-mix(in srgb,var(--meter) 8%,var(--card));border-color:color-mix(in srgb,var(--meter) 40%,var(--hair))}
+.plate.win .v{color:var(--pos)}
+
+.cheer{position:fixed;inset:0;z-index:90;display:grid;place-items:center;pointer-events:none}
+.cheer .chCard{pointer-events:auto;cursor:pointer;text-align:center;max-width:min(360px,calc(100vw - 32px));padding:22px 24px 20px;border-radius:18px;
+  background:var(--card);border:1px solid var(--hair);box-shadow:0 18px 50px rgba(0,0,0,.22)}
+.cheer .chEmo{font-size:46px;line-height:1;font-family:var(--emoji,system-ui);margin-bottom:8px}
+.cheer .chT{font-size:18px;font-weight:700;color:var(--ink);margin-bottom:4px}
+.cheer .chX{font-size:13.5px;color:var(--sub);line-height:1.45}
+.cheer.chOut{opacity:0;transition:opacity .3s}
+
+@media(prefers-reduced-motion:no-preference){
+  #page .emptyhero .ehEmo{animation:uibob .7s .1s ease-out both}
+  #page.tbin :is(.sheet,.plates,.card,.taxviz):not(.tabs *){animation:uifade .32s ease-out both}
+  #page.tbin .tabs button.on{animation:tbpulse .5s ease-out}
+  .cheer .chCard{animation:uimodal .38s cubic-bezier(.16,1,.3,1) both}
+  .cheer .chEmo{animation:uibadge .7s .12s cubic-bezier(.34,1.56,.64,1) both}
+  .plate.win .uipi{animation:uibob .6s .3s ease-out both}
+  @keyframes tbpulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 45%,transparent)}100%{box-shadow:0 0 0 8px transparent}}
+}
+
+
 :root{--sbw:236px;--tbh:52px;
   --sbbg:color-mix(in srgb,var(--page) 82%,#dfe3e6);--tbbg:color-mix(in srgb,var(--card) 74%,transparent)}
 body.dark{--sbbg:color-mix(in srgb,var(--page) 80%,#000);--tbbg:color-mix(in srgb,var(--page) 70%,transparent)}
@@ -2809,7 +2838,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.12";
+const APP_V="v29.13";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2823,7 +2852,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="473446c";
+const APP_BUILD="45d7a94";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -3542,14 +3571,80 @@ function uiDecorate(){
   return n;
 }
 
-let _uiLast=null;
+let _uiLast=null, _uiTab='';
 function uiEntered(shut){
   const k=(shut?'#shut':'')+S.view, pg=document.getElementById('page');
   const on=k!==_uiLast; _uiLast=k;
-  if(pg) pg.classList.toggle('pgin',on);
+  
+  const tk=typeof uiTabKey==='function'?uiTabKey(pg):'', tab=!on&&!!tk&&tk!==_uiTab; _uiTab=tk;
+  if(pg){ pg.classList.toggle('pgin',on); pg.classList.toggle('tbin',tab); }
   document.body.classList.toggle('vwin',on);   
   return on;
 }
+
+
+function emptyHero(o){
+  const acts=(o.acts||[]).map(function(a,i){
+    const at=Object.keys(a.data||{}).map(function(k){ return ' data-'+k+'="'+esc(a.data[k])+'"'; }).join('');
+    return '<button class="btn'+(i?' ghost':'')+'" data-act="'+esc(a.act)+'"'+at+'>'+a.label+'</button>'; }).join('');
+  return '<div class="sheet plain emptyhero" data-empty="'+esc(o.id||'')+'">'
+    +'<div class="ehEmo" aria-hidden="true">'+o.emo+'</div>'
+    +'<div class="ehT">'+o.title+'</div><div class="ehX">'+o.text+'</div>'
+    +(acts?'<div class="ehActs">'+acts+'</div>':'')
+    +(o.foot?'<div class="ehF">'+o.foot+'</div>':'')+'</div>';
+}
+
+function emptyStartActs(){
+  const n=new Date(), k=mkey(n.getFullYear(),n.getMonth()+1), out=[];
+  if(typeof welWanted==='function'&&welWanted()) out.push({act:'welgo',label:'✨ Set up your book'});
+  out.push({act:'mnew',data:{k:k},label:'Start '+MN[n.getMonth()]+' '+n.getFullYear()});
+  return out;
+}
+
+
+
+function cheerClose(ym){
+  const s=closeSummary(ym); if(!s.closed||s.todo) return null;
+  const mo=monthByKey(ym), B=mo?budgetSplit(mo):null, L=closeLabel(ym);
+  if(B&&B.budget>0&&B.budgeted<=B.budget)
+    return {emo:'🎉',title:L+' is closed',text:'And it came in <b>'+money(B.budget-B.budgeted,0)+' under budget</b>. Nicely done.',party:true};
+  return {emo:'✅',title:L+' is closed',text:'Every statement squared away and nothing left to do on it.',party:true};
+}
+function cheer(c){
+  if(!c) return null;
+  const old=document.getElementById('cheer'); if(old) old.parentNode.removeChild(old);
+  const el=document.createElement('div'); el.id='cheer'; el.className='cheer'; el.setAttribute('role','status');
+  el.innerHTML='<div class="chCard"><div class="chEmo" aria-hidden="true">'+c.emo+'</div><div class="chT">'+esc(c.title)+'</div>'
+    +'<div class="chX">'+c.text+'</div></div>';
+  
+  document.body.appendChild(el);
+  const calm=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  
+  if(c.party&&!calm&&typeof _tgConfetti==='function'){ _tgConfetti(el); const cf=el.querySelector('.tgConfetti'); if(cf) el.insertBefore(cf,el.firstChild); }
+  const go=function(){ el.classList.add('chOut'); setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); },350); };
+  el.addEventListener('click',go);
+  setTimeout(go,3200);
+  return el;
+}
+
+
+
+function uiTabKey(root){
+  if(!root) return '';
+  
+  return Array.prototype.map.call(root.querySelectorAll('.tabs button.on'),function(b){
+    return (b.dataset.act||'')+':'+(b.dataset.v||b.textContent); }).join('|');
+}
+
+
+
+function dashWin(mo,B,now){
+  if(!mo||!B||!(B.budget>0)) return false;
+  const cur=now.getFullYear()===mo.y&&now.getMonth()+1===mo.m;
+  const frac=cur?now.getDate()/new Date(mo.y,mo.m,0).getDate():1;
+  return B.budgeted<=B.budget*frac;
+}
+
 
 
 const _macH={back:[],fwd:[]};
@@ -7584,17 +7679,13 @@ window.addEventListener('resize',()=>{ clearTimeout(_fitT); _fitT=setTimeout(()=
 
 
 function emptyView(title,lede){
-  const n=new Date(), k=mkey(n.getFullYear(),n.getMonth()+1);
   
 
-  return head(title,lede)+'<div class="card"><div class="muted">There are no months in this book yet. '
-    +'Start the current one and type into it \u2014 everything else on the rail fills in from what is in here. '
-    +'Bringing a book from somewhere else instead? <b>Data \u2192 Restore</b> takes a backup file.</div>'
-    +'<div class="formrow" style="margin-top:10px">'
-    
-    +(typeof welWanted==='function'&&welWanted()?'<button class="btn" data-act="welgo">Set up your book</button>':'')
-    +'<button class="btn'+(typeof welWanted==='function'&&welWanted()?' ghost':'')+'" data-act="mnew" data-k="'+k+'">Start '+MN[n.getMonth()]+' '+n.getFullYear()+'</button>'
-    +'</div></div>';
+  
+
+  return head(title,lede)+emptyHero({id:'months',emo:'🌱',title:'A fresh book',
+    text:'There are no months in this book yet. Start the current one and type into it \u2014 everything else on the rail fills in from what is in here.',
+    acts:emptyStartActs(),foot:'Bringing a book from somewhere else instead? <b>Data \u2192 Restore</b> takes a backup file.'});
 }
 function head(title,lede,stamp){
   
@@ -8243,7 +8334,7 @@ Views.dash=function(){
         +(S1.pct!=null?' · '+(S1.pct*100).toFixed(0)+'%':'')
       :'no budget set')
     +' · '+dashPace(mo,now);
-  plates+='<div class="plate'+(S1.over>0?' alert':'')+'"><div class="k">'+esc(MN[mo.m-1])+' spend</div>'
+  plates+='<div class="plate'+(S1.over>0?' alert':dashWin(mo,S1,now)?' win':'')+'"><div class="k">'+esc(MN[mo.m-1])+' spend</div>'
     +'<div class="v">'+money(spent,0)+'</div><div class="s">'
     +(PACE.typ?trendDelta(PACE.spent,PACE.typNow)+' on a typical month'+(PACE.running?' by now':'')+' <span class="trwhen dpx">'+budTxt+'</span>':budTxt)
     +'</div></div>';
@@ -9783,7 +9874,8 @@ Views.trends=function(){
   const T=S.trends, rows=trendRows(T.grouped);
   const first=rows[0];
   const hd=head('Trends','Whether you are spending more or less than you were, and on what.',first?'SINCE '+MA[first.m-1].toUpperCase()+' ’'+String(first.y).slice(2):'');
-  if(!rows.length) return hd+'<div class="sheet plain"><div class="empty">No months in the book yet. Trends draws itself once there are a few.</div></div>'+eraSheet();
+  if(!rows.length) return hd+emptyHero({id:'trends',emo:'📈',title:'Trends draws itself from your months',
+    text:'No months in the book yet. Trends draws itself once there are a few: what you spend more on, what less, and since when.',acts:emptyStartActs()})+eraSheet();
   const names={}; rows.forEach(function(r){ Object.keys(r.vals).forEach(function(k){ names[k]=1; }); });
   if(T.cat&&!names[T.cat]) T.cat=null;
   const cat=T.cat||null, ser=trendSeries(rows,cat), roll=trendRolling(rows,ser), F=trendFigures(rows,ser), moved=trendMoved(rows);
@@ -10001,8 +10093,13 @@ function seriesView(kind){
 Views.bills=function(){
   return '<div class="billpage'+(billFresh()?' billin':'')+'">'+head('Bills','Utilities and recurring charges, month by month since 2008. '+tapWord(1)+' a bill to open its history.',
       DB.billOrder.length+' ACCOUNTS')
-   +'<div class="chips"><button class="chip" data-act="seradd" data-kind="bills">+ <span class="subqi" aria-hidden="true">🧾</span>Add a bill</button>'
+   
+   +(DB.billOrder.length?'<div class="chips"><button class="chip" data-act="seradd" data-kind="bills">+ <span class="subqi" aria-hidden="true">🧾</span>Add a bill</button>'
    +'<button class="chip" data-act="bpaste">\ud83d\udccb Paste a bill</button></div>'
+   :emptyHero({id:'bills',emo:'📬',title:'No bills yet',
+     text:'Add the electric, the water, the phone or the insurance, and each keeps its history, what it costs a month on average and when the next one is due.',
+     acts:[{act:'seradd',data:{kind:'bills'},label:'+ Add a bill'},{act:'bpaste',label:'📋 Paste a bill'}],
+     foot:'Linked Email? Statements fill their bills in as they arrive.'}))
    +billPastePanel()+seriesView('bills')+'</div>';
 };
 
@@ -10069,7 +10166,10 @@ function subsCostSheet(){
 }
 Views.cards=function(){
   return '<div class="cardpage'+(cardFresh()?' cardin':'')+'">'+head('Cards','Credit-card statement history — the monthly damage, card by card.','')
-   +'<div class="chips"><button class="chip" data-act="seradd" data-kind="cards">+ <span class="subqi" aria-hidden="true">💳</span>Add a card</button></div>'
+   +((DB.cardOrder||[]).length?'<div class="chips"><button class="chip" data-act="seradd" data-kind="cards">+ <span class="subqi" aria-hidden="true">💳</span>Add a card</button></div>'
+   :emptyHero({id:'cards',emo:'💳',title:'No cards yet',
+     text:'Add a credit card and each statement goes on its history: what it came to, against the month before, and whether it is paid.',
+     acts:[{act:'seradd',data:{kind:'cards'},label:'+ Add a card'}]}))
    +seriesView('cards')+'</div>';
 };
 
@@ -20700,6 +20800,10 @@ Views.amortize=function(){
       rows+='<div class="amitem"><div>'+esc(lab)+'</div><div class="num '+(amt!=null&&amt<0?'neg':'pos')+'">'+(amt!=null?money(amt):'')+'</div><div>'+(pr!=null?'<div class="miniprog"><i style="width:'+(pr*100).toFixed(0)+'%"></i></div>':'')+'</div></div>'; });
     html+='<div class="sheet"><h3>'+MN[b.m-1]+' '+(b.y||'')+' <span class="r">net '+(b.net!=null?mcell(b.net,0):'—')+'</span></h3>'+rows+'</div>';
   }
+  if(!blocks.length) return head('Amortize','Big purchases smoothed over months — what is paid, of how many.','')
+    +emptyHero({id:'amortize',emo:'⚖️',title:'Nothing spread over months yet',
+      text:'A big purchase paid for over several months (a couch, a trip) shows here month by month, with how much of it is paid. It comes in with a book restored from a backup that kept one.',
+      acts:[{act:'go',data:{view:'data'},label:'💾 Backups and restore'}]});
   const more=(!q&&!S.amort.all&&blocks.length>18)?'<div style="text-align:center"><button class="btn ghost" data-act="amall">Show all '+blocks.length+' months</button></div>':'';
   return head('Amortize','Big purchases smoothed over months — the (paid / of) ledger, 2008 onward. The couch, the aquarium, Mom’s 70th.','')
    +'<div class="searchrow"><input type="search" placeholder="Find an item — aquarium, couch, Indochino…" value="'+esc(S.amort.q)+'" data-act="amq"></div>'+html+more;
@@ -20891,7 +20995,8 @@ function _yrHeatmap(Y){
 }
 Views.year=function(){
   const yrs=[...new Set(DB.months.map(function(m){ return m.y; }))].sort();
-  if(!yrs.length) return head('Year','One year at a time, against the one before.','')+'<div class="sheet plain"><div class="empty">No months in the book yet.</div></div>';
+  if(!yrs.length) return head('Year','One year at a time, against the one before.','')+emptyHero({id:'year',emo:'🗓️',title:'A year at a glance, once it has months',
+    text:'No months in the book yet. Each year shows here against the one before: the total, the average month, and where it went.',acts:emptyStartActs()});
   
 
   if(!S.year.y||!yrs.includes(S.year.y)){ const R=trendRows(true), lc=R.filter(function(r){ return !r.part; }).pop();
@@ -31692,6 +31797,12 @@ function txSortHead(key,label,cls){
 
 Views.charges=function(){
   if(!S.tx) S.tx={q:'',cat:'',card:'',rec:'',from:'',to:'',sort:'date',dir:-1,page:0};
+  
+  if(!(DB.months||[]).some(function(mo){ return (mo.entries||[]).length; }))
+    return head('Charges','Every charge in the book, one row each — the month sheet’s figures in the other shape.','0 CHARGES')
+      +emptyHero({id:'charges',emo:'🧾',title:'No charges yet',
+        text:'Every charge you put on a month’s sheet, drop in as a receipt or bring in from a bank shows here, one row each, to search and sort.',
+        acts:DB.months&&DB.months.length?[{act:'go',data:{view:'months'},label:'🗓️ Open the month'},{act:'go',data:{view:'receipts'},label:'🧾 Add a receipt'}]:emptyStartActs()});
   const f=S.tx;
   const all=txFiltered();
   const total=tot(all.map(t=>t.amt));
@@ -41813,6 +41924,9 @@ function _imgLossOk(what){
     snap(was?'reopen '+ym:'close '+ym);
     closeSet(ym,was?null:todayISO());
     save(); render();
+    
+    const c=!was?cheerClose(ym):null;
+    if(c){ cheer(c); return; }
     toast(was?closeLabel(ym)+' reopened':closeLabel(ym)+' closed'+(s.todo?' with '+s.todo+(s.todo===1?' thing':' things')+' still to do':'')+' · ⌘Z to undo','ok');
   }
   
