@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-NQHJRm+i/xBdwTlGEg773N2wL9kR5wXdnlTa4jXsI8o=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-z7Tvqu94GUNHyyhJ4ThmuyB7k7UdOw5i4rssvbK5Nj4=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -62,6 +62,8 @@
   --border:var(--hair); --border2:var(--hair2);
   --accent:var(--verdigris); --accent-deep:var(--verdigris2);
   
+  --accent-ink:var(--verdigris2);
+  
   --btnbg:var(--accent); --btnbg-h:var(--accent-deep);
   
   --dngbg:var(--ember);
@@ -84,7 +86,7 @@ body.dark{
   --graphite:#E8E6DF;
   --slate:#B4B2A9; --slate2:#9C9A92;
   --mist:#1C1C1A; --porcelain:#252523; --shelf:#2A2A28;
-  --verdigris:#5C8A74; --verdigris2:#46735F; --verdiglow:rgba(92,138,116,.20);
+  --verdigris:#5C8A74; --verdigris2:#46735F; --verdiglow:rgba(92,138,116,.20); --accent-ink:#7FB398;
   --ember:#E88080; --amber:#E0A458;
   --meter:#5DCAA5; --steel:#3E86D6;
   --hair:#3A3A38; --hair2:#302F2D;
@@ -897,7 +899,7 @@ tr:hover .rowdel,.rowdel:focus{opacity:1}
   .formrow{gap:5px 9px}
 
   
-  .rowdel{opacity:.55;padding:6px 10px;font-size:17px}
+  .rowdel{opacity:.85;color:var(--sub);padding:6px 10px;font-size:17px}   
 
   
   .txsort{padding:6px 2px;min-height:30px}
@@ -2092,7 +2094,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;
 .mailsteps{list-style:none;margin:0;padding:0;display:grid;gap:12px}
 .mailstep{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
 .mailstep .msn{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;
-  background:var(--verdiglow);color:var(--accent-deep)}
+  background:var(--verdiglow);color:var(--ink)}   
 .mailstep.done .msn{background:var(--verdigris);color:#fff}
 .mailstep .msb{font-size:12.5px;line-height:1.6;color:var(--sub);margin-top:2px}
 .mailcode{width:100%;margin:6px 0 4px;font:11.5px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre;
@@ -2220,7 +2222,7 @@ details.masec>summary.mash{cursor:pointer}
   font:700 17px/1 var(--sans);letter-spacing:0;opacity:.55;transition:opacity .15s,background .15s,border-color .15s}
 :is(.plate,.hmo,.taxhero,tr.rwask,tr.rwoffer,.dl):is(:hover,:focus-within,.tmon) .tmbtn,.tmbtn[aria-expanded="true"]{opacity:1}
 .tmbtn:hover,.tmbtn:focus-visible,.tmbtn[aria-expanded="true"]{background:color-mix(in srgb,var(--ink) 8%,var(--card));border-color:var(--hair);color:var(--ink)}
-@media(hover:none){.tmbtn{opacity:.85}}
+@media(hover:none){.tmbtn{opacity:1}}   
 
 .plate>.tmbtn{width:26px;height:26px;right:3px;bottom:3px;font-size:16px}
 .tmsp{display:inline-block;width:16px;height:1px}   
@@ -2547,7 +2549,7 @@ html.tgPad #page{padding-bottom:48vh}
     padding:0 2px;border:0;border-radius:0;background:none;color:var(--sub);font-size:10.5px;font-weight:600;letter-spacing:.01em;
     white-space:nowrap;position:relative}
   #tabbar button .ic{width:30px;height:26px;display:grid;place-items:center;border-radius:8px}
-  #tabbar button.on{color:var(--accent-deep)}
+  #tabbar button.on{color:var(--accent-ink)}
   #tabbar button.on .ic{background:var(--verdiglow)}
   #tabbar .nbadge{position:absolute;top:5px;left:calc(50% + 4px);margin:0;min-width:16px;height:16px;padding:0 4px;border-radius:8px;
     font-size:10px;line-height:16px;font-weight:700;text-align:center;color:#fff;background:var(--ember)}
@@ -2897,7 +2899,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.16";
+const APP_V="v29.17";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2911,7 +2913,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="0e97e11";
+const APP_BUILD="cb379cd";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
