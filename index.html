@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-oOyfpk2a1w4bVgb3y7CaQ/SC9xHwMwoNpWv98oTLDok=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-p9HL4GU7t+xfs9J3Yh72UFNdiFCZUYOKVxeifScc9xE=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2838,7 +2838,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.13";
+const APP_V="v29.14";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2852,7 +2852,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="45d7a94";
+const APP_BUILD="5dd0150";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -11944,6 +11944,41 @@ const TAX_FORM_TITLE={'1040':'Form 1040 · U.S. Individual Income Tax Return',
 
 
 
+let _tfLiveBusy=false;
+function taxFactsLive(year){
+  if(_tfLiveBusy||typeof taxEstimateInputs!=='function'||typeof taxFedEstimate!=='function') return null;
+  _tfLiveBusy=true;
+  try{
+    const I=taxEstimateInputs(year), E=I?taxFedEstimate(I):null;
+    if(!E||!(E.agi>0)) return null;
+    const y=Number(String(year).slice(0,4)), fil=I.filing;
+    
+    const fedRate=_tfStep(function(x){ return taxFedBrackets(x,y,fil); },E.ordTaxable!=null?E.ordTaxable:E.taxable);
+    let stateRate=null, stateName=null;
+    const ny=typeof taxIsNY==='function'&&taxIsNY(year)&&typeof nyInputs==='function'&&typeof nyReturn==='function';
+    if(ny){
+      const g=nyInputs(year), r=nyReturn(g.inp);
+      if(r&&r.lines){
+        const ti=r.lines['38']||0;
+        stateRate=_tfStep(function(x){ return nyMainTax(x,y,fil); },ti)
+          +(g.inp.nyc?_tfStep(function(x){ return nycTax(x,y,fil); },ti):0);
+        
+
+        stateName='New York';
+      }
+    }
+    return {agi:E.agi,taxable:E.taxable,taken:r2v(E.agi-E.taxable),fedRate:fedRate,stateRate:stateRate,stateName:stateName};
+  }catch(e){ return null; }
+  finally{ _tfLiveBusy=false; }
+}
+
+function _tfStep(f,x){
+  const a=Number(f(Math.max(0,x)))||0, b=Number(f(Math.max(0,x)+100))||0;
+  return Math.round((b-a)/100*10000)/10000;
+}
+
+
+
 
 
 const TAX_LIMITS={
@@ -12188,10 +12223,13 @@ function taxFacts(year,today){
   
 
   const ST=typeof taxStateFor==='function'?taxStateFor(year):{};
-  const stRate=M.state!=null?M.state:(ST.taxesWages===false?0:null);
+  
+
+  const LV=(R.sum.agi==null&&R.sum.taxable==null&&typeof taxFactsLive==='function')?taxFactsLive(year):null;
+  const stRate=M.state!=null?M.state:LV&&LV.stateRate!=null?LV.stateRate:(ST.taxesWages===false?0:null);
   const fil=taxFilingFor(year);
   const P=function(k){ const v=R.pairs[k]; return (typeof v==='number'&&isFinite(v))?v:null; };
-  const agi=R.sum.agi, taxable=R.sum.taxable;
+  const agi=LV?LV.agi:R.sum.agi, taxable=LV?LV.taxable:R.sum.taxable;
   
 
   const magi=R.L('8960','13')!=null?R.L('8960','13'):agi;
@@ -12246,7 +12284,8 @@ function taxFacts(year,today){
     dueDate:taxDueDate(y), beforeDue:(function(){
       const d=taxDueDate(y); return d?now<=new Date(d+'T23:59:59'):false; })(),
     filing:fil.filing, filingSrc:fil.src, filingCell:fil.cell, filingAgrees:fil.agrees,
-    fedRate:M.fed, stateRate:stRate, stateName:(M.stateName==='State'&&ST.name)?ST.name:M.stateName, state:ST.state||'', medEx:M.medEx, niit:M.niit,
+    fedRate:M.fed!=null?M.fed:LV?LV.fedRate:null, stateRate:stRate,
+    stateName:LV&&M.state==null&&LV.stateName?LV.stateName:(M.stateName==='State'&&ST.name)?ST.name:M.stateName, live:!!LV, state:ST.state||'', medEx:M.medEx, niit:M.niit,
     agi:agi, taxable:taxable, magi:magi, taken:taken,
     std:std, stdPair:P('Standard Deduction'), item:P('Itemized Deduction'),
     mort:mort, mortSrc:P('Mortgage Interest')!=null?'sheet':LT?'loan':null, mortLoan:LT, mortLimit:ML,
@@ -12286,12 +12325,13 @@ function taxFacts(year,today){
   }
   
 
-  F.s125Rate=(M.fed!=null&&stRate!=null)
-    ?(M.fed+stRate+0.0145+(M.medEx?0.009:0)):null;
+  
+  F.s125Rate=(F.fedRate!=null&&stRate!=null)
+    ?(F.fedRate+stRate+0.0145+(M.medEx?0.009:0)):null;
   F.wageRate=F.s125Rate;
   
 
-  if(F.s125Rate==null&&M.fed!=null){ F.s125Rate=M.fed+0.0145+(M.medEx?0.009:0); F.s125NoState=true; }
+  if(F.s125Rate==null&&F.fedRate!=null){ F.s125Rate=F.fedRate+0.0145+(M.medEx?0.009:0); F.s125NoState=true; }
   
   F.dcfsaSep=fil.filing==='mfs';
   const dcK=fil.filing==='mfj'||fil.filing==='mfs'?fil.filing:'single';
@@ -12300,7 +12340,9 @@ function taxFacts(year,today){
   
 
   F.dcfsaOnSheet=Object.keys(R.pairs).some(function(k){
-    return /dependent.?care|\bdcfsa\b|\bdcap\b|child.?care (fsa|account)/i.test(k); });
+    return /dependent.?care|\bdcfsa\b|\bdcap\b|child.?care (fsa|account)/i.test(k); })
+    
+    ||(typeof taxDocsFor==='function'&&taxDocsFor(y).some(function(d){ return d&&d.kind==='W-2'&&Number((d.boxes||{})['10'])>0; }));
   F.elective=L.elective!=null?L.elective:null;
   
 
@@ -12316,6 +12358,8 @@ function taxFacts(year,today){
   const cc=((DB.settings||{}).fixed||[]).filter(function(f){
     return f&&/child.?care|day.?care|nanny|au.?pair/i.test(String(f.name||'')); });
   F.childcare=cc.length?r2v(cc.reduce(function(n,f){ return n+Math.abs(Number(f.monthly)||0); },0)*12):null;
+  
+  if(F.childcare==null&&typeof nyAnswers==='function'){ const _ca=Number((nyAnswers(y)||{}).careExp); if(_ca>0) F.childcare=r2v(_ca); }
   
 
   let scan=null; try{ scan=taxDeductScan(year); }catch(e){ scan=null; }
@@ -12445,7 +12489,9 @@ function taxFacts(year,today){
   
 
   let cs=null;
-  try{ cs=(typeof taxCreditScan==='function')?taxCreditScan(year,R,prof2):null; }catch(e){ cs=null; }
+  
+  const R2=F.live?Object.assign({},R,{sum:Object.assign({},R.sum,{agi:agi})}):R;
+  try{ cs=(typeof taxCreditScan==='function')?taxCreditScan(year,R2,prof2):null; }catch(e){ cs=null; }
   
   const _any=!!(cs&&((cs.kids&&cs.kids.length)||cs.odc));
   F.ctcBase=_any?r2v(cs.base+(cs.odc||0)):null;
@@ -13461,11 +13507,14 @@ function taxYearEnd(today){
     return r.lv!=='ok'&&[].concat(r.window||[]).some(function(w){ return w&&w.closes===end; });
   }).map(function(r){
     const w=[].concat(r.window||[]).find(function(x){ return x&&x.closes===end; });
-    return {id:r.id,what:r.what,why:w&&w.why?w.why:'',amt:r.dollars>0?r.dollars:null,est:r.hedge!=='exact',
+    return {id:r.id,what:r.what,why:w&&w.why?w.why:'',amt:r.dollars>0?r.dollars:null,est:r.hedge!=='exact',about:r.hedge==='est',
       done:typeof taxDoneIs==='function'&&taxDoneIs(key,r.id)};
   });
   const left=items.filter(function(i){ return !i.done; });
-  return {year:y,key:key,days:days,items:items,left:left.length,
+  
+
+  const unchecked=(P&&P.skipped||[]).filter(function(s){ return s.dec31; }).map(function(s){ return {id:s.id,how:s.dec31}; });
+  return {year:y,key:key,days:days,items:items,left:left.length,unchecked:unchecked,
     worth:r2v(left.reduce(function(s,i){ return s+(i.amt||0); },0)),anyEst:left.some(function(i){ return i.est&&i.amt; })};
 }
 function taxYearEndOn(today){ return (today||new Date()).getMonth()+1>=YEAREND_FROM_MONTH; }
@@ -13486,9 +13535,11 @@ function yearEndModal(today){
     +Y.items.map(function(i){
       return '<div class="tdo'+(i.done?' done':'')+'"><span class="d">'+(i.done?'✓ done':'Dec 31')+'</span>'
         +'<span class="w"><b>'+i.what+'</b>'+(i.why?'<div class="mut">'+esc(i.why)+'</div>':'')+'</span>'
-        +'<span class="a'+(i.est?' est':'')+'">'+(i.amt!=null?(i.est?'up to ':'')+money(i.amt,0):'')+'</span>'
+        +'<span class="a'+(i.est?' est':'')+'">'+(i.amt!=null?(i.about?'about ':i.est?'up to ':'')+money(i.amt,0):'')+'</span>'
         +'<button class="btn ghost sm" data-act="yearend'+(i.done?'undo':'done')+'" data-y="'+esc(Y.key)+'" data-id="'+esc(i.id)+'">'+(i.done?'Undo':'Done')+'</button></div>';
-    }).join(''),
+    }).join('')
+    +(Y.unchecked.length?'<div class="mut" style="font-size:12px;margin:12px 0 4px"><b>Not checked yet</b> — tell the Ledger more and it can say:</div>'
+      +Y.unchecked.map(function(u){ return '<div class="tdo ye-unchk"><span class="d">?</span><span class="w">'+esc(u.how)+'</span></div>'; }).join(''):''),
     '<button class="btn" data-act="mclose">Close</button>');
 }
 
@@ -15248,6 +15299,32 @@ const TAX_PLAYS_KIDS=[
   guards:function(){ return [
     'The child must be a U.S. citizen with a Social Security number. File Form 4547 with the return, or through the Trump Accounts app or website, or your IRS Individual Account.',
     'From 4 July 2026 a family can add up to $5,000 a year and an employer up to $2,500 tax-free; what goes in is not deductible.']; }
+},
+
+
+{ id:'dcfsa-next', family:'payroll',
+  law:'§129 (dependent-care assistance) inside a §125 plan, elected at open enrolment; Form 2441',
+  needs:['childcare','dcfsaCap','s125Rate'],
+  blind:'no child care on the book — a standing bill, or what it cost told to the New York page',
+  hedge:function(){ return 'est'; },
+  lv:function(){ return 'act'; },
+  when:function(F){ return !!F.current&&F.childcare>0&&F.depsUnder13>0&&!F.dcfsaOnSheet&&!(F.fsaPerCheck>0)&&F.spouseEarns!=='no'; },
+  dollars:function(F){ const e=Math.min(F.childcare,F.dcfsaCap), L=taxCareLost(F,e);
+    return r2v(Math.max(0,e*F.s125Rate-(L?L.lost:0))); },
+  window:function(F){ return {closes:F.year+'-12-31',
+    why:'open enrolment for '+(F.year+1)+' is usually in November or December; the election is made then, and cannot be started mid-year without a qualifying event'}; },
+  say:function(F){
+    const e=Math.min(F.childcare,F.dcfsaCap), L=taxCareLost(F,e), lost=L?L.lost:0, gross=r2v(e*F.s125Rate);
+    return {what:'Elect the dependent-care FSA for '+(F.year+1)+' at open enrolment: '+money(e,0)+' of child care paid before tax',
+      why:'Child care for '+F.depsUnder13+' child'+(F.depsUnder13===1?'':'ren')+' under 13 costs about '+money(F.childcare,0)+' a year here, and no dependent-care account shows. '
+        +'Paid through one, up to '+money(F.dcfsaCap,0)+' of it escapes federal and '+(F.s125NoState?'Medicare':'state tax and Medicare')+' — about '
+        +money(gross,0)+' at '+(Math.round(F.s125Rate*1000)/10)+'%'+(lost>0?', less the '+money(lost,0)+' Form 2441 credit those same dollars could no longer claim':'')+'.',
+      chip:'<code>'+money(e,0)+' × '+(Math.round(F.s125Rate*1000)/10)+'%'+(lost>0?' − '+money(lost,0)+' credit':'')+' ≈ '+money(Math.max(0,gross-lost),0)+'</code>'};
+  },
+  guards:function(F){ return [
+    'Your employer has to offer one; most with a cafeteria plan do. The money is spent on care within the plan year, or most of it is lost.',
+    F.filing==='mfs'?'Filing separately, each of you may put in only '+money(F.dcfsaMfs||3750,0)+'.':null,
+    'Priced at this year’s income and rates; next year’s will move it.']; }
 }];
 
 
@@ -17754,7 +17831,7 @@ function taxPlays(year,today){
     if(missing.length){
       
       const st=missing.every(function(k){ return STATEISH.indexOf(k)>=0; });
-      skipped.push({id:p.id,law:p.law,missing:missing,
+      skipped.push({id:p.id,law:p.law,missing:missing,dec31:p.dec31||null,
         why:st?'the '+(F.stateName&&F.stateName!=='State'?F.stateName:'state')+' rate is not on this sheet, and this app does not work out a state’s tax'
           :(p.blind||('needs '+missing.join(', ')))});
       return;
@@ -17767,7 +17844,8 @@ function taxPlays(year,today){
     const hedge0=typeof p.hedge==='function'?p.hedge(F):p.hedge;
     
 
-    const hedge=(F.expired&&hedge0==='exact')?'flag':hedge0;
+    
+    const hedge=(F.expired&&hedge0==='exact')?'flag':(F.live&&hedge0==='exact')?'est':hedge0;
     const d=p.dollars?p.dollars(F):0;
     const said=p.say(F);
     if(F.s125NoState&&(p.needs||[]).indexOf('s125Rate')>=0)
@@ -17918,7 +17996,7 @@ const TAX_PLAYS_DEDUCT=[
     F.est?'The '+F.year+' standard deduction is an indexed estimate until the IRS publishes.':null,
     'Itemising and the standard deduction are alternatives, not a sum — this is the larger of the two, not an addition to what is already there.']; }
 },
-{ id:'bunching', family:'deduction',
+{ id:'bunching', dec31:'whether to give before or after 31 December: record this year’s giving (Taxes → Plan, a gift to charity)', family:'deduction',
   law:'§170 (charitable deduction, cash basis) with §63(c)',
   
 
@@ -18135,7 +18213,7 @@ const TAX_PLAYS_INCOME=[
       ? 'Electing this displaces the dependent-care credit dollar for dollar, and no child under 13 or no AGI is on file to work out by how much.'
       : 'If you claim the dependent-care credit, electing this displaces it dollar for dollar. No dependents are on file, so that cannot be checked from here.',]; }
 },
-{ id:'elective-ceiling', family:'payroll',
+{ id:'elective-ceiling', dec31:'how much 401(k) room is left before the last paycheck of the year: add your latest pay stub (Taxes → Pay stub)', family:'payroll',
   law:'§402(g) (elective deferral limit)',
   needs:['k401','elective'],
   blind:'no 401k line on this sheet',
@@ -18707,7 +18785,7 @@ const TAX_PLAYS_BROKERAGE=[
 },
 
 
-{ id:'loss-harvest', family:'investment',
+{ id:'loss-harvest', dec31:'whether a loss could be sold to offset gains: add a brokerage statement or 1099 (Check-up → Documents)', family:'investment',
   law:'§1211(b) (the $3,000 of ordinary income a net loss can offset) · §1212(b) (the carryforward) · §1091 (the wash-sale rule)',
   needs:['divTotal','fedRate','stateRate','current'],
   blind:'no dividend line on this sheet — nothing shows a brokerage account',
@@ -19004,7 +19082,7 @@ function taxPlaysText(year,today){
   const F=P.facts||{};
   const D=(typeof taxPlaysSplit==='function')?taxPlaysSplit(P,year):{live:P.rows,done:[],liveTotal:P.total,doneTotal:0};
   const LV={act:'ACTION',note:'WORTH KNOWING',ok:'SETTLED'};
-  const HOW={exact:'exact, on the sheet’s own figures',ceiling:'a ceiling — the most it could be',flag:'a price, not a finding — nothing is claimed'};
+  const HOW={exact:'exact, on the sheet’s own figures',ceiling:'a ceiling — the most it could be',est:'an estimate, from this year’s figures so far',flag:'a price, not a finding — nothing is claimed'};
   let out='THE LEDGER — ways to pay less · '+P.year+'\n';
   out+=(D.liveTotal>0?money(D.liveTotal,0)+' on the table':'nothing priced on the table')
     +(D.doneTotal>0?' · '+money(D.doneTotal,0)+' marked done':'')
@@ -19451,7 +19529,8 @@ function taxHomeData(year,today){
   out.records=_thRecords(out.year,F,now);
   if(!isFinite(y)) return out;
   let R=null; try{ R=taxReturn(year); }catch(e){ R=null; }
-  if(!R||!R.lines.length||R.sum.tax==null) return out;
+  
+  if(!R||!R.lines.length||R.sum.tax==null){ if(F&&F.live&&F.open) _thPlaysTodo(out,year,now,y,F); return out; }
   out.R=R;
   const ys=_thYears(), i=ys.indexOf(year);
   const prev=i>0?taxReturn(ys[i-1]):null;
@@ -19527,20 +19606,27 @@ function taxHomeData(year,today){
         why:w4?'on the W-4 — it reaches every cheque still to come':'on the sheet, before the return is worked'});
     });
   }
-  if(live||(F&&F.amendable)){
+  if(live||(F&&F.amendable)) _thPlaysTodo(out,year,now,y,F,todo);
+  else _thPlaysTodo(out,year,now,y,null,todo);
+  return out;
+}
+
+function _thPlaysTodo(out,year,now,y,F,todo){
+  todo=todo||[];
+  const open=!!(F&&F.open);
+  if(F){
     let P=null; try{ P=taxPlays(year,now); }catch(e){ P=null; }
     (P?P.rows:[]).forEach(function(r){
       const w=[].concat(r.window||[]).filter(Boolean)[0];
       if(!w&&!(open&&r.lv==='act')) return;
       if(typeof taxDoneIs==='function'&&taxDoneIs(year,r.id)) return;
       todo.push({closes:w?w.closes:y+'-12-31',what:r.what,amt:r.dollars>0?r.dollars:null,
-        est:r.hedge!=='exact',tab:'plan',why:w?w.why:'',id:r.id});
+        est:r.hedge!=='exact',about:r.hedge==='est',tab:'plan',why:w?w.why:'',id:r.id});
     });
   }
   const iso=function(t){ return /^\d{4}-\d{2}-\d{2}$/.test(String(t.closes))?String(t.closes):'9999'; };
   todo.sort(function(a,b){ return iso(a)<iso(b)?-1:iso(a)>iso(b)?1:0; });
   out.todo=todo.slice(0,5); out.more=todo.length-out.todo.length;
-  return out;
 }
 function _thGo(tab,label){
   return '<button class="tgo" data-act="taxtab" data-v="'+tab+'">'+label+' →</button>';
@@ -19563,11 +19649,49 @@ function _thRecordHtml(D){
     +(r.asks!=null?row('Questions',r.asks?r.asks+' unanswered':'all answered',_thGo('plan','Plan')):'')
     +'</div></div>';
 }
+
+
+function _thTodoSheet(D,h,today){
+  const y=D.year;
+  const soonBy=_thIso(new Date((today||new Date()).getTime()+45*864e5));
+  
+  const ye=h.open&&typeof taxYearEndOn==='function'&&taxYearEndOn(today)&&y===(today||new Date()).getFullYear()?taxYearEnd(today):null;
+  const title=h.open?'Before '+y+' shuts':h.beforeDue?'Before you file':'Still claimable';
+  const left=ye?' · '+ye.days+' day'+(ye.days===1?'':'s'):'';
+  let todo;
+  
+  const tick=ye&&ye.items.length?' <button class="linkbtn" style="min-height:24px;min-width:24px" data-act="yearendlist">Tick off…</button>':'';
+  if(D.todo.length) todo='<div class="sheet openfirst"><h3>'+title+' <span class="r">'+(D.todo.length+D.more)+left+tick+'</span></h3>'
+    +D.todo.map(function(t,i){
+      const soon=/^\d{4}-/.test(String(t.closes))&&String(t.closes)<=soonBy;
+      
+
+      return '<div class="tdo'+(i>=4?' xtra':'')+'"><span class="d'+(soon?' soon':'')+'">'+_thWhen(t.closes,y)
++'</span>'
+        +'<span class="w"><b>'+t.what+'</b> '+_thGo(t.tab,t.tab==='plan'?'Plan':'Check-up')
+
+        +(t.why?'<div class="mut">'+esc(t.why)+'</div>':'')+'</span>'
+        +'<span class="a'+(t.est?' est':'')+'">'+(t.amt!=null?(t.about?'about ':t.est?'up to ':'')+money(t.amt,0):'')
++'</span>'
++'</div>'; }).join('')
+    +((D.more||D.todo.length>4)
+      ?'<button class="tmore" data-act="taxtab" data-v="plan">'
+        +'<span class="dwide">'+(D.more?D.more+' more, and':'And')+'</span>'
+        +'<span class="dphone">'+(D.more+Math.max(0,D.todo.length-4))+' more, and</span>'
+        +' the ones with no deadline, on Plan →</button>'
+      :'<div class="tmore-note">Everything without a date on it is on '+_thGo('plan','Plan')+'</div>')
+    +'</div>';
+  else if(h.live) todo='<div class="sheet openfirst"><h3>'+title+'</h3>'
+    +'<div class="mut" style="font-size:12.5px">Nothing with a deadline on it. '+_thGo('plan','Plan')+'</div></div>';
+  else todo='';
+  return todo;
+}
 function taxHomeHtml(year,today){
   const D=taxHomeData(year,today);
   const y=D.year;
   if(!D.hero){
-    return '<div class="sheet nofold"><h3>'+y+' has no return worked yet</h3>'
+    return (D.todo.length?_thTodoSheet(D,{open:true},today):'')
+      +'<div class="sheet nofold"><h3>'+y+' has no return worked yet</h3>'
       +'<div class="mut" style="font-size:12.5px;line-height:1.6">Import the year’s sheet from Records → Data '
       +'to read it line by line, or work it from scratch on <b>File it</b>. The pay stub and the '
       +'documents do not need one — they are about the year as it is being lived.</div>'
@@ -19608,37 +19732,7 @@ function taxHomeHtml(year,today){
   const plates=D.plates.length?'<div class="plates">'+D.plates.map(function(p){
     return '<div class="plate'+(p.cls?' '+p.cls:'')+'"><div class="v">'+p.v+'</div><div class="k">'+p.k+'</div>'
       +(p.s?'<div class="s">'+p.s+'</div>':'')+'</div>'; }).join('')+'</div>':'';
-  const soonBy=_thIso(new Date((today||new Date()).getTime()+45*864e5));
-  
-  const ye=h.open&&typeof taxYearEndOn==='function'&&taxYearEndOn(today)&&y===(today||new Date()).getFullYear()?taxYearEnd(today):null;
-  const title=h.open?'Before '+y+' shuts':h.beforeDue?'Before you file':'Still claimable';
-  const left=ye?' · '+ye.days+' day'+(ye.days===1?'':'s'):'';
-  let todo;
-  
-  const tick=ye&&ye.items.length?' <button class="linkbtn" style="min-height:24px;min-width:24px" data-act="yearendlist">Tick off…</button>':'';
-  if(D.todo.length) todo='<div class="sheet openfirst"><h3>'+title+' <span class="r">'+(D.todo.length+D.more)+left+tick+'</span></h3>'
-    +D.todo.map(function(t,i){
-      const soon=/^\d{4}-/.test(String(t.closes))&&String(t.closes)<=soonBy;
-      
-
-      return '<div class="tdo'+(i>=4?' xtra':'')+'"><span class="d'+(soon?' soon':'')+'">'+_thWhen(t.closes,y)
-+'</span>'
-        +'<span class="w"><b>'+t.what+'</b> '+_thGo(t.tab,t.tab==='plan'?'Plan':'Check-up')
-
-        +(t.why?'<div class="mut">'+esc(t.why)+'</div>':'')+'</span>'
-        +'<span class="a'+(t.est?' est':'')+'">'+(t.amt!=null?(t.est?'up to ':'')+money(t.amt,0):'')
-+'</span>'
-+'</div>'; }).join('')
-    +((D.more||D.todo.length>4)
-      ?'<button class="tmore" data-act="taxtab" data-v="plan">'
-        +'<span class="dwide">'+(D.more?D.more+' more, and':'And')+'</span>'
-        +'<span class="dphone">'+(D.more+Math.max(0,D.todo.length-4))+' more, and</span>'
-        +' the ones with no deadline, on Plan →</button>'
-      :'<div class="tmore-note">Everything without a date on it is on '+_thGo('plan','Plan')+'</div>')
-    +'</div>';
-  else if(h.live) todo='<div class="sheet openfirst"><h3>'+title+'</h3>'
-    +'<div class="mut" style="font-size:12.5px">Nothing with a deadline on it. '+_thGo('plan','Plan')+'</div></div>';
-  else todo='';
+  const todo=_thTodoSheet(D,h,today);
   const split=typeof taxSplitBar==='function'?taxSplitBar(D.R):'';
   return '<div class="taxviz taxhome">'+hero+plates+todo
 
