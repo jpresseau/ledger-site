@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-p9HL4GU7t+xfs9J3Yh72UFNdiFCZUYOKVxeifScc9xE=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-8XSrrHsrXQAd8KcHgBjjiu4mtQuZNp2KTDY4QnGo5/k=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2155,6 +2155,53 @@ details.masec>summary.mash{cursor:pointer}
 }
 
 
+.recapcard{padding:14px 16px 10px}
+.recapcard .rcHead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.recapcard .rcBadge{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:10px;font-size:18px;font-family:var(--emoji,system-ui);
+  background:color-mix(in srgb,var(--accent) 12%,var(--card))}
+.recapcard .rcHt{flex:1 1 auto;min-width:0}
+.recapcard h3.rcT{display:block;margin:0;padding:0;background:none;border:0;font:650 15px/1.25 var(--sans);color:var(--ink)}
+.recapcard .rcWhen{font-size:12px;color:var(--sub)}
+.recapcard .rcLead{margin:4px 0 10px;font-size:13.5px;line-height:1.5;color:var(--ink)}
+.recapcard .rcLead.stale{color:var(--sub)}
+.recapcard .rcStale{font-weight:600}
+.recapcard .rcNote{font-size:12px;color:var(--sub);margin:-4px 0 8px}
+.recapcard .rcStats{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.recapcard .rcStat{font-size:12px;color:var(--sub);padding:3px 9px;border-radius:999px;background:color-mix(in srgb,var(--ink) 5%,var(--card));white-space:nowrap}
+.recapcard .rcStat b{color:var(--ink);font-weight:650}
+.recapcard .rcSec{margin-top:10px}
+.recapcard .rcSec h4{margin:0 0 4px;font:650 11.5px/1.3 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--sub)}
+.recapcard .rcN{display:inline-block;min-width:18px;padding:0 6px;margin-left:4px;border-radius:999px;background:var(--accent);color:var(--card);
+  font-size:11px;line-height:18px;text-align:center;letter-spacing:0}
+.recapcard .rcList{list-style:none;margin:0;padding:0}
+.recapcard .rcRow{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--hair)}
+.recapcard .rcList .rcRow:first-child{border-top:0}
+.recapcard .rcIco{flex:none;width:24px;text-align:center;font-size:16px;line-height:1;font-family:var(--emoji,system-ui)}
+.recapcard .rcW{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:1px}
+.recapcard .rcWhat{font-size:13.5px;line-height:1.35;color:var(--ink);overflow-wrap:anywhere}
+.recapcard .rcWhatP{font-size:13px;color:var(--sub)}
+.recapcard .rcFrom{font-size:11.5px;color:var(--sub2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.recapcard .rcDue{flex:none;font-size:12px;color:var(--sub);white-space:nowrap}
+.recapcard .rcDue.today{color:var(--card);background:var(--ember);padding:2px 8px;border-radius:999px;font-weight:600}
+.recapcard .rcDue.soon{color:var(--ink);font-weight:650}
+.recapcard .rcDue.late{color:var(--neg)}
+.recapcard .rcDone{flex:none;min-width:30px;min-height:30px;border-radius:999px;border:1px solid var(--hair);background:var(--card);color:var(--sub);
+  font-size:14px;cursor:pointer}
+.recapcard .rcDone:hover{border-color:var(--accent);color:var(--accent)}
+.recapcard .rcAmt{flex:none;font-variant-numeric:tabular-nums;font-weight:650;font-size:13.5px;color:var(--ink)}
+.recapcard .rcAmt.neg{color:var(--neg)}
+.recapcard .rcDay{font-size:12px;font-weight:650;color:var(--ink);margin:8px 0 0}
+.recapcard .rcAv{flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:999px;font-size:11px;font-weight:700;
+  color:var(--ink);background:color-mix(in srgb,var(--accent) 14%,var(--card))}
+.recapcard .rcNone{font-size:13px;color:var(--sub);padding:4px 0}
+.recapcard .rcPast{margin-top:8px;font-size:12.5px;color:var(--sub)}
+.recapcard .rcPast summary{cursor:pointer;min-height:24px;display:flex;align-items:center}
+.recapcard .rcPast>.btn{margin:4px 0 2px}
+@media(prefers-reduced-motion:no-preference){
+  #page.pgin .recapcard .rcBadge{animation:uibadge .6s cubic-bezier(.34,1.56,.64,1) both}
+}
+
+
 :is(.plate,.hmo,.taxhero,.dl){position:relative}
 .tmbtn{position:absolute;right:6px;bottom:6px;width:28px;height:28px;padding:0;display:grid;place-items:center;
   border:1px solid transparent;border-radius:50%;background:transparent;color:var(--sub);cursor:pointer;
@@ -2838,7 +2885,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.14";
+const APP_V="v29.15";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2852,7 +2899,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="5dd0150";
+const APP_BUILD="d264886";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -30496,23 +30543,6 @@ function mailAssistSheet(){
   return h;
 }
 
-
-function mailRecapCard(){
-  const a=mailAssistState(), rec=a&&a.recap, needs=a&&Array.isArray(a.needs)?a.needs:null, dates=a&&Array.isArray(a.dates)?a.dates:null;
-  if((!rec||!rec.r)&&!(needs&&needs.length)&&!(dates&&dates.length)) return '';
-  const r=(rec&&rec.r)||{}, li=function(rows,f){ return rows&&rows.length?'<ul class="recapl">'+rows.slice(0,8).map(function(x){ return '<li>'+f(x)+'</li>'; }).join('')+'</ul>':''; };
-  const sec=function(t,rows,f){ const b=li(rows,f); return b?'<div class="recaps"><b>'+t+'</b>'+b+'</div>':''; };
-  const busy=(typeof S!=='undefined'&&S.assist&&S.assist.busy)?' disabled':'';
-  return '<div class="sheet nofold recapcard"><h3><span aria-hidden="true">📬</span> Your inbox'+(rec&&rec.r?' recap <span class="r">'+_maEsc(mailWhen(rec.at))+'</span>':'')+'</h3>'
-    +(rec&&rec.r?'<div style="font-size:14px;margin-bottom:6px"><b>'+_maEsc(r.headline)+'</b></div>'+(rec.preview?'<div class="mut" style="font-size:12px">'+(Number(rec.filed)?'Part of this was read in preview, and that part was not moved.':'Preview: nothing was moved.')+'</div>':''):'')
-    +sec('Needs you',needs||r.needs,function(x){ return _maEsc(x.what)+(x.due?' <span class="mut">— '+_maEsc(/^\d{4}-\d{2}-\d{2}$/.test(x.due)?'by '+fD(x.due):x.due)+'</span>':'')+(x.src?' <span class="mut">· from '+_maEsc(x.src)+'</span>':'')
-      +(needs&&x.k?' <button class="linkbtn" data-act="assistdone" data-k="'+_maEsc(x.k)+'" aria-label="Done: '+_maEsc(x.what)+'"'+busy+'>✓ Done</button>':''); })
-    +sec('Money',r.money,function(x){ return _maEsc(x.what)+(x.amount?' <b>'+_maEsc(x.amount)+'</b>':''); })
-    +sec('Coming up',dates||r.dates,function(x){ return _maEsc(x.what)+(x.when||x.day?' <span class="mut">— '+_maEsc(x.when||x.day)+'</span>':'')+(x.src?' <span class="mut">· from '+_maEsc(x.src)+'</span>':''); })
-    +sec('People',r.people,function(x){ return '<b>'+_maEsc(x.who)+'</b>: '+_maEsc(x.what); })
-    +'<div class="mut" style="font-size:12px;margin-top:6px">'+(rec&&rec.r?_maCount(Number(rec.n)||0,Number(rec.filed)||0,Number(rec.would)||0,Number(rec.unsure)||0,Number(rec.left)||0)+'. ':'')
-    +'<button class="linkbtn" data-act="go" data-view="mail">Email ›</button></div></div>';
-}
 if(typeof document!=='undefined') document.addEventListener('change',function(ev){
   const el=ev.target; if(!el||!el.dataset||!/^assist(mode|model|scope|move)$/.test(el.dataset.act||'')) return;
   if(el.dataset.act==='assistmove'&&!el.value) return;
@@ -30535,6 +30565,161 @@ if(typeof document!=='undefined') document.addEventListener('change',function(ev
       :el.dataset.act==='assistmove'?(many?'Filed '+ids.length+' emails':'Filed')+' under '+label+'; that sender’s mail goes there from now on':'Model changed','ok'); },
     function(e){ S.assist=Object.assign({},S.assist,{busy:false,err:e.message||String(e)}); render(); });
 });
+
+
+
+const RECAP_ICONS=[
+  [/overdraft|overdrawn|negative|insufficient|declined|fraud|unauthori[sz]ed/i,'⚠️'],
+  [/dentist|dental|teeth|orthodont/i,'🦷'],
+  [/doctor|clinic|medical|pharmac|prescription|hospital|vet\b/i,'🩺'],
+  [/flight|airline|ferry|train|hotel|check.?(in|out)|reservation|trip|boarding/i,'🧳'],
+  [/api key|password|sign.?in|log.?in|security|verify|two.?factor|expires|expiring/i,'🔑'],
+  [/deposit|refund|paid you|received|credited|payout|consult offer|offer/i,'💵'],
+  [/transfer/i,'🔁'],
+  [/subscription|renews|renewal|membership/i,'🔄'],
+  [/invoice|bill|payment|pay\b|due|withdrawal|minimum|statement|autopay/i,'💳'],
+  [/meeting|event|lunch|dinner|party|vestry|webinar|class/i,'📅'],
+  [/appointment|slot|book/i,'🗓️'],
+  [/package|delivery|shipped|order/i,'📦'],
+  [/reply|respond|answer|call|email/i,'✉️']
+];
+function recapIco(text,fallback){
+  const r=RECAP_ICONS.find(function(x){ return x[0].test(String(text||'')); });
+  return r?r[1]:(fallback||'•');
+}
+
+const RECAP_ROBOT=/^(no.?reply|do.?not.?reply|donotreply|noreply\S*|no_reply|campaigns?|alerts?|notifications?|notify|reservations?|bookings?|info|support|hello|news(letter)?|marketing|mailer|updates?|guest\w*|service|customer\w*|accounts?|billing|statements?|team|email|em\d*)\b/i;
+function recapFrom(src){
+  const s=String(src||'').trim(), at=s.lastIndexOf('@');
+  if(at<1) return s;
+  const local=s.slice(0,at), dom=s.slice(at+1).toLowerCase();
+  
+  if(!RECAP_ROBOT.test(local)&&!/^(notifications?|alerts?|e?mail|em\d*|campaigns?|news|info|reply|bounce|mailer|marketing|updates?)\./.test(dom)) return s;
+  const p=dom.split('.').filter(Boolean);
+  
+  const n=p.length>2&&/^(co|com|org|net|gov|ac|edu)$/.test(p[p.length-2])&&p[p.length-1].length===2?3:2;
+  return p.slice(-n).join('.');
+}
+
+function recapAmt(a){
+  const s=String(a==null?'':a).trim(), m=/^([-−]?)\s*([$€£¥])?\s*([-−]?)\s*([\d,]+(?:\.\d+)?)$/.exec(s);
+  if(!m) return {txt:s,neg:/^[-−]/.test(s)};
+  const neg=!!(m[1]||m[3]), v=Number(m[4].replace(/,/g,''));
+  if(!isFinite(v)) return {txt:s,neg:neg};
+  const cents=Math.abs(v%1)>0.0001||/\.\d/.test(m[4]);
+  const num=v.toLocaleString('en-US',{minimumFractionDigits:cents?2:0,maximumFractionDigits:2});
+  return {txt:(neg?'−':'')+(m[2]||'')+num,neg:neg};
+}
+
+function recapDue(due,T){
+  if(!due) return {label:'',cls:'',past:false};
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(due)) return {label:String(due),cls:'',past:false};
+  const n=cfDaysBetween(T,due);
+  if(n<0) return {label:n===-1?'yesterday':(-n)+' days ago',cls:'late',past:true};
+  if(n===0) return {label:'Today',cls:'today',past:false};
+  if(n===1) return {label:'Tomorrow',cls:'soon',past:false};
+  if(n<7) return {label:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(due+'T12:00:00').getDay()],cls:'soon',past:false};
+  return {label:fD(due).replace(/ ’\d+$/,''),cls:'',past:false};
+}
+
+
+function _rcAt(when,day,label){
+  const t=/\b(\d{1,2}(?::\d{2})?\s*[ap]\.?m\.?)/i.exec(String(when||''));
+  if(t) return t[1].replace(/\s+/g,' ').replace(/\./g,'').toUpperCase().replace(/ ?([AP]M)$/,' $1');
+  
+  const h=/\b(noon|midnight|at \d{1,2}(?::\d{2})?)\b/i.exec(String(when||''));
+  if(h) return h[1];
+  if(!day) return String(when||'');
+  if(label==='Today'||label==='Tomorrow') return '';
+  if(label==='This week') return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(day+'T12:00:00').getDay()];
+  return fD(day).replace(/ ’\d+$/,'');
+}
+function _rcKey(t){ return String(t||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().slice(0,48); }
+
+function recapWhen(ms,now){
+  if(!ms) return '';
+  const d=new Date(ms), n=now||new Date(), t=d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}).toLowerCase();
+  const day=function(x){ return x.getFullYear()+'-'+x.getMonth()+'-'+x.getDate(); };
+  const y=new Date(n.getTime()-864e5);
+  if(day(d)===day(n)) return (d.getHours()<12?'This morning, ':d.getHours()<17?'This afternoon, ':'This evening, ')+t;
+  if(day(d)===day(y)) return 'Yesterday, '+t;
+  return typeof mailWhen==='function'?mailWhen(ms):d.toDateString();
+}
+
+function recapModel(a,T,now){
+  T=T||todayISO(); now=now||new Date();
+  const rec=a&&a.recap, r=(rec&&rec.r)||{};
+  const needs0=a&&Array.isArray(a.needs)?a.needs:(Array.isArray(r.needs)?r.needs:[]);
+  const dates0=a&&Array.isArray(a.dates)?a.dates:(Array.isArray(r.dates)?r.dates:[]);
+  const seen={};
+  const needs=needs0.filter(function(x){ return x&&x.what; }).map(function(x){
+    const d=recapDue(x.due,T); seen[_rcKey(x.what)]=1; if(x.k) seen['#'+x.k]=1;
+    return {k:x.k||'',what:x.what,from:recapFrom(x.src),src:x.src||'',due:x.due||'',when:d.label,cls:d.cls,past:d.past,ico:recapIco(x.what,'📌')};
+  }).sort(function(p,q){ return (p.due||'9999')<(q.due||'9999')?-1:(p.due||'9999')>(q.due||'9999')?1:0; });
+  const money=(Array.isArray(r.money)?r.money:[]).filter(function(x){ return x&&x.what; }).map(function(x){
+    const m=recapAmt(x.amount); return {what:x.what,amt:x.amount?m.txt:'',neg:m.neg,ico:recapIco(x.what,'💲')}; });
+  
+  const groups=[], byLabel={}, dseen={};
+  dates0.filter(function(x){ return x&&x.what; }).forEach(function(x){
+    const key=_rcKey(x.what);
+    if(seen[key]||(x.k&&seen['#'+x.k])||dseen[key]) return;
+    const day=/^\d{4}-\d{2}-\d{2}$/.test(String(x.day||''))?x.day:'';
+    if(day&&day<T) return;
+    dseen[key]=1;
+    const n=day?cfDaysBetween(T,day):null;
+    const label=n===null?'Later':n===0?'Today':n===1?'Tomorrow':n<7?'This week':'Later';
+    if(!byLabel[label]){ byLabel[label]={label:label,rows:[]}; groups.push(byLabel[label]); }
+    byLabel[label].rows.push({what:x.what,when:_rcAt(x.when,day,label),day:day,from:recapFrom(x.src),src:x.src||'',ico:recapIco(x.what,'📅')});
+  });
+  const order=['Today','Tomorrow','This week','Later'];
+  groups.sort(function(p,q){ return order.indexOf(p.label)-order.indexOf(q.label); });
+  groups.forEach(function(g){ g.rows.sort(function(p,q){ return (p.day||'9999')<(q.day||'9999')?-1:(p.day||'9999')>(q.day||'9999')?1:0; }); });
+  const people=(Array.isArray(r.people)?r.people:[]).filter(function(x){ return x&&x.who; }).map(function(x){ return {who:x.who,what:x.what||''}; });
+  const stats=rec&&rec.r?[['📥',Number(rec.n)||0,'read'],['🗂️',Number(rec.filed)||0,'filed'],['🕓',Number(rec.would)||0,'would have been filed'],
+    ['📭',Number(rec.left)||0,'left in the inbox'],['❓',Number(rec.unsure)||0,'not sure']].filter(function(s,i){ return i===0||s[1]>0; }):[];
+  const recDay=rec&&rec.at?new Date(rec.at):null;
+  return {when:rec&&rec.at?recapWhen(rec.at,now):'',headline:r.headline||'',preview:!!(rec&&rec.preview),filedPreview:!!(rec&&Number(rec.filed)),
+    stale:!!(recDay&&recDay.toDateString()!==now.toDateString()),
+    needs:needs.filter(function(x){ return !x.past; }),past:needs.filter(function(x){ return x.past; }),
+    money:money,groups:groups,people:people,stats:stats,
+    any:!!(rec&&rec.r)||needs.length>0||groups.length>0};
+}
+function mailRecapCard(){
+  const a=typeof mailAssistState==='function'?mailAssistState():null, M=recapModel(a);
+  if(!M.any) return '';
+  const E=typeof _maEsc==='function'?_maEsc:esc, busy=(typeof S!=='undefined'&&S.assist&&S.assist.busy)?' disabled':'';
+  const from=function(x){ return x.from?'<span class="rcFrom" title="'+E(x.src)+'">'+E(x.from)+'</span>':''; };
+  const need=function(x){ return '<li class="rcRow"><span class="rcIco" aria-hidden="true">'+x.ico+'</span>'
+    +'<span class="rcW"><span class="rcWhat">'+E(x.what)+'</span>'+from(x)+'</span>'
+    +(x.when?'<span class="rcDue '+x.cls+'">'+E(x.when)+'</span>':'')
+    +(x.k?'<button class="rcDone" data-act="assistdone" data-k="'+E(x.k)+'" aria-label="Done: '+E(x.what)+'"'+busy+'>✓</button>':'')+'</li>'; };
+  const sec=function(t,n,body,cls){ return body?'<section class="rcSec'+(cls?' '+cls:'')+'"><h4>'+t+(n!=null?' <span class="rcN">'+n+'</span>':'')+'</h4>'+body+'</section>':''; };
+  let h='<div class="sheet nofold recapcard">'
+    +'<div class="rcHead"><span class="rcBadge" aria-hidden="true">📬</span><div class="rcHt"><h3 class="rcT">Inbox recap</h3>'
+    +(M.when?'<div class="rcWhen">'+E(M.when)+'</div>':'<div class="rcWhen">What still needs you from your email</div>')+'</div>'
+    +'<button class="btn ghost sm" data-act="go" data-view="mail">Email ›</button></div>';
+  if(M.headline) h+='<p class="rcLead'+(M.stale?' stale':'')+'">'+(M.stale?'<span class="rcStale">From '+E(M.when)+':</span> ':'')+E(M.headline)+'</p>';
+  if(M.preview) h+='<div class="rcNote">'+(M.filedPreview?'Part of this was read in preview, and that part was not moved.':'Preview: nothing was moved.')+'</div>';
+  if(M.stats.length) h+='<div class="rcStats">'+M.stats.map(function(s){ return '<span class="rcStat"><span aria-hidden="true">'+s[0]+'</span> <b>'+s[1]+'</b> '+E(s[2])+'</span>'; }).join('')+'</div>';
+  h+=sec('Needs you',M.needs.length||null,M.needs.length?'<ul class="rcList">'+M.needs.map(need).join('')+'</ul>':(M.past.length?'':'<div class="rcNone">Nothing waiting on you. 🎉</div>'));
+  if(M.past.length){
+    const ks=M.past.map(function(x){ return x.k; }).filter(Boolean);
+    h+='<details class="rcPast"><summary>'+M.past.length+' past '+(M.past.length===1?'its':'their')+' date — done, or no longer needed?</summary>'
+      +'<ul class="rcList">'+M.past.map(need).join('')+'</ul>'
+      +(ks.length>1?'<button class="btn ghost sm" data-act="assistdoneall" data-ks="'+E(ks.join(','))+'"'+busy+'>✓ Clear all '+ks.length+'</button>':'')+'</details>';
+  }
+  h+=sec('Money',null,M.money.length?'<ul class="rcList">'+M.money.slice(0,8).map(function(x){
+    return '<li class="rcRow"><span class="rcIco" aria-hidden="true">'+x.ico+'</span><span class="rcW"><span class="rcWhat">'+E(x.what)+'</span></span>'
+      +(x.amt?'<span class="rcAmt'+(x.neg?' neg':'')+'">'+E(x.amt)+'</span>':'')+'</li>'; }).join('')+'</ul>':'');
+  h+=sec('Coming up',null,M.groups.map(function(g){
+    return '<div class="rcDay">'+g.label+'</div><ul class="rcList">'+g.rows.slice(0,6).map(function(x){
+      return '<li class="rcRow"><span class="rcIco" aria-hidden="true">'+x.ico+'</span><span class="rcW"><span class="rcWhat">'+E(x.what)+'</span>'+from(x)+'</span>'
+        +(x.when?'<span class="rcDue">'+E(x.when)+'</span>':'')+'</li>'; }).join('')+'</ul>'; }).join(''));
+  h+=sec('People',null,M.people.length?'<ul class="rcList">'+M.people.slice(0,6).map(function(x){
+    const ini=String(x.who).replace(/\(.*?\)/g,'').trim().split(/\s+/).slice(0,2).map(function(w){ return w.charAt(0); }).join('').toUpperCase();
+    return '<li class="rcRow"><span class="rcAv" aria-hidden="true">'+E(ini||'?')+'</span><span class="rcW"><b>'+E(x.who)+'</b> <span class="rcWhatP">'+E(x.what)+'</span></span></li>'; }).join('')+'</ul>':'');
+  return h+'</div>';
+}
 
 
 
@@ -42847,6 +43032,15 @@ function _imgLossOk(what){
 
   
 
+  
+  if(act==='assistdoneall'){
+    if(S.assist&&S.assist.busy) return;
+    const ks=String(b.dataset.ks||'').split(',').filter(Boolean); if(!ks.length) return;
+    S.assist=Object.assign({},S.assist,{busy:true,err:null}); render();
+    _maSeq(ks.map(function(k){ return 'done:'+k; })).then(function(){ S.assist=Object.assign({},S.assist,{busy:false}); render(); toast('Ticked off '+ks.length,'ok'); },
+      function(e){ S.assist=Object.assign({},S.assist,{busy:false,err:e.message||String(e)}); render(); toast('Could not tick them all off: '+(e.message||e),'warn'); });
+    return;
+  }
   
   if(act==='assistgrp'){
     const li=b.closest('.magrp'), k=String(b.dataset.g||''); if(!li) return;
