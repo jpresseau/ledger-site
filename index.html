@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-z7Tvqu94GUNHyyhJ4ThmuyB7k7UdOw5i4rssvbK5Nj4=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-9nVA+dWklO5ktqj/EUVeWVwjcXhOV2CsRoSHD8eNA38=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -867,11 +867,18 @@ tr:hover .rowdel,.rowdel:focus{opacity:1}
   .barhit{pointer-events:all;cursor:pointer}
   .tbl th,.tbl td{padding-left:5px;padding-right:5px}
   
+  .tbl td:not(.n){overflow-wrap:anywhere}
+  
   .tbl td svg{max-width:100%;height:auto}
 
   
   .ghtbl td{font-size:12px}
-  .ghtbl td:nth-child(3){max-width:90px}
+  .ghtbl td:nth-child(3){max-width:90px}   
+
+  
+  .mlbud th,.mlbud td{padding-left:4px;padding-right:4px}
+  .mlbud td.n,.mlbud th.n{font-size:12px}
+  .mlbud td:first-child{hyphens:auto}
 
   
   .chgtbl th:nth-child(4),.chgtbl td:nth-child(4){display:none}
@@ -2899,7 +2906,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.17";
+const APP_V="v29.18";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2913,7 +2920,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="cb379cd";
+const APP_BUILD="f0ff685";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -9139,7 +9146,7 @@ Views.months=function(){
    +(S.mview==='sheet'?monthPlates(mo,sums,B,P,prev):'')
    +monthPaceSheet(mo,P,B)
    +'<div class="sheet"><h3>'+esc(monthLabel(mo))+' vs budget <span class="r">'+verdict+'</span></h3>'
-   +'<div class="tblwrap"><table class="tbl tight"><thead><tr><th>Category</th>'+monthTypHead(P)+'<th class="n">Budget</th><th class="n">Left</th>'+(prev?'<th class="n">'+MA[prev.m-1]+' '+String(prev.y).slice(2)+'</th>':'')+'</tr></thead><tbody>'+bud+'</tbody>'
+   +'<div class="tblwrap"><table class="tbl tight mlbud"><thead><tr><th>Category</th>'+monthTypHead(P)+'<th class="n">Budget</th><th class="n">Left</th>'+(prev?'<th class="n">'+MA[prev.m-1]+' '+String(prev.y).slice(2)+'</th>':'')+'</tr></thead><tbody>'+bud+'</tbody>'
    +'<tfoot><tr><td>Total</td>'+monthTypCells(mcell(spent),P.typ?money(P.typNow,0):'—',P.typ?_mlVs(P.spent,P.typNow):'')+'<td class="n num">'+(bt!=null?money(bt,0):'—')+'</td><td class="n num">'+(overBy==null?'—':mcell(-overBy,0))+'</td>'+(prev?'<td class="n num mut">'+money(tot(catSums(prev)),0)+'</td>':'')+'</tr></tfoot></table></div>'+sheetNote+'</div>';
 };
 
