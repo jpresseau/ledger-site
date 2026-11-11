@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-8XSrrHsrXQAd8KcHgBjjiu4mtQuZNp2KTDY4QnGo5/k=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-NQHJRm+i/xBdwTlGEg773N2wL9kR5wXdnlTa4jXsI8o=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2202,6 +2202,18 @@ details.masec>summary.mash{cursor:pointer}
 }
 
 
+.tdGreet .tdHello{font-size:12.5px;font-weight:600;color:var(--sub);letter-spacing:.02em;margin-bottom:2px}
+.tdGreet .tdChips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tdChip{font-size:12.5px;color:var(--sub);padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--ink) 5%,var(--card));white-space:nowrap}
+.tdChip b{color:var(--ink);font-weight:650}
+.tdChip.act{background:color-mix(in srgb,var(--accent) 14%,var(--card))}
+.tdChip.late{background:color-mix(in srgb,var(--ember) 12%,var(--card))}
+.tdClear{display:flex;align-items:center;gap:12px;padding:12px 16px;font-size:13.5px}
+.tdClear .tdClearIco{font-size:22px;font-family:var(--emoji,system-ui)}
+@media(prefers-reduced-motion:no-preference){ #page.pgin .tdClear .tdClearIco{animation:uibob .7s .2s ease-out both} }
+.tdGreet .tdSay{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+
 :is(.plate,.hmo,.taxhero,.dl){position:relative}
 .tmbtn{position:absolute;right:6px;bottom:6px;width:28px;height:28px;padding:0;display:grid;place-items:center;
   border:1px solid transparent;border-radius:50%;background:transparent;color:var(--sub);cursor:pointer;
@@ -2885,7 +2897,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.15";
+const APP_V="v29.16";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2899,7 +2911,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="d264886";
+const APP_BUILD="0e97e11";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -27168,9 +27180,23 @@ Views.today=function(){
   const T=todayISO(), M=adviceMoves(T), moves=M.list.filter(function(m){ return m.pile==='today'; }), dated=todayDated(T);
   const week=M.list.filter(function(m){ return m.pile==='week'; }), out=r2v(dated.reduce(function(s,it){ return s+(it.amt<0?-it.amt:0); },0));
   const hd=head('Today','What to do today and what leaves today — Advice’s first pile, on one screen.',moves.length?moves.length+' TO DO':'NOTHING TO DO');
-  const greet='<div class="sheet nofold advgreet"><div class="advg1">'+esc(fDay(T))+'</div><div class="advg2">'
-    +(moves.length?moves.length+' thing'+(moves.length===1?'':'s')+' to do':'Nothing to do today')
-    +(dated.length?', '+dated.length+' dated today'+(out?' with '+money(out,0)+' leaving':''):'')+(week.length?'; '+week.length+' more this week':'')+'.</div></div>';
+  
+
+  const IM=typeof recapModel==='function'&&typeof mailAssistState==='function'?recapModel(mailAssistState(),T):null;
+  const inToday=IM?IM.needs.filter(function(x){ return x.cls==='today'; }).length:0, inLate=IM?IM.past.length:0;
+  const hr=new Date().getHours(), hello=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
+  const chip=function(ico,txt,cls){ return '<span class="tdChip'+(cls?' '+cls:'')+'"><span aria-hidden="true">'+ico+'</span> '+txt+'</span>'; };
+  const inAny=inToday+inLate>0;
+  const chips=[moves.length?chip('✅','<b>'+moves.length+'</b> to do','act'):chip('✅',inAny?'Nothing on the Ledger':'Nothing to do'),
+    dated.length?chip('💸',out?'<b>'+money(out,0)+'</b> leaving':'<b>'+dated.length+'</b> dated today'):'',
+    inToday||inLate?chip('📬','<b>'+(inToday+inLate)+'</b> from your inbox'+(inLate?' · '+inLate+' overdue':''),inLate?'late':''):'',
+    week.length?chip('🗓️','<b>'+week.length+'</b> more this week'):''].join('');
+  const greet='<div class="sheet nofold advgreet tdGreet"><div class="tdHello">'+hello+'</div><div class="advg1">'+esc(fDay(T))+'</div>'
+    
+    +'<div class="advg2 tdSay">'+(moves.length?moves.length+' thing'+(moves.length===1?'':'s')+' to do':inAny?'Nothing on the Ledger today':'Nothing to do today')
+    +(dated.length?', '+dated.length+' dated today'+(out?' with '+money(out,0)+' leaving':''):'')+(week.length?'; '+week.length+' more this week':'')
+    +(inToday||inLate?'; '+(inToday?inToday+' from your inbox due today':'')+(inToday&&inLate?' and ':'')+(inLate?inLate+' overdue':''):'')+'.</div>'
+    +'<div class="tdChips">'+chips+'</div></div>';
   const todo='<div class="sheet nofold advmoves"><h3>To do today <span class="r">'+(moves.length||'none')+'</span></h3>'
     +(moves.length?'<div class="advpile">'+_advRows(moves,T)+'</div>':'<div class="mut" style="font-size:13px;line-height:1.6">Nothing is due today. Advice has the week and the month.</div>')+'</div>';
   const leaving='<div class="sheet nofold"><h3>Dated today <span class="r">'+(dated.length?(out?money(out,0):dated.length):'none')+'</span></h3>'
@@ -27187,7 +27213,12 @@ Views.today=function(){
     +'</div>'+(api?'<div class="advacts"><button class="btn sm" data-act="todaybadge" aria-pressed="'+(on?'true':'false')+'">'+(on?'Turn the badge off':'Turn the badge on')+'</button>'+(on&&perm==='default'&&can?'<button class="btn ghost sm" data-act="todaybadgeallow">Allow notifications</button>':'')+'</div>':'')+'</div>';
   
   const recap=typeof mailRecapCard==='function'?mailRecapCard():'';
-  return hd+greet+recap+todo+leaving+more+badge;
+  
+
+  const clear=!moves.length&&!dated.length?'<div class="sheet nofold tdClear"><span class="tdClearIco" aria-hidden="true">'+(inAny?'☕':'🎉')+'</span><div>'
+    +(inAny?'<b>Nothing on the Ledger today.</b> <span class="mut">Nothing to do and nothing leaving the accounts — what your inbox wants is below.</span>'
+      :'<b>All clear.</b> <span class="mut">Nothing to do and nothing leaving the accounts today.</span>')+'</div></div>':'';
+  return hd+greet+(clear||todo+leaving)+recap+more+badge;
 };
 
 
