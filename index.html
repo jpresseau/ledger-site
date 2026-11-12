@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-IGM9GdGIL9aq4JyySwiTJPCPx5r+VzLJSO56z/3LP+E=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-e3l6wS0sWwUgStaQN7hk6CqyDXc1eYo9Jwe/PpFLgiU=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2906,7 +2906,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.23";
+const APP_V="v29.24";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2920,7 +2920,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="01d3ab4";
+const APP_BUILD="fda69fd";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -12750,108 +12750,174 @@ function taxNyAmendBy(y,rec){
 
 
 const TAX_INTAKE=[
-  {id:'hdhp', per:false, q:'Is your health plan a high-deductible one (HSA-eligible)?',
+  {id:'hdhp', g:'work', per:false, q:'Is your health plan a high-deductible one (HSA-eligible)?',
    yes:'An HSA is the only account that goes in untaxed, grows untaxed and comes out untaxed for '
       +'medical costs — better than the 401k on the way out, and it is not use-it-or-lose-it like '
       +'the medical FSA. If your plan qualifies and you are not funding one, that is the largest '
       +'single thing on this list.',
    ask:'Your payroll or benefits portal says whether the plan is HSA-qualified.'},
-  {id:'ira', per:false, q:'Do you or your spouse have an IRA (traditional or Roth)?',
+  {id:'ira', g:'save', per:false, q:'Do you or your spouse have an IRA (traditional or Roth)?',
    yes:'What an IRA is worth turns on income limits and on whether a workplace plan covers you — '
       +'both of which this app would have to be given. Worth raising: a contribution for a year '
       +'can be made right up to that year’s filing deadline, which is the one retirement move '
       +'still open after 31 December.',
    ask:'A statement from whoever holds it, or the absence of one.'},
-  {id:'equity', per:false, q:'Any equity compensation — RSUs, ISOs, ESPP?',
+  {id:'equity', g:'work', per:false, q:'Any equity compensation — RSUs, ISOs, ESPP?',
    yes:'This is where the largest surprises live. RSUs are withheld at the flat supplemental rate, '
       +'which is well under the top bracket and leaves people owing in April; ISOs are the classic '
       +'way an ordinary year lands in alternative minimum tax. The AMT guard on the deduction plays '
       +'exists for exactly this.',
    ask:'The vesting or exercise statements from your employer’s equity portal.'},
-  {id:'sold', per:true, q:'Did you sell anything in a taxable brokerage account this year?',
+  {id:'sold', g:'save', per:true, q:'Did you sell anything in a taxable brokerage account this year?',
    yes:'Gains and losses net against each other, and a loss realised before 31 December can cancel '
       +'a gain already taken — the only tax move that gets cheaper the longer the market has been '
       +'unkind. Nothing on your sheets shows a brokerage, so this app cannot see it at all.',
    ask:'Your broker’s realised gain/loss report for the year to date.'},
-  {id:'selfemp', per:true, q:'Any self-employment or 1099 income this year?',
+  {id:'selfemp', g:'work', per:true, q:'Any self-employment or 1099 income this year?',
    yes:'It carries its own tax on top of income tax, and it opens retirement accounts a salary '
       +'cannot — a solo plan can take far more than the workplace limit. It also means quarterly '
       +'payments, which is a penalty question rather than a saving one.',
    ask:'Any 1099-NEC forms, or the invoices behind them.'},
   
 
-  {id:'estpaid', per:true, q:'Did you send the IRS or the state an estimated payment this year?',
+  {id:'estpaid', g:'year', per:true, q:'Did you send the IRS or the state an estimated payment this year?',
    yes:'It comes straight off what you owe, and nothing on your sheets can see it — the Check-up '
       +'finding about a payment the state cannot see is exactly this question unanswered. Write each payment down '
       +'below, with the day it was sent: the federal ones are line 26 on File it, and each one counts '
       +'toward the voucher dates from that day.',
    ask:'The confirmation from IRS Direct Pay or the state’s site, or the cheque stub.'},
-  {id:'retire', per:true, q:'Did you take money out of a retirement account, or roll one over, this year?',
+  {id:'retire', g:'save', per:true, q:'Did you take money out of a retirement account, or roll one over, this year?',
    yes:'A 1099-R arrives either way. A rollover done directly is not taxed but is still reported; '
       +'a withdrawal before 59½ carries an addition on top of income tax unless an exception '
       +'applies, and the exceptions are a list this app does not carry.',
    ask:'The 1099-R from the plan or custodian, in January.'},
-  {id:'digital', per:true, q:'Did you receive, sell or exchange any digital asset — crypto, NFTs — this year?',
+  {id:'digital', g:'save', per:true, q:'Did you receive, sell or exchange any digital asset — crypto, NFTs — this year?',
    yes:'The 1040 asks this as a yes/no box on its first page, so it has to be answered either way. '
       +'A sale or an exchange is a capital gain or loss like any other; being paid in one is '
       +'income at its value that day.',
    ask:'The exchange’s year-end statement, or its 1099-DA where it issues one.'},
-  {id:'student', per:true, q:'Any tuition paid, or student-loan interest, this year?',
+  {id:'student', g:'family', per:true, q:'Any tuition paid, or student-loan interest, this year?',
    yes:'Tuition can earn a credit and loan interest a deduction, and both phase out with income — '
       +'at thresholds this app has not been given, so it will not say which applies. The forms '
       +'settle it.',
    ask:'A 1098-T from the school, a 1098-E from the loan servicer.'},
-  {id:'rental', per:false, q:'Do you own property you rent out?',
+  {id:'rental', g:'home', per:false, q:'Do you own property you rent out?',
    yes:'Rental income goes on Schedule E with its own expenses against it, and depreciation is the '
       +'piece almost everyone gets wrong — it is taken whether or not you claim it, and it comes '
       +'back at sale. Worth a preparer the first year.',
    ask:'The lease, and a year’s statements for the property.'},
-  {id:'gave', per:true, q:'Did you give to charity this year — cash, goods or shares?',
+  {id:'gave', g:'year', per:true, q:'Did you give to charity this year — cash, goods or shares?',
    yes:'Write each gift down below — the deduction plays and File it read that list, and it says '
       +'which gifts still need the charity’s letter or a Form 8283. Shares held over a year are '
       +'deductible at market value and skip the gain.',
    ask:'The acknowledgement letters, or the giving summary from the platform.'},
-  {id:'med', per:true, q:'Did you pay medical or dental bills yourself this year, beyond what insurance covered?',
+  {id:'med', g:'year', per:true, q:'Did you pay medical or dental bills yourself this year, beyond what insurance covered?',
    yes:'Write each one down below. Medical costs count only past 7.5% of your income, so most years '
       +'they count for nothing — the list says how close this year is. Anything paid from an HSA or '
       +'FSA went in untaxed and does not count again.',
    ask:'The explanation-of-benefits statements from your insurer, and the pharmacy’s year-end printout.'},
-  {id:'invloan', per:true, q:'Did you pay interest on a loan used to buy investments — company shares, a margin loan?',
+  {id:'invloan', g:'save', per:true, q:'Did you pay interest on a loan used to buy investments — company shares, a margin loan?',
    yes:'That interest is an itemized deduction, up to what your investments paid you in interest and ordinary dividends, and '
       +'what it cannot use carries forward. Enter the interest on Check-up, under “A loan to buy investments”, and it is '
       +'worked into the deduction, New York’s and the investment-income surtax.',
    ask:'The lender’s year-end statement, which splits what you paid into interest and principal.'},
-  {id:'gains', per:false, q:'Do you own shares or funds, outside a retirement account, worth more than you paid for them?',
+  {id:'gains', g:'save', per:false, q:'Do you own shares or funds, outside a retirement account, worth more than you paid for them?',
    yes:'Then a gift to charity is worth more made in those than in cash: the deduction is the same and the gain '
       +'is taxed to nobody. Ways to pay less says what that saves at your rates wherever the book shows giving. '
       +'Held until death, the gain is never taxed at all, which is the case for giving or selling the losers and keeping the winners.',
    ask:'Your broker’s unrealised gain and loss page, which lists each lot with what it cost.'},
-  {id:'solar', per:true, q:'Did solar panels or a solar battery go on your home this year?',
+  {id:'solar', g:'home', per:true, q:'Did solar panels or a solar battery go on your home this year?',
    yes:'New York credits a quarter of the cost, to a ceiling, on Form IT-255, and carries forward what the year cannot use. '
       +'The federal credit ended with 2025, so this is the one still standing. Ways to pay less names it once you say yes.',
    ask:'The installer’s contract and final invoice, and any rebate that came off it.'},
-  {id:'ltc', per:false, q:'Do you pay premiums for long-term-care insurance?',
+  {id:'ltc', g:'family', per:false, q:'Do you pay premiums for long-term-care insurance?',
    yes:'New York credits a fifth of the premiums on Form IT-249, under an income limit, and the same premiums count as a '
       +'medical expense on the federal return up to a limit by age.',
    ask:'The insurer’s yearly premium statement, which says whether the policy qualifies.'},
-  {id:'commute', per:false, q:'Do you pay for a commute — train, bus, ferry or parking at work?',
+  {id:'commute', g:'work', per:false, q:'Do you pay for a commute — train, bus, ferry or parking at work?',
    yes:'Transit and parking can come out of pay before tax through a §132(f) commuter benefit, '
       +'escaping federal, state and payroll tax alike — the same rate as the dependent-care '
       +'account. Say yes and Ways to pay less prices it at the year’s monthly ceiling; the benefits portal '
       +'says whether the employer offers it, and it is the cheapest thing on this list to switch on.',
    ask:'Your benefits portal, under commuter or transit benefits.'},
-  {id:'spouse', per:false, q:'Does your spouse earn income too — a job, self-employment — or study full-time?',
+  
+
+  {id:'k1', g:'save', per:false, q:'Do you own part of a partnership or S corporation — does a Schedule K-1 come to you?',
+   yes:'A K-1 carries its income onto your return whether or not any cash came with it, often arrives after the '
+      +'filing date (so an extension is normal), and can carry the business-income deduction. Interest on a loan taken '
+      +'to buy the stake follows what the business does: against an operating business you work in, it is deducted '
+      +'beside the K-1’s income, not capped by investment income the way a loan to buy ordinary shares is.',
+   ask:'Last year’s K-1, or the company’s investor portal.'},
+  {id:'bigincome', g:'work', per:true, q:'Is a large one-off coming this year or next — a bonus, a sale of shares or a business, options to exercise?',
+   yes:'Which year it lands in is often yours to choose, and it moves everything that phases with income: the cap on '
+      +'state and local taxes, the child credit, the surtaxes, the minimum tax. Deductions are worth most in the high '
+      +'year. Withholding on a bonus is a flat rate that runs short at a high bracket; paying in what last year’s tax '
+      +'came to, with the margin the rule asks at higher incomes, keeps the penalty away whatever the year turns out to be.',
+   ask:'The offer, grant or sale papers, and last year’s total tax from the return.'},
+  {id:'carry', g:'year', per:false, q:'Does last year’s return carry anything forward — a capital loss, gifts over the limit, a minimum tax credit, unused interest?',
+   yes:'A carryforward is only used if somebody carries it: it is on last year’s worksheets, not on any form that arrives '
+      +'this year. A capital loss offsets gains and then some ordinary income each year; a minimum tax credit comes '
+      +'back in a year the minimum tax is not owed; investment interest carries on Form 4952.',
+   ask:'Last year’s return: Schedule D’s carryover worksheet, Schedule A, Forms 4952, 8801 and 8582.'},
+  {id:'kidincome', g:'family', per:false, q:'Does a child have income of their own — investments in their name, or pay from work?',
+   yes:'A child’s investment income past a small yearly amount is taxed at the parents’ rate (Form 8615), so moving '
+      +'investments into a child’s name saves little. Pay from real work is different: it is taxed at the child’s own '
+      +'low rate, and it opens a Roth IRA in the child’s name up to what they earned — decades of untaxed growth.',
+   ask:'The custodial account’s 1099, or the child’s W-2.'},
+  {id:'support', g:'family', per:false, q:'Do you support a parent or another adult relative?',
+   yes:'An adult you support can be a dependent — a credit of its own — where their income is under the year’s limit. '
+      +'Medical bills you pay for them count with yours even where their income is over it, and care for one who '
+      +'cannot look after themselves can earn the dependent-care credit.',
+   ask:'What they received in the year, and what you paid toward their keep.'},
+  {id:'household', g:'family', per:true, q:'Do you pay someone to work in your home — a nanny, a housekeeper, a carer?',
+   yes:'Past a yearly threshold their pay carries Social Security and Medicare tax that you owe as the employer, '
+      +'reported on Schedule H with your own return. Paid properly, a nanny’s wages also count as care for the '
+      +'dependent-care account and credit; paid in cash off the books they count for nothing and the tax is still owed.',
+   ask:'What you paid each person in the year.'},
+  {id:'homesale', g:'home', per:true, q:'Did you sell a home this year, or do you expect to?',
+   yes:'The gain on a home you owned and lived in for two of the last five years is excluded up to a large limit, more '
+      +'on a joint return. What you spent improving it — not repairing it — raises its cost and shrinks the gain; the '
+      +'renovation records in this book are that list.',
+   ask:'The closing statements from the purchase and the sale, and the improvement receipts.'},
+  {id:'inherit', g:'family', per:true, q:'Did you inherit money, property or a retirement account this year?',
+   yes:'An inheritance is not income. Property’s cost resets to its value at the death, so a sale soon after shows '
+      +'little gain. An inherited retirement account is the exception: most heirs must empty it within ten years, and '
+      +'each withdrawal is income — which years to take it in is a choice worth making on purpose.',
+   ask:'The estate’s valuation at the date of death, and the account custodian’s letter.'},
+  {id:'biggift', g:'family', per:true, q:'Did you give one person — not a charity — a large gift this year?',
+   yes:'A gift over the yearly exclusion to any one person means a gift tax return (Form 709), almost never any tax: it '
+      +'counts against a lifetime amount. Two spouses can each give the exclusion, tuition and medical bills paid '
+      +'straight to the school or the doctor do not count at all, and a 529 can take five years’ worth at once.',
+   ask:'What was given, to whom, and when.'},
+  {id:'foreign', g:'save', per:false, q:'Do you have a bank or investment account outside the United States, or pay tax to another country?',
+   yes:'Accounts abroad over a modest total have to be reported — to the Treasury (the FBAR) and, above a higher '
+      +'line, on Form 8938 — and the penalties for not doing so dwarf any tax. Tax another country kept, including on '
+      +'a fund’s foreign dividends, is a credit against yours.',
+   ask:'Each account’s highest balance in the year, and the foreign tax shown on your 1099-DIV.'},
+  {id:'otherstate', g:'work', per:true, q:'Did you live in, or work in, more than one state this year?',
+   yes:'Each state taxes what was earned in it, and your home state taxes everything and gives a credit for what the '
+      +'other took — claimed on its own form, not automatic. Days worked from home for an out-of-state employer are '
+      +'counted differently state by state, New York most aggressively.',
+   ask:'Your W-2’s state boxes, and a count of days worked in each place.'},
+  {id:'ev', g:'home', per:true, q:'Did you buy an electric vehicle, a charger, or energy improvements for your home this year?',
+   yes:'The 2025 law ended the federal credits for these: a vehicle bought after September 2025 and home improvements '
+      +'after December 2025 earn nothing, and a home charger only until the middle of 2026. A purchase before those '
+      +'dates is still claimed on that year’s return, and state and utility rebates run on their own rules.',
+   ask:'The purchase contract with its date, and the seller’s report for a vehicle.'},
+  {id:'spouse', g:'family', per:false, q:'Does your spouse earn income too — a job, self-employment — or study full-time?',
    yes:'Then the dependent-care account and the childcare credit are both open to you. A joint '
       +'return can shelter care money only up to the LOWER of the two earned incomes, and a '
       +'full-time student or a spouse unable to care for themselves counts as earning for those '
       +'months. Answer no and the app stops pricing an election you could not keep.',
    ask:'Nothing to look up — you know this one.'},
-  {id:'life', per:true, q:'Anything change this year — marriage, a birth, a house, a move, a death?',
+  {id:'life', g:'year', per:true, q:'Anything change this year — marriage, a birth, a house, a move, a death?',
    yes:'Every one of these changes the filing status, the credits or the state, and all three are '
       +'assumed from last year’s return everywhere else in this app. It is the question most worth '
       +'answering because it silently invalidates the others.',
    ask:'Nothing to look up — you know this one.'},
 ];
+
+const TAX_INTAKE_GROUPS=[['year','This year, on paper'],['work','Work, pay and benefits'],['save','Savings and investments'],['home','Your home'],['family','Family']];
 function taxIntakeKey(q,year){
   return q.per?(q.id+':'+Number(String(year).slice(0,4))):q.id;
 }
@@ -12862,7 +12928,7 @@ function taxIntakeRead(year){
   return TAX_INTAKE.map(function(q){
     const k=taxIntakeKey(q,year);
     const v=all[k];
-    return {id:q.id, key:k, per:q.per, q:q.q, yes:q.yes, ask:q.ask,
+    return {id:q.id, g:q.g, key:k, per:q.per, q:q.q, yes:q.yes, ask:q.ask,
       a:(v==='yes'||v==='no')?v:''};
   });
 }
@@ -16075,6 +16141,110 @@ const TAX_PLAYS_AMT=[
       'Exercising incentive stock options and holding the shares adds the spread to this form. Type it on File it → Build before you exercise, and see.',
     'Worked from this book’s estimate of the year. Depreciation, private-activity bond interest and the foreign tax credit are not in it.']; }
 }];
+
+
+
+function _taxYearTables(){
+  const T=function(v,label){ return {t:v,label:label}; }, has=function(f){ try{ return f(); }catch(e){ return null; } };
+  return {
+    TAX_FED:T(has(function(){ return TAX_FED; }),'the federal brackets'),
+    TAX_CONST:T(has(function(){ return TAX_CONST; }),'the standard deduction and the child credit'),
+    TAX_LTCG:T(has(function(){ return TAX_LTCG; }),'the capital-gain bands'),
+    TAX_LIMITS:T(has(function(){ return TAX_LIMITS; }),'the contribution limits and the state-and-local cap'),
+    TAX_AMT:T(has(function(){ return TAX_AMT; }),'the minimum tax’s exemption'),
+    TAX_SS_BASE:T(has(function(){ return TAX_SS_BASE; }),'the Social Security wage base'),
+    TAX_QBI:T(has(function(){ return TAX_QBI; }),'the business-income deduction’s thresholds'),
+    TAX_CATCHUP:T(has(function(){ return TAX_CATCHUP; }),'the catch-up limit'),
+    TAX_ACTC:T(has(function(){ return TAX_ACTC; }),'the refundable child credit')};
+}
+
+
+function taxTablesMissing(year){
+  const y=Number(String(year).slice(0,4)); if(!Number.isFinite(y)) return [];
+  const R=_taxYearTables();
+  return Object.keys(R).map(function(k){
+    const t=R[k].t; if(!t||typeof t!=='object'||t[y]!=null) return null;
+    const last=Math.max.apply(null,Object.keys(t).map(Number).filter(Number.isFinite));
+    return y>last?{name:k,label:R[k].label,last:last}:null; }).filter(Boolean);
+}
+function taxTablesNote(year){
+  const M=taxTablesMissing(year); if(!M.length) return '';
+  const y=String(year).slice(0,4);
+  return '<div class="mut tblmiss" style="font-size:12px;line-height:1.55;margin:0 0 10px">This app has no '+esc(y)+' figures yet for '
+    +esc(M.map(function(m){ return m.label; }).join('; '))+'. Whatever needs them stays unsaid here rather than guessed; they go in when they are published.</div>';
+}
+
+function _taxNoNames(text){
+  let out=String(text||'');
+  (typeof taxProfile==='function'?(taxProfile().deps||[]):[]).forEach(function(d){
+    const nm=String(d&&d.name||'').trim(); if(nm.length<2) return;
+    out=out.split(nm).join('your child'); });
+  return out;
+}
+function taxReviewAskText(year,today){
+  const P=taxPlays(year,today), F=P.facts||{}, y=P.year;
+  const D=(typeof taxPlaysSplit==='function')?taxPlaysSplit(P,year):{live:P.rows,done:[]};
+  const prof=typeof taxProfile==='function'?taxProfile():{deps:[]};
+  const ages=(prof.deps||[]).map(function(d){ return y-Number(d.born); }).filter(function(a){ return a>=0&&a<120; }).sort(function(a,b){ return b-a; });
+  const L=['A REVIEW REQUEST — what has this missed? · '+y];
+  L.push('The household: '+(typeof taxFilingLabel==='function'&&F.filing?taxFilingLabel(F.filing):(F.filing||'filing status not set'))
+    +(F.stateName&&F.stateName!=='State'?', '+F.stateName:'')
+    +(ages.length?', '+ages.length+' child'+(ages.length===1?'':'ren')+' aged '+ages.join(' and '):', no dependents on file')
+    +(F.mort>0||F.prop>0?', owns a home':'')+(F.elective!=null&&(F.k401>0||F.k401Per>0)?', a workplace retirement plan':'')+'.');
+  if(F.agi!=null) L.push('Income: AGI '+money(F.agi,0)+(F.taxable!=null?', taxable '+money(F.taxable,0):'')+(F.fedRate!=null?'; federal bracket '+_rateLab(F.fedRate):'')
+    +(F.stateRate!=null?', state '+_rateLab(F.stateRate):'')+(F.live?' (this year’s estimate so far)':'')+'.');
+  if(F.amtWork) L.push('Minimum tax (Form 6251, worked): '+(F.amtWork.amt>0?money(F.amtWork.amt,0)+' owed':'none, '+money(F.amtWork.margin,0)+' to spare')+'.');
+  const one=function(r){ return '  • '+_briefPlain(r.what)+(r.dollars!=null?' — '+money(r.dollars,0)+(r.hedge==='ceiling'?' at most':r.hedge==='est'?' estimated':''):' — unpriced'); };
+  L.push('', 'WHAT THE APP FOUND ('+D.live.length+')'); D.live.forEach(function(r){ L.push(one(r)); });
+  if(D.done.length){ L.push('', 'ALREADY DONE'); D.done.forEach(function(r){ L.push(one(r)); }); }
+  if(P.skipped.length){ L.push('', 'LOOKED FOR AND NOT JUDGED, WITH WHY'); P.skipped.forEach(function(s){ L.push('  • '+s.id+': '+_briefPlain(s.why)); }); }
+  if(typeof taxIntakeSummary==='function'){
+    const I=taxIntakeSummary(year), q=function(r){ return '  • '+_briefPlain(r.q); };
+    const yes=I.rows.filter(function(r){ return r.a==='yes'; }), no=I.rows.filter(function(r){ return r.a==='no'; }), open=I.rows.filter(function(r){ return r.a===''; });
+    if(yes.length){ L.push('', 'THE HOUSEHOLD SAID YES'); yes.forEach(function(r){ L.push(q(r)); }); }
+    if(no.length){ L.push('', 'THE HOUSEHOLD SAID NO'); no.forEach(function(r){ L.push(q(r)); }); }
+    if(open.length){ L.push('', 'NOT YET ANSWERED'); open.forEach(function(r){ L.push(q(r)); }); }
+  }
+  const M=taxTablesMissing(year);
+  if(M.length) L.push('', 'NO '+y+' FIGURES IN THE APP YET FOR: '+M.map(function(m){ return m.label; }).join('; ')+'.');
+  L.push('', TAX_REVIEW_ASK);
+  return _taxNoNames(L.join('\n'));
+}
+const TAX_REVIEW_ASK='THE QUESTION: Reading this as a tax adviser for this household, what could lower their federal or state tax that is not listed above? '
+  +'For each: what it is, roughly what it is worth here, the deadline, the form or Code section, and what you would need to know to be sure. '
+  +'Say too where anything above looks wrong.';
+const TAX_REVIEW_PROMPT='You are a careful U.S. tax adviser giving a second opinion on one household’s position, from the summary below — figures and plain descriptions, '
+  +'no names. Answer THE QUESTION at its end in plain English, in at most 350 words, as a short numbered list, most valuable first. Use only what the summary supports; '
+  +'where something depends on a fact it does not give, say which. Do not repeat what is already listed as found. No disclaimers and no generic tips.';
+
+async function taxReviewAsk(year,today){
+  const V=S.tax=S.tax||{}; V.missed={busy:true,year:year}; render();
+  try{
+    if(typeof localOnly==='function'&&localOnly()) throw new Error('Local-only mode is on, so nothing is sent. Turn it off under Receipts → Reading engine to ask.');
+    const text=taxReviewAskText(year,today), gen=BOOKGEN;
+    const a=await callClaude([{type:'text',text:TAX_REVIEW_PROMPT+'\n\n'+text}],1100);
+    if(BOOKGEN!==gen||S.tax!==V){ V.missed=null; return; }   
+    V.missed={year:year,answer:String(a||'').trim(),at:todayISO()};
+  }catch(e){ V.missed={year:year,err:String(e&&e.message||e)}; }
+  render();
+}
+
+function taxReviewAskHtml(year,today){
+  const m=(S.tax&&S.tax.missed&&S.tax.missed.year===year)?S.tax.missed:null;
+  let text=''; try{ text=taxReviewAskText(year,today); }catch(e){ return ''; }
+  return '<div class="tra" style="margin-top:12px"><div style="font-weight:650;font-size:13px">What did this miss?</div>'
+    +'<div class="mut" style="font-size:12px;line-height:1.55;margin:3px 0 8px">This page can only say what it was written to look for. A review request sums up your position — figures, no names — '
+    +'and asks a second adviser what is not on it.</div>'
+    +'<button class="btn" data-act="reviewask"'+(m&&m.busy?' disabled':'')+'>'+(m&&m.busy?'Asking…':'Ask the advisor what this missed')+'</button> '
+    +'<button class="btn ghost" data-act="reviewcopy">Copy the request for your preparer</button>'
+    +'<details style="margin-top:8px"><summary class="mut" style="font-size:12px;cursor:pointer">What is sent</summary>'
+    +'<pre class="trasent" style="white-space:pre-wrap;font-size:11.5px;line-height:1.5;margin:6px 0 0">'+esc(text)+'</pre></details>'
+    +(m&&m.err?'<div class="off" style="font-size:12.5px;margin-top:8px">'+esc(m.err)+'</div>':'')
+    +(m&&m.answer?'<div class="traans" style="margin-top:10px;padding:10px 12px;border:1px solid var(--hair);border-radius:8px">'
+      +'<div class="mut" style="font-size:11.5px;margin-bottom:6px">A second opinion from the advisor, '+esc(m.at)+'. Not a finding: the app has priced none of it. Check each against your own papers.</div>'
+      +'<div style="white-space:pre-wrap;font-size:13px;line-height:1.55">'+esc(m.answer)+'</div></div>':'')
+    +'</div>';
+}
 
 
 
@@ -19784,11 +19954,19 @@ function _taxIntakeHtml(year,F){
     +'<span class="r">'+(S.open?S.open+' unanswered':'all answered')+'</span></h3>'
     +'<div class="mut" style="font-size:12px;line-height:1.55;margin-bottom:9px">'
     +'Everything above reads your sheets. None of it can see the things a preparer opens by '
-    +'asking about, because none of them are on a return. <b>An answer here buys a conversation, '
-    +'not a number</b> — the limits and phase-outs these turn on are figures this app has not '
-    +'been given, and it will not invent them to put a confident total next to one.</div>'
+    +'asking about, because none of them are on a return. <b>An answer never puts a figure on this panel.</b> '
+    +'Where the app holds the year’s limits, a yes turns on a row in Ways to pay less, priced there; where it '
+    +'has not been given them, it says what to ask about and will not invent a number.</div>'
     +'<div class="tblwrap"><table class="tbl tight"><tbody>'
-    +S.rows.map(function(r){
+    
+
+    +(typeof TAX_INTAKE_GROUPS!=='undefined'?TAX_INTAKE_GROUPS:[['','']]).map(function(g,gi,GS){
+      const mine=S.rows.filter(function(r){ return r.g===g[0]||(gi===GS.length-1&&!GS.some(function(x){ return x[0]===r.g; })); });
+      if(!mine.length) return '';
+      const open=mine.filter(function(r){ return r.a===''; }).length;
+      return (g[1]?'<tr class="qgrp"><th colspan="2" style="text-align:left;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;padding-top:12px">'+esc(g[1])
+        +' <span class="mut" style="text-transform:none;letter-spacing:0;font-weight:400">· '+(open?open+' to answer':'all answered')+'</span></th></tr>':'')
+      +mine.map(function(r){
       return '<tr><td style="width:52px">'+sel(r)+'</td>'
         +'<td style="font-size:12.5px">'+esc(r.q)
         +(r.a==='yes'?'<div class="mut" style="font-size:11.5px;margin-top:4px">'+esc(r.yes)+'</div>':'')
@@ -19802,7 +19980,7 @@ function _taxIntakeHtml(year,F){
           ?taxEstPayHtml(year):'')
         +(r.a===''?'<div class="mut" style="font-size:11px;margin-top:3px">'
           +esc(r.ask)+'</div>':'')
-        +'</td></tr>'; }).join('')
+        +'</td></tr>'; }).join(''); }).join('')
     +'</tbody></table></div></div>';
 }
 
@@ -19843,7 +20021,7 @@ function taxPlaysHtml(year,today){
         :(D.done.length?'<span class="mut">'+D.done.length+' marked done</span>':''));
   
 
-  return _taxIntakeHtml(year,P.facts)+foldSheet('tax.plays','Ways to pay less',right,
+  return _taxIntakeHtml(year,P.facts)+(typeof taxTablesNote==='function'?taxTablesNote(year):'')+foldSheet('tax.plays','Ways to pay less',right,
     (function(){
       if(!D.live.length) return D.done.length
         ?'<div class="mut" style="font-size:12.5px">Everything found for '+P.year+' is marked done below.</div>'
@@ -19875,6 +20053,8 @@ function taxPlaysHtml(year,today){
     +(D.live.length||D.done.length
       ?'<div style="margin-top:11px"><button class="btn" data-act="playscopy">Copy the brief for your preparer</button></div>'
       :'')
+    
+    +(F.current&&typeof taxReviewAskHtml==='function'?taxReviewAskHtml(year,today):'')
     +'<div class="mut" style="font-size:11.5px;line-height:1.55;margin-top:11px">'
     +'Every one of these is a deduction or a credit the law allows and this return did not take, '
     +'priced on your own figures. Nothing here hides income or invents an expense — the point is '
@@ -19944,6 +20124,8 @@ function taxPlaysText(year,today){
     if(I.yes.length) out+='\nANSWERED YES\n'+I.yes.map(function(r){ return '  • '+_briefPlain(r.q)+'\n'; }).join('');
     if(open.length) out+='\nSTILL TO ANSWER ('+open.length+' of '+I.total+')\n'+open.map(function(r){ return '  • '+_briefPlain(r.q)+'\n'; }).join('');
   }
+  if(typeof taxTablesMissing==='function'){ const M=taxTablesMissing(year);
+    if(M.length) out+='\nNO '+String(P.year).slice(0,4)+' FIGURES IN THE APP YET FOR: '+M.map(function(m){ return m.label; }).join('; ')+'\n'; }
   out+='\nEvery item is a deduction, a credit or a timing choice the law allows and this return did not take, '
     +'priced on the book’s own figures. Not professional advice; a year with anything unusual in it deserves a CPA’s eyes.\n';
   return out;
@@ -43047,6 +43229,17 @@ function _imgLossOk(what){
     const I=taxInvInt(typeof taxYearKey==='function'?taxYearKey(b.dataset.y):b.dataset.y);
     return toast(I?money(I.allowed,0)+' deductible in '+b.dataset.y+(I.carry>0?', '+money(I.carry,0)+' carried forward':'')+' · ⌘Z to undo':'Cleared','ok');
   }
+  
+  if(act==='reviewask'){ const py=_taxYear(); if(py) taxReviewAsk(py); return; }
+  if(act==='reviewcopy'){
+    const py=_taxYear(), t=py&&taxReviewAskText(py);
+    if(!t) return;
+    const done=function(){ toast('Copied — the review request, ready to paste','ok'); };
+    (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).then(done)
+      .catch(function(){ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select();
+        try{ document.execCommand('copy'); done(); }catch(e){ toast('Could not copy','warn'); } ta.remove(); });
+    return;
+  }
   if(act==='taxnewdedsave'){
     const y=Number(b.dataset.y), v=id=>{ const e=document.getElementById(id); return e?String(e.value||'').trim():null; };
     const yr=s=>s===''||s==null?null:/^(19|20)\d{2}$/.test(s)&&Number(s)<=new Date().getFullYear()?Number(s):NaN;
@@ -49422,7 +49615,7 @@ function renderOnce(name,fn){
     historyForget,
     AUTH,authUser,authWanted,authSetWanted,authSignIn,authSignOut,authErrText,authExplain,authInit,AUTH_CFG_URL,_rulesOwn,_rulesShared,
     pfDerive,syncFingerprint,pfEncrypt,pfDecrypt,bookEmpty,syncFetch,syncDeleteDoc,syncTornWhy,syncSecure,syncPushDoc,syncPullDoc,_syncPartId,syncSnapList,syncSnapKeep,syncSnapRows,syncSnapFail,_snapPlan,PF_SNAP_MIN,get _syncLastWrite(){return _syncLastWrite;},PF_SNAP_TIERS,PF_SNAP_N,
-    taxRuns,TAX_LIMITS,taxFacts,taxPlays,taxPlaysHtml,taxPlaysRowHtml,taxPlayById,_taxPlayList,TAX_PLAYS_DEDUCT,TAX_PLAYS_INCOME,taxFilingFor,TAX_FILINGS,taxFilingKey,taxFilingLabel,taxSurtaxThreshold,taxCtcThreshold,taxSaltCap,taxStage,taxAmendBy,taxDueDate,taxFiled,taxFiledRead,taxFiledSet,TAX_INTAKE,taxIntakeRead,taxGifts,taxGiftLong,taxGiftValue,taxGiftSummary,taxGiftAdd,taxGiftDel,taxGiftAck,taxGiftsHtml,taxGiftDraftRead,taxGiftsShown,taxGiftsSheetHtml,taxGiftCandidates,taxGiftAdopt,taxGiftLetters,taxGiftLetterLink,taxGiftLetterSet,taxGiftLetterFlags,TAXDOC_LETTER,taxLogShown,taxBookCandidates,GIFT_CARRY_YEARS,taxGiftLimit,taxGiftCarry,taxGiftCarryFlags,_giftRows,_giftCats,MED_FLOOR,taxMedical,taxMedValue,taxMedSummary,taxMedAdd,taxMedDel,taxMedCandidates,taxMedAdopt,taxMedShown,taxMedicalSheetHtml,taxMedicalHtml,taxMedDraftRead,ESTPAY_TO,taxEstPays,taxEstPaySummary,taxEstPayFed,taxEstPayAdd,taxEstPayDel,taxEstPayExplains,taxEstPayShown,taxEstPaySheetHtml,taxEstPayHtml,taxEstPayDraftRead,taxIntakeSet,taxIntakeSummary,taxIntakeKey,taxDoneRead,taxDoneIs,taxDoneSet,taxPlaysSplit,taxPlaysGroups,taxAmendByFor,taxNyAmendBy,_taxRollFwd,taxPublished,taxDedWorth,taxDeferWorth,_bunchAnnual,_bunchDoubled,_bunchNp,_bunchGain,taxMedDeductible,TAX_SUPP,taxSupRate,taxSupHeld,taxSupWages,taxQualDivWorth,TAX_PLAYS_INVEST,TAX_PLAYS_BANDS,TAX_PLAYS_ACCOUNTS,TAX_PLAYS_BROKERAGE,taxDueLater,taxPlaysText,taxDeferStack,taxDeferPlan,taxDeferHtml,taxDeferYears,taxCapGains,taxPairsAll,_taxHeldFor,_taxPrevFor,_jurKey,taxBlocks,taxBlockHtml,fmtTax,taxFormLines,taxPairs,taxBrackets,taxReturn,taxChecks,taxReturnHtml,TAX_FORMS,taxBracketBar,taxSplitBar,_rateLab,taxYearLine,taxHero,taxWhyFor,taxMarginal,taxAdvice,taxAdviceHtml,taxPlanBands,_planOpenBand,taxPlanFill,taxPlanSeed,taxPlanCompute,taxPlanForget,taxPlanHtml,taxPlanPaint,taxFilePack,taxFilePackText,taxFileHtml,taxConst,TAX_CONST,taxProfile,taxProfileParse,taxProfileSave,taxDeductScan,taxQuarterly,taxHarborPct,taxCreditScan,taxAdvisorHtml,taxDocs,taxDocsFor,taxDocAdd,taxDocParse,taxDocRead,taxDocCheck,taxDocExpected,taxDocsHtml,TAXDOC_PROMPT,TAX_FED,TAX_LTCG,taxFedBrackets,taxFedEstimate,taxEstimateInputs,taxSecondOpinion,taxSecondOpinionHtml,TAX_ENERGY,taxEnergyRows,taxEnergyCredit,taxEnergyHtml,taxYoY,taxYoYHtml,taxW4,taxW4Html,taxDepCare,taxDepCareHtml,weekDoneShown,weekLeft,weekResetPrev,weekResetNext,weekLeftWords,weekBadgePaint,taxVerify,taxVerifyRows,taxVerifyHtml,taxEvidence,taxEvidenceHtml,TAX_SETTLES,taxReviewFlags,taxReviewSummary,taxReviewRank,taxSurtaxFlags,taxStaleFlags,taxStaleCells,taxNyDeductionFrozen,taxNyDeductionFlag,taxNyClock,taxCellFrozenSince,taxCellVintage,TAX_SHEET_CONSTANTS,taxMedhiBase,taxNiitBase,_taxNonWage,taxReviewHtml,TAXWORK_FIELDS,taxWork,taxWorkSet,taxWorkInputs,taxWorkEstimate,taxBuildHtml,
+    taxRuns,TAX_LIMITS,taxFacts,taxPlays,taxPlaysHtml,taxPlaysRowHtml,taxPlayById,_taxPlayList,TAX_PLAYS_DEDUCT,TAX_PLAYS_INCOME,taxFilingFor,TAX_FILINGS,taxFilingKey,taxFilingLabel,taxSurtaxThreshold,taxCtcThreshold,taxSaltCap,taxStage,taxAmendBy,taxDueDate,taxFiled,taxFiledRead,taxFiledSet,TAX_INTAKE,TAX_INTAKE_GROUPS,taxIntakeRead,taxGifts,taxGiftLong,taxGiftValue,taxGiftSummary,taxGiftAdd,taxGiftDel,taxGiftAck,taxGiftsHtml,taxGiftDraftRead,taxGiftsShown,taxGiftsSheetHtml,taxGiftCandidates,taxGiftAdopt,taxGiftLetters,taxGiftLetterLink,taxGiftLetterSet,taxGiftLetterFlags,TAXDOC_LETTER,taxLogShown,taxBookCandidates,GIFT_CARRY_YEARS,taxGiftLimit,taxGiftCarry,taxGiftCarryFlags,_giftRows,_giftCats,MED_FLOOR,taxMedical,taxMedValue,taxMedSummary,taxMedAdd,taxMedDel,taxMedCandidates,taxMedAdopt,taxMedShown,taxMedicalSheetHtml,taxMedicalHtml,taxMedDraftRead,ESTPAY_TO,taxEstPays,taxEstPaySummary,taxEstPayFed,taxEstPayAdd,taxEstPayDel,taxEstPayExplains,taxEstPayShown,taxEstPaySheetHtml,taxEstPayHtml,taxEstPayDraftRead,taxIntakeSet,taxIntakeSummary,taxIntakeKey,taxDoneRead,taxDoneIs,taxDoneSet,taxPlaysSplit,taxPlaysGroups,taxAmendByFor,taxNyAmendBy,_taxRollFwd,taxPublished,taxDedWorth,taxDeferWorth,_bunchAnnual,_bunchDoubled,_bunchNp,_bunchGain,taxMedDeductible,TAX_SUPP,taxSupRate,taxSupHeld,taxSupWages,taxQualDivWorth,TAX_PLAYS_INVEST,TAX_PLAYS_BANDS,TAX_PLAYS_ACCOUNTS,TAX_PLAYS_BROKERAGE,taxDueLater,taxPlaysText,taxDeferStack,taxDeferPlan,taxDeferHtml,taxDeferYears,taxCapGains,taxPairsAll,_taxHeldFor,_taxPrevFor,_jurKey,taxBlocks,taxBlockHtml,fmtTax,taxFormLines,taxPairs,taxBrackets,taxReturn,taxChecks,taxReturnHtml,TAX_FORMS,taxBracketBar,taxSplitBar,_rateLab,taxYearLine,taxHero,taxWhyFor,taxMarginal,taxAdvice,taxAdviceHtml,taxPlanBands,_planOpenBand,taxPlanFill,taxPlanSeed,taxPlanCompute,taxPlanForget,taxPlanHtml,taxPlanPaint,taxFilePack,taxFilePackText,taxFileHtml,taxConst,TAX_CONST,taxProfile,taxProfileParse,taxProfileSave,taxDeductScan,taxQuarterly,taxHarborPct,taxCreditScan,taxAdvisorHtml,taxDocs,taxDocsFor,taxDocAdd,taxDocParse,taxDocRead,taxDocCheck,taxDocExpected,taxDocsHtml,TAXDOC_PROMPT,TAX_FED,TAX_LTCG,taxFedBrackets,taxFedEstimate,taxEstimateInputs,taxSecondOpinion,taxSecondOpinionHtml,TAX_ENERGY,taxEnergyRows,taxEnergyCredit,taxEnergyHtml,taxYoY,taxYoYHtml,taxW4,taxW4Html,taxDepCare,taxDepCareHtml,weekDoneShown,weekLeft,weekResetPrev,weekResetNext,weekLeftWords,weekBadgePaint,taxVerify,taxVerifyRows,taxVerifyHtml,taxEvidence,taxEvidenceHtml,TAX_SETTLES,taxReviewFlags,taxReviewSummary,taxReviewRank,taxSurtaxFlags,taxStaleFlags,taxStaleCells,taxNyDeductionFrozen,taxNyDeductionFlag,taxNyClock,taxCellFrozenSince,taxCellVintage,TAX_SHEET_CONSTANTS,taxMedhiBase,taxNiitBase,_taxNonWage,taxReviewHtml,TAXWORK_FIELDS,taxWork,taxWorkSet,taxWorkInputs,taxWorkEstimate,taxBuildHtml,
     stmtParse,stmtPhotoLines,_stmtIsSummary,_stmtDateParts,_stmtYearFrom,_stmtIso,_stmtDate,stmtPhotoMerge,stmtPhotoRead,STMT_PHOTO_PROMPT,_stmtLineKey,reconMatch,reconCandidates,reconScore,stmtNameScore,cardMatches,stmtCat,gridParse,gridDiff,
     pdfRuns,pdfLines,_a85,_ahx,_stmtStripDates,stmtCycle,parseHomeDepot,pdfToReceipt,rcpAddPdf,reconImport,RECON_ISSUERS,reconIssuerOfName,reconIssuerOfText,reconGuard,reconGuardHold,reconHeldImport,reconHeldPanel,reconRun,reconDecide,reconGet,reconKey,reconOrphans,
     SRV,srvUrl,srvSetUrl,srvOn,srvHealth,srvLoadBook,srvSaveBook,srvFlush,srvReadReceipt,srvFileReceipt,srvConnect,srvAuthPrompt,srvAdopt};
