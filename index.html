@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-EUDK1xxwOJaRx8qtfgEvtZ2jd8zvFAgUM8egU+482Vg=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-6oCyefHbW86Je6Iu259hCGOoh7D3HKM0q4MbLlAz6nE=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2906,7 +2906,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.19";
+const APP_V="v29.20";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2920,7 +2920,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="6314864";
+const APP_BUILD="96e26a3";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -12450,12 +12450,18 @@ function taxFacts(year,today){
 
   const logGift=(scan&&scan.charity&&scan.charity.fromLog)?Math.max(0,r2v(F.charity-F.charFloor)):0;
   const logMed=(scan&&scan.medical&&scan.medical.fromLog)?r2v(taxMedDeductible(F.medical,agi)):0;
-  F.logItem=r2v(logGift+logMed);
+  
+  let II=null; try{ II=typeof taxInvInt==='function'?taxInvInt(year):null; }catch(e){ II=null; }
+  F.invInt=II?II.paid:null; F.invCarryIn=II?II.carryIn:null; F.invNii=II?II.nii:null; F.invAllowed=II?II.allowed:null; F.invCarry=II?II.carry:null;
+  F.logItem=r2v(logGift+logMed+(II?II.allowed:0));
+  if(F.dedBase!=null&&II) F.dedBase=r2v(F.dedBase+II.allowed);
   if(F.trueItem!=null&&F.logItem>0){
     F.trueItem=r2v(F.trueItem+F.logItem);
     F.effItem=Math.max(F.trueItem,F.std==null?0:F.std);
     F.missedDed=F.taken!=null?Math.max(0,r2v(F.effItem-F.taken)):null;
   }
+  
+  F.invItemizes=F.std!=null&&((agi!=null&&taxable!=null&&!F.live&&F.taken!=null)?F.taken>F.std+1:(F.trueItem!=null&&F.trueItem>F.std));
   
 
   
@@ -12791,6 +12797,11 @@ const TAX_INTAKE=[
       +'they count for nothing — the list says how close this year is. Anything paid from an HSA or '
       +'FSA went in untaxed and does not count again.',
    ask:'The explanation-of-benefits statements from your insurer, and the pharmacy’s year-end printout.'},
+  {id:'invloan', per:true, q:'Did you pay interest on a loan used to buy investments — company shares, a margin loan?',
+   yes:'That interest is an itemized deduction, up to what your investments paid you in interest and ordinary dividends, and '
+      +'what it cannot use carries forward. Enter the interest on Check-up, under “A loan to buy investments”, and it is '
+      +'worked into the deduction, New York’s and the investment-income surtax.',
+   ask:'The lender’s year-end statement, which splits what you paid into interest and principal.'},
   {id:'commute', per:false, q:'Do you pay for a commute — train, bus, ferry or parking at work?',
    yes:'Transit and parking can come out of pay before tax through a §132(f) commuter benefit, '
       +'escaping federal, state and payroll tax alike — the same rate as the dependent-care '
@@ -14766,7 +14777,7 @@ function taxAdvisorHtml(year){
     +(typeof taxSecondOpinionHtml==='function'?taxSecondOpinionHtml(year):'')
     +(typeof nyReturnHtml==='function'?nyReturnHtml(year):'')   
     +taxYoYHtml(year)
-    +dedHtml+(typeof taxNewDedHtml==='function'?taxNewDedHtml(year):'')+cHtml
+    +dedHtml+(typeof taxInvIntCard==='function'?taxInvIntCard(year):'')+(typeof taxNewDedHtml==='function'?taxNewDedHtml(year):'')+cHtml
     +(typeof taxDepCareHtml==='function'?taxDepCareHtml(year):'')
     +(typeof taxEnergyHtml==='function'?taxEnergyHtml(year):'')
     +profHtml;
@@ -15095,7 +15106,7 @@ function taxFedEstimate(inp){
   const thr=taxSurtaxThreshold(f);
   const medWages=inp.medWages!=null?inp.medWages:wages;
   const addlMed=r2v(Math.max(0,medWages-thr)*0.009);
-  const netInv=r2v(interest+ordDiv+Math.max(0,ltcg));
+  const netInv=r2v(Math.max(0,interest+ordDiv+Math.max(0,ltcg)-Math.max(0,inp.invInt||0)));
   const niit=r2v(Math.min(netInv,Math.max(0,agi-thr))*0.038);
   const beforeCredits=r2v(ordTax+prefTax);
   
@@ -15158,7 +15169,9 @@ function taxEstimateInputs(year){
   let F=null; if(ded==null){ try{ F=taxFacts(year); }catch(e){ F=null; } }
   const IT=F&&(F.mort!=null||F.saltPaid!=null)?(function(){
     const cap=taxSaltCap(y,_agi,_fil), salt=F.saltPaid!=null?r2v(Math.min(F.saltPaid,cap!=null?cap:Infinity)):0;
-    return {mort:F.mort||0,mortLimit:F.mortSrc==='loan'&&F.mortLimit&&F.mortLimit.fed.fraction<1?F.mortLimit:null,salt:salt,saltPaid:F.saltPaid,saltCap:cap,logs:F.logItem||0,total:r2v((F.mort||0)+salt+(F.logItem||0))}; })():null;
+    
+    const inv=F.invAllowed||0;
+    return {mort:F.mort||0,mortLimit:F.mortSrc==='loan'&&F.mortLimit&&F.mortLimit.fed.fraction<1?F.mortLimit:null,salt:salt,saltPaid:F.saltPaid,saltCap:cap,inv:inv,logs:r2v((F.logItem||0)-inv),total:r2v((F.mort||0)+salt+(F.logItem||0))}; })():null;
   const itemize=!!(IT&&C&&IT.total>C.std[_fil]);
   const deduction=pick('deduction',null,ded!=null?ded:(C?r2v((itemize?IT.total:C.std[_fil])+(ND?ND.total:0)):null));
   if(ded==null&&C) src.deduction=itemize?'itemized':'standard';
@@ -15179,6 +15192,9 @@ function taxEstimateInputs(year){
     ltPref:SD&&src.ltcg==='documents'?SD.pref:null,schD:SD,
     medWages:w2.length?(sum(w2,'5')||null):null,
     deduction,newDed:ND&&ND.total>0?ND:null,itemized:ded==null?IT:null,itemize:itemize,
+    
+    invInt:(function(){ let I=null; try{ I=typeof taxInvInt==='function'?taxInvInt(year):null; }catch(e){ I=null; }
+      return I&&(ded==null?itemize:(C&&ded>C.std[_fil]+1))?I.allowed:0; })(),
     ctc:cs?cs.amount:0,ctcKids:cs&&cs.kids?cs.kids.length:0,care:care,earned:r2v(wages+other),held,src};
 }
 function taxSecondOpinion(year){
@@ -15342,10 +15358,15 @@ function taxCareLost(F,elect){
 }
 
 
+
+
 function taxTrumpKids(year){
   const y=Number(String(year).slice(0,4));
-  if(!(y>=2025&&y<=2028)||typeof taxProfile!=='function') return [];
-  return taxProfile().deps.filter(function(d){ return Number(d.born)===y; });
+  if(!(y>=2025)||typeof taxProfile!=='function') return [];
+  return taxProfile().deps.filter(function(d){ const b=Number(d.born);
+    if(!(b>=2025&&b<=2028)||b>y||y-b>17) return false;
+    for(let k=b;k<y;k++) if(typeof taxDoneIs==='function'&&taxDoneIs(String(k),'trump-account-pilot')) return false;
+    return true; });
 }
 const TAX_PLAYS_KIDS=[
 { id:'trump-account-pilot', family:'income',
@@ -15361,8 +15382,8 @@ const TAX_PLAYS_KIDS=[
   say:function(F){
     const K=taxTrumpKids(F.year), names=K.map(function(d){ return esc(d.name); }).join(' and ');
     return {what:'Ask for the $1,000 Trump account deposit for '+names,
-      why:names+(K.length>1?' were':' was')+' born in '+F.year+', so '+(K.length>1?'each':'')
-        +' qualifies for a one-time <b>$1,000</b> from Treasury into a Trump account — if a parent elects it on '
+      why:names+(K.length>1?' were':' was')+' born in '+K.map(function(d){ return d.born; }).filter(function(v,i,a){ return a.indexOf(v)===i; }).join(' and ')+', so '+(K.length>1?'each ':'')
+        +'qualifies for a one-time <b>$1,000</b> from Treasury into a Trump account — if a parent elects it on '
         +'Form 4547. It does not arrive by itself, even where Treasury has opened the account.',
       chip:'<code>'+K.length+' × $1,000 = '+money(1000*K.length,0)+', elected on Form 4547</code>'};
   },
@@ -15427,6 +15448,7 @@ function taxEnrollFacts(F,R,L,commuteAns){
       F.commuteMonthly=(F.commutePer>0&&c)?r2v(F.commutePer*c.per/12):null; }
     if(d.matchYtd!=null){ F.matchPer=d.match; F.matchYtd=d.matchYtd; }
     if(d.deferral!=null) F.k401Per=d.deferral;
+    if(d.loanYtd>0) F.stubLoanYtd=d.loanYtd;   
   }
   
   let spend=0; const cols=[];
@@ -15545,6 +15567,121 @@ const TAX_PLAYS_ENROLL=[
 
 
 
+function taxInvIntAnswers(year){
+  const m=((DB.meta||{}).taxInvInt), a=m&&typeof m==='object'?m[String(Number(String(year).slice(0,4)))]:null;
+  return a&&typeof a==='object'?a:{};
+}
+
+function taxInvIntSet(year,paid,carry){
+  const y=Number(String(year).slice(0,4)); if(!(y>=2000&&y<=2100)) return {ok:false,why:'That year has no record to write to.'};
+  const amt=function(s){ const t=String(s==null?'':s).trim(); if(t==='') return null; const n=pnum(t); return n!=null&&isFinite(n)&&n>=0&&n<1e8?r2v(n):NaN; };
+  const p=amt(paid), c=amt(carry);
+  if(Number.isNaN(p)||Number.isNaN(c)) return {ok:false,why:'An amount is a number of dollars, like 1,250'};
+  DB.meta=DB.meta||{}; const M=DB.meta.taxInvInt=Object.assign({},DB.meta.taxInvInt), A={};
+  if(p!=null) A.paid=p; if(c!=null) A.carry=c;
+  if(Object.keys(A).length) M[String(y)]=A; else delete M[String(y)];
+  if(!Object.keys(M).length) delete DB.meta.taxInvInt;
+  return {ok:true};
+}
+
+
+function taxInvIntNii(year){
+  const y=Number(String(year).slice(0,4)), docs=typeof taxDocsFor==='function'?taxDocsFor(y):[];
+  const sum=function(ds,k){ return r2v(ds.reduce(function(s,d){ return s+(Number(d.boxes&&d.boxes[k])||0); },0)); };
+  const ints=docs.filter(function(d){ return d.kind==='1099-INT'; }), divs=docs.filter(function(d){ return d.kind==='1099-DIV'; });
+  const W=(DB.taxwork&&typeof DB.taxwork==='object'&&DB.taxwork[y])||{};
+  let R=null; try{ R=typeof taxReturn==='function'?taxReturn(year):null; }catch(e){ R=null; }
+  const L=function(k){ return R&&R.L?R.L('1040',k):null; };
+  let interest=W.interest!=null?W.interest:ints.length?r2v(sum(ints,'1')+sum(ints,'3')):null;
+  let ordDiv=W.ordDiv!=null?W.ordDiv:divs.length?sum(divs,'1a'):null;
+  const qualDiv=W.qualDiv!=null?W.qualDiv:divs.length?sum(divs,'1b'):0;
+  let src=(ints.length||divs.length||W.interest!=null||W.ordDiv!=null)?'documents':'none';
+  
+  if(interest==null&&ordDiv==null&&L('06')!=null&&L('01')!=null){ interest=Math.max(0,r2v(L('06')-L('01'))); src='sheet'; }
+  let st=0; try{ const SD=typeof taxSchD==='function'?taxSchD(docs,taxFilingFor(year).filing):null; st=SD&&SD.st>0?SD.st:0; }catch(e){ st=0; }
+  const nii=r2v(Math.max(0,(interest||0)+Math.max(0,(ordDiv||0)-Math.min(qualDiv||0,ordDiv||0))+st));
+  return {nii:nii,interest:interest||0,ordDiv:ordDiv||0,qualDiv:qualDiv||0,st:st,src:src};
+}
+
+let _tiiDepth=0;
+function taxInvInt(year){
+  const y=Number(String(year).slice(0,4)), a=taxInvIntAnswers(y);
+  let carryIn=a.carry!=null?a.carry:0, carrySrc=a.carry!=null?'you':'';
+  
+  if(a.carry==null&&_tiiDepth<3&&Object.keys(taxInvIntAnswers(y-1)).length){
+    _tiiDepth++; try{ const p=taxInvInt(typeof taxYearKey==='function'?taxYearKey(y-1):String(y-1)); if(p&&p.carry>0){ carryIn=p.carry; carrySrc='last year'; } }finally{ _tiiDepth--; }
+  }
+  const paid=a.paid||0; if(!(paid>0)&&!(carryIn>0)) return null;
+  const N=taxInvIntNii(year), total=r2v(paid+carryIn), allowed=r2v(Math.min(total,N.nii));
+  return {year:y,paid:paid,carryIn:carryIn,carrySrc:carrySrc,total:total,nii:N.nii,allowed:allowed,carry:r2v(total-allowed),parts:N};
+}
+
+function taxInvIntCard(year){
+  const y=Number(String(year).slice(0,4)); if(!isFinite(y)) return '';
+  const a=taxInvIntAnswers(y), I=taxInvInt(year);
+  const inp=function(id,label,val,ph){ return '<label>'+label+'<input id="'+id+'" inputmode="decimal" value="'+esc(val==null?'':String(val))+'" placeholder="'+esc(ph)+'"></label>'; };
+  const row=function(k,v,note){ return '<tr><td>'+k+(note?' <span class="mut">— '+note+'</span>':'')+'</td><td class="n num">'+money(v,0)+'</td></tr>'; };
+  return '<div class="sheet"><h3>A loan to buy investments <span class="r">'+(I?money(I.allowed,0)+' deductible':'none entered')+'</span></h3>'
+    +'<div class="mut" style="font-size:12px;margin-bottom:8px">Interest on money borrowed to buy shares or other investments — a loan for company stock, a margin loan — '
+    +'is an itemized deduction (Form 4952), up to what your investments paid you in interest and ordinary dividends that year. What is left over carries forward. '
+    +'The lender’s year-end statement splits each payment into interest and principal; only the interest counts.</div>'
+    +(I?'<div class="tblwrap"><table class="tbl tight"><tbody>'
+      +row('Interest paid in '+y,I.paid)+(I.carryIn>0?row('Carried in from earlier years',I.carryIn,I.carrySrc==='last year'?'worked out from '+(y-1):'as you typed it'):'')
+      +row('Net investment income (the limit)',I.nii,money(I.parts.interest,0)+' interest + '+money(Math.max(0,I.parts.ordDiv-I.parts.qualDiv),0)+' ordinary dividends'
+        +(I.parts.st?' + '+money(I.parts.st,0)+' short-term gain':'')+(I.parts.src==='sheet'?'; off the sheet’s total, an upper bound':I.parts.src==='none'?'; no 1099-INT or 1099-DIV in yet':''))
+      +row('<b>Deductible this year</b> (Schedule A line 9)',I.allowed)+(I.carry>0?row('Carries forward to '+(y+1),I.carry):'')
+      +'</tbody></table></div>':'')
+    +'<div class="formrow" style="flex-wrap:wrap;gap:8px">'
+    +inp('tiiPaid','Interest paid in '+y+' ($)',a.paid,'0')+inp('tiiCarry','Unused from earlier years ($)',a.carry,I&&I.carrySrc==='last year'?String(I.carryIn):'0')
+    +'<button class="btn sm" data-act="taxinvintsave" data-y="'+y+'">Save</button></div></div>';
+}
+
+function _tiiRate(F){
+  const thr=F.filing==='mfj'?250000:F.filing==='mfs'?125000:200000;
+  return (F.fedRate||0)+(F.stateRate||0)+((F.niit||(F.agi!=null&&F.agi>thr))?0.038:0);
+}
+const TAX_PLAYS_INVINT=[
+{ id:'investment-interest', family:'deduction',
+  law:'§163(d) (investment interest) · Form 4952 · Schedule A line 9',
+  needs:['fedRate'],
+  blind:'no bracket for this year to price a deduction at',
+  
+
+  hedge:function(F){ return F.invAllowed>0&&F.invItemizes&&(F.open||F.beforeDue)?'exact':'flag'; },
+  lv:function(F){ return (F.open||F.beforeDue)?'act':'note'; },
+  when:function(F){ return F.invInt>0||F.invCarryIn>0||(F.stubLoanYtd>0&&!F.expired); },
+  dollars:function(F){ return F.invAllowed>0&&F.invItemizes&&(F.open||F.beforeDue)?r2v(F.invAllowed*_tiiRate(F)):null; },
+  window:function(F){ return F.amendable&&F.amendBy&&(F.invInt>0||F.invCarryIn>0)?{closes:F.amendBy,why:'an amended return can still claim it until then'}:null; },
+  say:function(F){
+    const rate=(Math.round(_tiiRate(F)*1000)/10)+'%';
+    if(!(F.invInt>0)&&!(F.invCarryIn>0)) return {what:'A loan is being repaid from your pay — is its interest deductible?',
+      why:'Your pay stub shows '+money(F.stubLoanYtd,0)+' repaid on a loan this year. If the loan bought investments or company shares, the interest part of that is an '
+        +'itemized deduction, up to what your investments paid you. Enter the interest on Check-up, under “A loan to buy investments”.',
+      chip:'<code>interest paid → Form 4952 → Schedule A line 9</code>'};
+    if(!(F.open||F.beforeDue)) return {what:'Check that '+F.year+'’s return deducted '+money(F.invAllowed,0)+' of investment interest',
+      why:'You paid '+money(F.invInt||0,0)+' of interest on a loan to buy investments in '+F.year+', and '+money(F.invAllowed,0)+' of it was deductible against that year’s '
+        +money(F.invNii,0)+' of investment income. Look for it on Schedule A line 9 of the return as filed; if it is not there, an amended return can still claim it'
+        +(F.amendBy?' until '+fD(F.amendBy):'')+' — about '+money(F.invAllowed*_tiiRate(F),0)+' at '+rate+'.',
+      chip:'<code>Schedule A line 9 · Form 4952 line 8: '+money(F.invAllowed,0)+'</code>'};
+    if(!F.invItemizes) return {what:money(F.invAllowed,0)+' of investment interest is lost to the standard deduction',
+      why:'The interest is deductible only on Schedule A, and this year’s itemized total does not beat the standard deduction. The '+money(F.invAllowed,0)
+        +' the form allows this year does not carry forward — only what the investment-income limit refuses does'+(F.invCarry>0?' ('+money(F.invCarry,0)+')':'')+'.',
+      chip:'<code>allowed '+money(F.invAllowed,0)+' · itemized under the standard deduction</code>'};
+    return {what:'Deduct '+money(F.invAllowed,0)+' of interest on your investment loan',
+      why:'You paid '+money(F.invInt||0,0)+' of interest on a loan to buy investments'+(F.invCarryIn>0?', with '+money(F.invCarryIn,0)+' carried in':'')
+        +'. Against '+money(F.invNii,0)+' of investment income, <b>'+money(F.invAllowed,0)+'</b> is deductible this year — about <b>'+money(F.invAllowed*_tiiRate(F),0)
+        +'</b> at '+rate+(F.invCarry>0?' — and '+money(F.invCarry,0)+' carries forward to '+(F.year+1):'')+'.',
+      chip:'<code>'+money(F.invAllowed,0)+' × '+rate+' = '+money(F.invAllowed*_tiiRate(F),0)+'</code>'};
+  },
+  guards:function(F){ return [
+    'Only the interest counts, not the principal repaid: the lender’s year-end statement has the split.',
+    'If the shares come with a Schedule K-1 (a partnership or LLC), the interest follows the business instead and may be deductible in full on Schedule E — ask a preparer which applies.',
+    F.invCarry>0?'Qualified dividends and long-term gains can be elected into the limit (Form 4952 line 4g), at the cost of their lower rate: worth it only for interest that would otherwise never be used.':null,
+    'Take the standard deduction and the part allowed that year is lost; only what the limit refuses carries forward.']; }
+}];
+
+
+
 function taxMortTable1(g,pre,post,filing){
   const h=filing==='mfs'?0.5:1;
   const L1=r2v(g), L2=r2v(pre), L7=r2v(post);
@@ -15630,6 +15767,7 @@ function taxFilePackWorked(year){
       F('5d','State and local taxes paid (income and property)',I.saltPaid),
       F('5e','The smaller of line 5d and the year’s cap',I.salt),
       F('8a','Home mortgage interest'+(I.mortLimit?' — the share Publication 936 allows':''),I.mort),
+      I.inv?F('9','Investment interest (Form 4952 line 8)',I.inv):null,
       I.logs?F('—','Gifts and medical expenses from the logs, past their floors',I.logs):null,
       F('17','Total itemized deductions',I.total)].filter(Boolean)}); }
   if(est.care>0&&typeof taxDepCare==='function'){
@@ -16474,8 +16612,8 @@ function nyInputs(year){
   
   let F=null; try{ F=taxFacts(year); }catch(e){ F=null; }
   
-  const itemized=F&&[F.mort,F.prop,F.charity,F.medical].some(function(v){ return Number(v)>0; })
-    ?{interest:(F.mortNy!=null?F.mortNy:F.mort)||0,propertyTax:F.prop||0,charity:F.charity||0,medical:F.medical||0,investmentInterest:0}:null;
+  const itemized=F&&[F.mort,F.prop,F.charity,F.medical,F.invAllowed].some(function(v){ return Number(v)>0; })
+    ?{interest:(F.mortNy!=null?F.mortNy:F.mort)||0,propertyTax:F.prop||0,charity:F.charity||0,medical:F.medical||0,investmentInterest:F.invAllowed||0}:null;
   src.itemized=itemized?'the sheet, the loan and the logs':'none recorded';
   const prof=taxProfile();
   const ages=(prof.deps||[]).filter(function(d){ return Number(d.born)<=y; }).map(function(d){ return y-Number(d.born); });
@@ -17470,7 +17608,7 @@ function taxWorkInputs(year){
     if(w[f]!=null){ out[f]=w[f]; out.src[f]='hand'; }
     else{ out[f]=r2v(sv); out.src[f]=f==='estPaid'?(logged!=null?'log':'none'):(seed.src[f]||'none'); }
   });
-  out.medWages=seed.medWages; out.ctcKids=seed.ctcKids; out.earned=seed.earned;
+  out.medWages=seed.medWages; out.ctcKids=seed.ctcKids; out.earned=seed.earned; out.invInt=seed.invInt;
   
   out.ltPref=out.src.ltcg==='hand'?null:seed.ltPref; out.schD=out.src.ltcg==='hand'?null:seed.schD;
   return out;
@@ -17701,13 +17839,15 @@ function taxStubParse(text){
   const match=_stubRun(lines,/\b(401\s*\(?K\)?\s*(?:ER\s*)?MATC\w*|(?:EMPLOYER|COMPANY|ER|CO)\s+MATCH\w*)/i);
   
   const commuter=_stubRun(lines,/\b(TRANSIT|COMMUT\w*|PARKING|WAGEWORKS)\b[A-Z ]*/i);
+  
+  const loan=_stubRun(lines,/\b((?:EQUITY|STOCK|SHARE)\s+LOAN|LOAN\s+(?:PAYMENT|REPAY\w*))\b[A-Z ]*/i,true);
   const hfsa=_stubRun(lines,/\b(FLEX\w*\s+SPEND\w*(?:\s+ACC\w*)?|(?:HEALTH|MEDICAL|MED)\s*(?:CARE\s*)?FSA|HCFSA)\b/i);
   return {ok:true,period:period,gross:gross,net:net,rows:rows,k401:k401,hsa:hsa,dcfsa:dcfsa,match:match,commuter:commuter,hfsa:hfsa,
     taxes:_stubTotalLine(lines,'Taxes')||_stubTile(t,'TAXES'),
     deductions:_stubTotalLine(lines,'Deductions')||_stubTile(t,'DEDUCTIONS'),
     derived:Object.assign(taxStubDerive(rows,gross,k401,fedTaxableStated,hsa,dcfsa),
       match&&match.ytd>=0?{match:match.amt,matchYtd:match.ytd}:{},commuter&&commuter.ytd>0?{commuter:commuter.amt,commuterYtd:commuter.ytd}:{},
-      hfsa&&hfsa.ytd>0?{hfsa:hfsa.amt,hfsaYtd:hfsa.ytd}:{})};
+      hfsa&&hfsa.ytd>0?{hfsa:hfsa.amt,hfsaYtd:hfsa.ytd}:{},loan&&loan.ytd>0?{loanYtd:loan.ytd}:{})};
 }
 
 
@@ -17726,12 +17866,14 @@ function _stubLabelled(lines,re,sum){
 }
 
 
-function _stubRun(lines,re){
+function _stubRun(lines,re,one){
   for(let i=0;i<lines.length;i++){
     const m=re.exec(lines[i]); if(!m) continue;
     const run=/^(?:\s*\$?\s?-?[0-9][0-9,]*\.[0-9]{2})+/.exec(lines[i].slice(m.index+m[0].length));
     const f=run?_stubFigs(run[0]):[];
     if(f.length>=2) return {amt:f[f.length-2],ytd:f[f.length-1]};
+    
+    if(one&&f.length===1) return {amt:0,ytd:f[0]};
   }
   return null;
 }
@@ -18048,7 +18190,8 @@ function _taxPlayList(){
     typeof TAX_PLAYS_BROKERAGE!=='undefined'?TAX_PLAYS_BROKERAGE:[],
     typeof TAX_PLAYS_NEWDED!=='undefined'?TAX_PLAYS_NEWDED:[],
     typeof TAX_PLAYS_KIDS!=='undefined'?TAX_PLAYS_KIDS:[],
-    typeof TAX_PLAYS_ENROLL!=='undefined'?TAX_PLAYS_ENROLL:[]);
+    typeof TAX_PLAYS_ENROLL!=='undefined'?TAX_PLAYS_ENROLL:[],
+    typeof TAX_PLAYS_INVINT!=='undefined'?TAX_PLAYS_INVINT:[]);
 }
 function taxPlayById(id){
   const all=_taxPlayList();
@@ -42457,6 +42600,16 @@ function _imgLossOk(what){
 
   
 
+  
+  if(act==='taxinvintsave'){
+    const v=id=>{ const e=document.getElementById(id); return e?e.value:''; };
+    snap('investment interest');
+    const r=taxInvIntSet(b.dataset.y,v('tiiPaid'),v('tiiCarry'));
+    if(!r.ok){ snapCancel(); return toast(r.why,'warn'); }
+    save(); render();
+    const I=taxInvInt(typeof taxYearKey==='function'?taxYearKey(b.dataset.y):b.dataset.y);
+    return toast(I?money(I.allowed,0)+' deductible in '+b.dataset.y+(I.carry>0?', '+money(I.carry,0)+' carried forward':'')+' · ⌘Z to undo':'Cleared','ok');
+  }
   if(act==='taxnewdedsave'){
     const y=Number(b.dataset.y), v=id=>{ const e=document.getElementById(id); return e?String(e.value||'').trim():null; };
     const yr=s=>s===''||s==null?null:/^(19|20)\d{2}$/.test(s)&&Number(s)<=new Date().getFullYear()?Number(s):NaN;
