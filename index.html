@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-oGOrv40XYABLIUIKz7WR5dAqlwhyulVHGEmU8b+YKJw=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-ipKCr045fEZx1IQqIpn+EOJuCxD6vq1whmzJV0OdB80=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2600,6 +2600,67 @@ html.tgPad #page{padding-bottom:48vh}
 @media(max-width:560px){ .wd{display:none} }
 
 
+@media(max-width:900px){
+  
+  input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]):not([type=color]):not([type=hidden]),select,textarea{
+    font-size:16px!important;min-height:44px;max-width:100%}   
+  
+  .formrow label{min-width:0;max-width:100%}
+  textarea{line-height:1.4}
+  
+  button.btn,a.btn,label.btn,button.chip,a.chip,.tabs button,.tabs select,.segbtn button,summary{min-height:44px;min-width:44px}
+  .segbtn button{padding-left:14px;padding-right:14px}
+  summary{display:flex;align-items:center}
+  
+  .dmore,.tmore,.txsort,.trnm{min-height:44px;min-width:44px}   
+  .dmore,.tmore{display:flex;align-items:center}
+  button.btn,a.btn,label.btn{justify-content:center}
+  button.chip,a.chip{display:inline-flex;align-items:center;justify-content:center}
+  .tabs button{padding:4px 14px;font-size:13px}
+  
+  .tabs{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs>*{flex:none}
+  
+  #page tr[data-act]>td,#page tr.lrow>td{height:44px}
+  
+  
+  td>.hiscard,td>.pkcopy,td>.cellish,td>.paid,td>.budbtn{position:relative}
+  td>.hiscard::after,td>.pkcopy::after,td>.cellish::after,td>.paid::after,td>.budbtn::after{
+    content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+  td>.rowdel:has(+.rowdel),td>.rowdel+.rowdel,td>.hiscard+.rowdel,td>.hiscard,td>.cellish{min-width:44px}
+  #page td:has(>button){height:44px;vertical-align:middle}
+  #page th[data-act]{height:44px;min-width:44px}
+  #page h3.fold{min-height:44px}
+  
+  .pkl{display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;cursor:pointer;
+    position:relative;z-index:1;margin:0 -7px}   
+  .budpick{min-height:44px;padding:0 6px 0 16px}
+  .ckl{min-height:44px;margin-left:-14px;padding-left:14px}
+  #page input[type=file]{min-height:44px;padding-top:9px}
+  
+  .hmo{padding-left:8px;padding-right:8px}
+  .hmg{gap:0}
+  .hmd{border:1.5px solid transparent;background-clip:padding-box!important}   
+  
+  .tbl.tblwide td:not(.n){overflow-wrap:break-word}
+  
+  
+  .sheet h3 .pin,.rowdel,.linkbtn,.dcat .lab,.dcat .note{position:relative}
+  .dayl .dl>.tmbtn{position:relative;right:auto;bottom:auto;flex:none;width:44px;margin:0 -12px 0 0}
+  
+  
+  .dcat .lab{overflow:visible;z-index:1}   
+  
+  .sheet h3 .pin::after,.tmbtn::after,.rowdel::after,.linkbtn::after,.dcat .lab::after,.dcat .note::after{
+    content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+  
+  .tgLaunch{width:48px;height:48px;padding:0;justify-content:center;gap:0;font-size:20px;transition:opacity .15s}
+  .tgLaunch .tgLt{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  html.tgEnd .tgLaunch{opacity:0;pointer-events:none}
+}
+
+
 :root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
   --sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px)}
 
@@ -2906,7 +2967,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.28";
+const APP_V="v29.29";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2920,7 +2981,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="2274131";
+const APP_BUILD="6d9577d";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -3606,6 +3667,43 @@ function _uiSpan(cls,html){
   const sp=document.createElement('span'); sp.className=cls; sp.setAttribute('aria-hidden','true'); sp.innerHTML=html; return sp;
 }
 
+
+
+function tabsReveal(){
+  let n=0;
+  document.querySelectorAll('#page .tabs').forEach(function(t){
+    if(t.scrollWidth<=t.clientWidth+1) return;
+    const on=t.querySelector('button.on'); if(!on) return;
+    const a=on.offsetLeft, b=a+on.offsetWidth;
+    if(a<t.scrollLeft+8||b>t.scrollLeft+t.clientWidth-8){ t.scrollLeft=Math.max(0,a-(t.clientWidth-on.offsetWidth)/2); n++; }
+  });
+  return n;
+}
+
+
+const TBL_FIT_COLS=5, TBL_FIT_MIN=3, TBL_FIT_CRUSH=176, TBL_FIT_ROW=92, TBL_FIT_STEPS=[1.35,1.7,2.1,2.6];
+function tblFit(){
+  const root=document.getElementById('page'); let n=0;
+  if(!root||!(window.matchMedia&&window.matchMedia('(max-width:900px)').matches)) return n;
+  
+  const blocky=function(td){ return !!td.querySelector('table,details,label,button,input,select,textarea,svg'); };
+  const rg=document.createRange();
+  
+  const tall=function(t,lim){ let k=0, all=0;
+    for(const tb of t.tBodies) for(const tr of tb.rows){ all++; if(tr.offsetHeight<=lim) continue;
+      for(const td of tr.cells){ if(blocky(td)) continue; rg.selectNodeContents(td); if(rg.getBoundingClientRect().height>lim){ k++; break; } } }
+    return [k,all]; };
+  root.querySelectorAll('.tblwrap>table.tbl').forEach(function(t){
+    const w=t.parentElement, W=w.clientWidth; if(!W||!t.offsetParent) return;
+    t.classList.remove('tblwide'); t.style.minWidth='';
+    const r0=t.tBodies[0]&&t.tBodies[0].rows[0]; if(!r0||r0.cells.length<TBL_FIT_COLS) return;
+    const c=tall(t,TBL_FIT_CRUSH); if(c[0]<TBL_FIT_MIN||c[0]*3<c[1]) return;
+    t.classList.add('tblwide');
+    for(const k of TBL_FIT_STEPS){ t.style.minWidth=Math.round(W*k)+'px'; const r=tall(t,TBL_FIT_ROW); if(r[0]*10<r[1]) break; }
+    n++;
+  });
+  return n;
+}
 function uiDecorate(){
   const root=document.getElementById('page'); if(!root) return 0;
   let n=0; const own=uiPageIcoName();
@@ -7656,7 +7754,7 @@ function _render(){
   _chartBand=chartBand();
   tilesWire(shut);
   labelsWire();
-  uiEntered(shut); uiDecorate();
+  uiEntered(shut); uiDecorate(); if(typeof tabsReveal==='function') tabsReveal();
   headFit();   
   plateFit();  
   gridFit();
@@ -7937,6 +8035,7 @@ function plateFit(root){
 }
 function scrollersWire(){
   const root=document.getElementById('page'); if(!root) return;
+  if(typeof tblFit==='function') tblFit();   
   root.querySelectorAll('.tblwrap,.gridpane').forEach(function(w){
     const scrolls=w.scrollWidth>w.clientWidth+1||w.scrollHeight>w.clientHeight+1;
     const own=w.hasAttribute('data-scrollstop');
@@ -16651,8 +16750,8 @@ function taxPackRowsHtml(pack,f){
   return f.lines.map(function(l){
     const k=taxPackLineKey(f.form,l), v=taxPackLineVal(l), t=T[k], typed=t===v, moved=t!=null&&!typed;
     return '<tr class="pkrow'+(typed?' typed':'')+(moved?' moved':'')+'" data-k="'+esc(k)+'" data-st="'+st+'">'
-      +'<td class="pkt"><input type="checkbox" data-act="packtick" data-y="'+y+'" data-k="'+esc(k)+'" data-v="'+esc(v)+'"'+(typed?' checked':'')
-        +' aria-label="Typed line '+esc(l.box)+' onto the form"></td>'
+      +'<td class="pkt"><label class="pkl"><input type="checkbox" data-act="packtick" data-y="'+y+'" data-k="'+esc(k)+'" data-v="'+esc(v)+'"'+(typed?' checked':'')
+        +' aria-label="Typed line '+esc(l.box)+' onto the form"></label></td>'
       +'<td class="mut">'+esc(l.box)+'</td><td>'+esc(l.label)
         +(moved?'<div class="pkmoved">Changed since you typed it: it was '+esc(t)+'. Correct it on the form, then tick it again.</div>':'')+'</td>'
       +'<td class="n num"><b>'+(l.dec?Number(l.v).toFixed(2):money(l.v))+'</b>'
@@ -17077,14 +17176,31 @@ function _tgConfetti(root){
 
 
 function _tgTourDone(){ try{ return localStorage.getItem('ledger.tourdone')==='1'; }catch(e){ return true; } }
+
+
+let _tgEndWired=false;
+function _tgEndSync(){
+  const d=document.documentElement, far=d.scrollHeight-(window.scrollY||d.scrollTop||0)-window.innerHeight;
+  d.classList.toggle('tgEnd',d.scrollHeight>window.innerHeight+120&&far<96);
+}
+function _tgEndWire(){
+  if(_tgEndWired) return; _tgEndWired=true;
+  window.addEventListener('scroll',_tgEndSync,{passive:true}); window.addEventListener('resize',_tgEndSync,{passive:true});
+}
 function _tgLauncher(kind){
   let b=document.getElementById('tgLaunch');
   if(b&&b.dataset.kind!==kind){ b.parentNode.removeChild(b); b=null; }
+  _tgEndWire(); _tgEndSync();
   if(!kind||b) return;
   
   const L=kind==='app'?['tourapp','Show me around','👋 Show me around']:['guideopen','Walk me through filing','🧭 Walk me through filing'];
   b=document.createElement('button'); b.id='tgLaunch'; b.className='tgLaunch'; b.dataset.act=L[0]; b.dataset.kind=kind;
-  b.setAttribute('aria-label',L[1]); b.textContent=L[2];
+  
+
+  b.setAttribute('aria-label',L[1]);
+  const pic=L[2].slice(0,L[2].indexOf(' ')), i=document.createElement('span'), w=document.createElement('span');
+  i.className='tgLi'; i.setAttribute('aria-hidden','true'); i.textContent=pic; w.className='tgLt'; w.textContent=L[2].slice(pic.length+1);
+  b.appendChild(i); b.appendChild(w);
   document.body.appendChild(b);
 }
 function taxGuideSync(){
@@ -49884,7 +50000,7 @@ function renderOnce(name,fn){
     RCP,RCP_PROMPT,mailVouched,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
-    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
+    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
     BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,mailOldScriptWords,MAIL_STMT_NOTICE_RE,mailAssistUnread,_maUnread,MAIL_ASSIST_V22,MAIL_FX_AMT,mailHasFx,mailRbsStmtSettle,mailRbsSelf,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,NY_TUITION_CAP,nyCareCredit,nyTuitionCredit,nyCareFedRate,nyCareRate,nyCareApplicable,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
