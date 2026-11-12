@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-SpoUyj/Ix1AoiEF5t9YM9rfR9tWxjO7D+pJAYq6J4OA=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-MP555c7LB6f4QXQLpEpcJhJt8of1d0BXrQWrLUT+0WA=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2906,7 +2906,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.25";
+const APP_V="v29.26";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2920,7 +2920,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="9b23a6a";
+const APP_BUILD="9cf10aa";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -12575,6 +12575,7 @@ function taxFacts(year,today){
 
   F.spouseEarns=F.filing==='mfj'?_ans('spouse'):'yes';
   
+  F.stubYear=F.current&&typeof taxStubYear==='function'?taxStubYear(year):null;   
   
   F.invBack=(function(){ if(!F.current||!(F.invInt>0||F.stubLoanYtd>0||_ans('invloan')==='yes')||typeof taxInvIntBack!=='function') return null;
     const B=taxInvIntBack(year,now); return B.length?B:null; })();
@@ -12616,6 +12617,9 @@ function taxFacts(year,today){
 function taxStatePaid(R,y){
   const P=function(k){ const v=R.pairs[k]; return (typeof v==='number'&&isFinite(v))?v:null; };
   const SS=(R.sum&&R.sum.state)||{}, name=(R.sum&&R.sum.stateName)||'State';
+  
+  const SY=typeof taxStubYear==='function'?taxStubYear(R.year!=null?R.year:y):null, sv=SY?taxStubPick(SY,'state',P('NYS Withheld')!=null?P('NYS Withheld'):(SS.status==='read'?SS.held:null)):null;
+  if(sv!=null) return {amt:r2v(sv+(P('NYC Withheld')||0)),src:'stub',name:name,unknown:false};
   if(P('NYS Withheld')!=null||P('NYC Withheld')!=null)
     return {amt:r2v((P('NYS Withheld')||0)+(P('NYC Withheld')||0)),src:'sheet',name:name,unknown:false};
   if(SS.status==='read'&&SS.held!=null) return {amt:SS.held,src:'sheet',name:name,unknown:false};
@@ -15250,7 +15254,12 @@ function taxEstimateInputs(year){
     if(sheetVal!=null){ src[name]='sheet'; return sheetVal; }
     src[name]='none'; return 0;
   };
-  const wages=pick('wages',w2.length?sum(w2,'1'):null,R.L('1040','01'));
+  
+
+  const SY=!w2.length&&typeof taxStubYear==='function'?taxStubYear(year):null;
+  const pick3=(name,docVal,k,sheetVal)=>{ const sv=(docVal!=null&&docVal!==0)?null:taxStubPick(SY,k,sheetVal);
+    if(sv!=null){ src[name]='stub'; return sv; } return pick(name,docVal,sheetVal); };
+  const wages=pick3('wages',w2.length?sum(w2,'1'):null,'wages',R.L('1040','01'));
   const ints=docs.filter(d=>d.kind==='1099-INT');
   const divs=docs.filter(d=>d.kind==='1099-DIV');
   
@@ -15299,10 +15308,10 @@ function taxEstimateInputs(year){
   let DC=null; try{ DC=typeof taxDepCare==='function'?taxDepCare(year,_R,prof):null; }catch(e){ DC=null; }
   const care=DC&&DC.fromAnswer&&!DC.noSecond?DC.credit:0;
   src.care=care?'answer':'none';
-  const held=pick('held',
+  const held=pick3('held',
     docs.some(d=>d.boxes&&(d.boxes['2']!=null||d.boxes['4']!=null))
       ?r2v(sum(w2,'2')+sum(docs.filter(d=>/^1099/.test(d.kind)),'4')):null,
-    R.sum.fedHeld);
+    'fed',R.sum.fedHeld);
   
 
   let amtAdd=null;
@@ -15314,9 +15323,9 @@ function taxEstimateInputs(year){
   return {year:y,filing:_fil,wages,interest,ordDiv,qualDiv,ltcg,other,se,
     amtAdd:amtAdd,isoTyped:_wk.iso>0?_wk.iso:0,
     
-    ssWages:w2.length&&sum(w2,'3')>0?sum(w2,'3'):null,
+    ssWages:w2.length&&sum(w2,'3')>0?sum(w2,'3'):(src.wages==='stub'&&SY.ssWages!=null?SY.ssWages:null),
     ltPref:SD&&src.ltcg==='documents'?SD.pref:null,schD:SD,
-    medWages:w2.length?(sum(w2,'5')||null):null,
+    medWages:w2.length?(sum(w2,'5')||null):(src.wages==='stub'?SY.medWages:null),
     deduction,newDed:ND&&ND.total>0?ND:null,itemized:ded==null?IT:null,itemize:itemize,
     
     invInt:(function(){ let I=null; try{ I=typeof taxInvInt==='function'?taxInvInt(year):null; }catch(e){ I=null; }
@@ -15338,7 +15347,7 @@ function taxSecondOpinionHtml(year){
   if(!so) return '';
   const {inp,est,sheet}=so;
   const mut=t=>'<div class="mut" style="font-size:12px;margin-bottom:8px">'+t+'</div>';
-  const srcLab={documents:'from the documents',sheet:'from the sheet',none:'nothing found',
+  const srcLab={documents:'from the documents',sheet:'from the sheet',stub:'from the pay stub, projected to year end',none:'nothing found',
     itemized:'itemized: mortgage interest '+money((inp.itemized||{}).mort||0,0)
       +((inp.itemized||{}).mortLimit?' (of '+money(inp.itemized.mortLimit.interest,0)+' paid: the interest on '+money(inp.itemized.mortLimit.fed.L11,0)
         +' of a '+money(inp.itemized.mortLimit.fed.L12,0)+' average balance, Publication 936)':'')+' + state and local taxes '+money((inp.itemized||{}).salt||0,0)
@@ -15598,6 +15607,14 @@ function taxEnrollFacts(F,R,L,commuteAns){
     } else if(n>0&&per===0&&room<1&&F.matchPer===0&&F.matchYtd>0){
       F.matchGap={room:0,n:n,per:0,dry:n,match:0,even:0,lost:0,stopped:true};
     }
+  }
+  
+
+  F.erProj=null;
+  if(d&&(d.matchYtd!=null||d.erOtherYtd>0)){
+    const n=F.payLeft||0, per=F.k401Per||0, room=(F.elective!=null&&F.k401!=null)?Math.max(0,F.elective-F.k401):Infinity;
+    const fed=per>0?Math.min(n,Math.ceil(room/per-1e-9)):0;
+    F.erProj=r2v((d.matchYtd||0)+(d.match>0?d.match*fed:0)+(d.erOtherYtd||0)+(d.erOther>0?d.erOther*n:0));
   }
 }
 const TAX_PLAYS_ENROLL=[
@@ -16287,6 +16304,104 @@ function taxReviewAskHtml(year,today){
       +'<div style="white-space:pre-wrap;font-size:13px;line-height:1.55">'+esc(m.answer)+'</div></div>':'')
     +'</div>';
 }
+
+
+
+function taxStubUse(year){
+  const m=(DB.meta||{}).stubUse, y=String(year||'').slice(0,4);
+  return !!(m&&typeof m==='object'&&m[y]);
+}
+function taxStubUseSet(year,on){
+  const y=String(year||'').slice(0,4);
+  if(!/^\d{4}$/.test(y)) return {ok:false,why:'That year has no record to write to.'};
+  DB.meta=DB.meta||{};
+  if(on){ DB.meta.stubUse=DB.meta.stubUse||{}; DB.meta.stubUse[y]=true; }
+  else if(DB.meta.stubUse){ delete DB.meta.stubUse[y]; if(!Object.keys(DB.meta.stubUse).length) delete DB.meta.stubUse; }
+  return {ok:true,on:!!on};
+}
+
+
+function taxStubYear(year){
+  const y=Number(String(year).slice(0,4));
+  if(!Number.isFinite(y)||typeof taxStubGet!=='function') return null;
+  const st=taxStubGet(y); if(!st||!st.derived) return null;
+  if((typeof taxDocsFor==='function'?taxDocsFor(y):[]).some(function(d){ return d&&d.kind==='W-2'; })) return null;
+  const d=st.derived, rows=st.rows||{}, pace=typeof taxWithheldPace==='function'?taxWithheldPace(y):null;
+  
+  let n=pace?pace.n:null;
+  if(n==null){ const pd=typeof taxPaydaysLeft==='function'?taxPaydaysLeft(y,_stubNext(st)):null, c=!pd&&typeof taxStubCadence==='function'?taxStubCadence(st.period):null; n=pd?pd.n:(c?c.left:null); }
+  if(n==null) return null;
+  const med=rows.med||null, rate=STUB_RATES.medicare;
+  const medPer=med?(med.taxable>0?med.taxable:(med.amt>0?r2v(med.amt/rate):null)):null;
+  const medYtd=d.medWages!=null?d.medWages:(med&&med.ytd>0?r2v(med.ytd/rate):null);
+  let wages=null, roth=false;
+  if(medPer!=null&&medYtd!=null){
+    const fedT=d.fedTaxable>0?d.fedTaxable:(rows.fed&&rows.fed.taxable>0?rows.fed.taxable:null), def=d.deferral>0?d.deferral:0, defYtd=d.deferralYtd>0?d.deferralYtd:0;
+    
+    roth=def>0&&fedT!=null&&Math.abs(medPer-fedT)<1;
+    const lim=(typeof TAX_LIMITS==='object'&&TAX_LIMITS[y])?TAX_LIMITS[y].elective:null;
+    const more=roth?0:Math.min(n*def,lim!=null?Math.max(0,lim-defYtd):n*def);
+    wages=r2v(medYtd-(roth?0:defYtd)+n*medPer-more);
+  }
+  let R=null; try{ R=taxReturn(year); }catch(e){ R=null; }
+  const P=function(k){ const v=R&&R.pairs?R.pairs[k]:null; return (typeof v==='number'&&isFinite(v))?v:null; };
+  const sheet={wages:R?R.L('1040','01'):null, fed:R&&R.sum?R.sum.fedHeld:null, state:P('NYS Withheld')};
+  const far=function(a,b){ return a!=null&&b!=null&&Math.abs(a-b)>Math.max(500,0.01*Math.abs(b)); };
+  const out={year:y,n:n,asOf:st.period?st.period.to:null,wages:wages,medWages:(medPer!=null&&medYtd!=null)?r2v(medYtd+n*medPer):null,
+    ssWages:d.ssDone?d.ssWages:null,fed:pace?pace.fedProj:null,state:pace?pace.stateProj:null,roth:roth,sheet:sheet,
+    use:taxStubUse(y),auto:sheet.wages==null&&wages!=null};
+  out.differs=far(out.wages,sheet.wages)||far(out.fed,sheet.fed)||far(out.state,sheet.state);
+  return out;
+}
+
+function taxStubPick(SY,k,sheetVal){
+  if(!SY||SY[k]==null) return null;
+  return (SY.use||sheetVal==null)?SY[k]:null;
+}
+
+function taxStubYearHtml(year){
+  const SY=taxStubYear(year); if(!SY) return '';
+  const y=SY.year, S=SY.sheet, any=S.wages!=null||S.fed!=null||S.state!=null;
+  const row=function(label,a,b){ if(a==null) return '';
+    return _stubRow(label,'<b>'+money(a,0)+'</b>','by year end',b!=null?'the sheet says '+money(b,0):'the sheet has no figure'); };
+  const rows=row('Wages (W-2 box 1)',SY.wages,S.wages)+row('Federal withheld',SY.fed,S.fed)+row('State withheld',SY.state,S.state);
+  if(!rows) return '';
+  const using=SY.use?'The estimate and every figure on Plan are using the stub’s year.'
+    :!any?'The sheet has no figures for '+y+', so the estimate uses these.'
+    :SY.differs?'The estimate is using the sheet’s figures, and they differ from the stub’s.'
+    :'The sheet and the stub agree; the estimate uses the sheet’s.';
+  const btn=SY.use?'<button class="btn ghost sm" data-act="stubuse" data-y="'+y+'" data-on="0">Go back to the sheet’s figures</button>'
+    :any?'<button class="btn sm" data-act="stubuse" data-y="'+y+'" data-on="1">Use the stub’s figures for '+y+'</button>':'';
+  return _stubBox('The year, from this stub',SY.n+' payday'+(SY.n===1?'':'s')+' left',
+    rows+'<div class="stubsay '+(SY.differs&&!SY.use&&any?'bad':'good')+'"><span class="mk">'+(SY.differs&&!SY.use&&any?'⚠':'✓')+'</span><span>'+using+'</span></div>'
+    +(btn?'<div style="margin-top:8px">'+btn+'</div>':'')
+    +'<div class="stubnote">Projected as if every paycheck left is like this one. A bonus still to come is not in it'
+    +(SY.roth?'; the 401(k) deferral is read as Roth, since it did not lower this paycheck’s taxable pay':'')+'.</div>');
+}
+const TAX_PLAYS_STUBYEAR=[
+{ id:'stub-vs-sheet', family:'payroll',
+  law:'Form W-2 boxes 1, 2 and 17, as the year’s pay stub projects them',
+  needs:['stubYear'],
+  blind:'no pay stub for this year — Taxes → Pay stub reads one',
+  hedge:function(){ return 'flag'; },
+  lv:function(){ return 'act'; },
+  when:function(F){ const Y=F.stubYear; return !!F.current&&Y.differs&&!Y.use&&Y.sheet.wages!=null; },
+  dollars:function(){ return null; },
+  say:function(F){
+    const Y=F.stubYear, S=Y.sheet, bits=[];
+    if(Y.wages!=null&&S.wages!=null) bits.push('wages of '+money(Y.wages,0)+' against the sheet’s '+money(S.wages,0));
+    if(Y.fed!=null&&S.fed!=null) bits.push('federal tax withheld of '+money(Y.fed,0)+' against '+money(S.fed,0));
+    if(Y.state!=null&&S.state!=null) bits.push('state tax withheld of '+money(Y.state,0)+' against '+money(S.state,0));
+    return {what:Y.wages!=null&&S.wages!=null?'Your stub projects '+money(Y.wages,0)+' of wages; the sheet '+money(S.wages,0)
+        :'Check the year’s withholding: the stub and sheet differ',
+      why:'Your pay stub to '+fD(Y.asOf)+', with '+Y.n+' payday'+(Y.n===1?'':'s')+' left, projects '+bits.join(', ')+'. Every figure on this page is priced from the sheet’s. '
+        +'If the stub is nearer the truth, press “Use the stub’s figures” on Taxes → Pay stub and the estimate, the brackets and the plays follow it.',
+      chip:'<code>stub: '+(Y.wages!=null?money(Y.wages,0):'—')+' · sheet: '+(S.wages!=null?money(S.wages,0):'—')+'</code>'};
+  },
+  guards:function(){ return [
+    'The stub is projected as if every paycheck left is like this one: a bonus still to come is in the sheet only if you put it there.',
+    'Either way the W-2 replaces both in January.']; }
+}];
 
 
 
@@ -17256,9 +17371,11 @@ function nyInputs(year){
   const w2=docs.filter(function(d){ return d&&d.kind==='W-2'; });
   const nyW2=w2.filter(function(d){ const s=String(d.state||(d.boxes||{})['15']||'').trim().toUpperCase().slice(0,2); return !s||s==='NY'; });
   const P=function(k){ return R.pairs[k]==null?null:R.pairs[k]; };
-  const held={nys:nyW2.length?sum(nyW2,'17'):(P('NYS Withheld')||0),
+  
+  const SYn=!nyW2.length&&typeof taxStubYear==='function'?taxStubYear(year):null, svn=SYn?taxStubPick(SYn,'state',P('NYS Withheld')):null;
+  const held={nys:nyW2.length?sum(nyW2,'17'):(svn!=null?svn:(P('NYS Withheld')||0)),
     nyc:nyW2.length?sum(nyW2.filter(function(d){ return /NYC|NEW YORK CITY|CITY OF N/i.test(String(d.locality||'')); }),'19'):(P('NYC Withheld')||0)};
-  src.withheld=nyW2.length?'the W-2s':'the sheet';
+  src.withheld=nyW2.length?'the W-2s':svn!=null?'the pay stub, projected to year end':'the sheet';
   const est=typeof taxEstPaySummary==='function'?taxEstPaySummary(y):{state:0,city:0};
   
 
@@ -18265,7 +18382,7 @@ function taxBuildHtml(year){
     +'nothing it cannot price correctly.</div></div>';
   const {inp,est}=W;
   const y=String(year).slice(0,4);
-  const srcLab={hand:'by hand',documents:'from the documents',sheet:'from the sheet',log:'from the payments log',none:'nothing seeded',
+  const srcLab={hand:'by hand',documents:'from the documents',sheet:'from the sheet',stub:'from the pay stub, projected',log:'from the payments log',none:'nothing seeded',
     itemized:'itemized: mortgage interest and state and local taxes',standard:'the standard deduction',answer:'your child care answer, Form 2441'};
   const fld=([f,label,line])=>{
     const hand=inp.src[f]==='hand';
@@ -18480,13 +18597,17 @@ function taxStubParse(text){
   const commuter=_stubRun(lines,/\b(TRANSIT|COMMUT\w*|PARKING|WAGEWORKS)\b[A-Z ]*/i);
   
   const loan=_stubRun(lines,/\b((?:EQUITY|STOCK|SHARE)\s+LOAN|LOAN\s+(?:PAYMENT|REPAY\w*))\b[A-Z ]*/i,true);
+  
+
+  const erOther=_stubRun(lines,/\b(SAFE\s*HARB\w*|PROFIT\s*SHAR\w*|NON-?\s*ELECTIVE)\b[A-Z ]*/i,true);
   const hfsa=_stubRun(lines,/\b(FLEX\w*\s+SPEND\w*(?:\s+ACC\w*)?|(?:HEALTH|MEDICAL|MED)\s*(?:CARE\s*)?FSA|HCFSA)\b/i);
   return {ok:true,period:period,gross:gross,net:net,rows:rows,k401:k401,hsa:hsa,dcfsa:dcfsa,match:match,commuter:commuter,hfsa:hfsa,
     taxes:_stubTotalLine(lines,'Taxes')||_stubTile(t,'TAXES'),
     deductions:_stubTotalLine(lines,'Deductions')||_stubTile(t,'DEDUCTIONS'),
     derived:Object.assign(taxStubDerive(rows,gross,k401,fedTaxableStated,hsa,dcfsa),
       match&&match.ytd>=0?{match:match.amt,matchYtd:match.ytd}:{},commuter&&commuter.ytd>0?{commuter:commuter.amt,commuterYtd:commuter.ytd}:{},
-      hfsa&&hfsa.ytd>0?{hfsa:hfsa.amt,hfsaYtd:hfsa.ytd}:{},loan&&loan.ytd>0?{loanYtd:loan.ytd}:{})};
+      hfsa&&hfsa.ytd>0?{hfsa:hfsa.amt,hfsaYtd:hfsa.ytd}:{},loan&&loan.ytd>0?{loanYtd:loan.ytd}:{},
+      erOther&&erOther.ytd>0?{erOther:erOther.amt,erOtherYtd:erOther.ytd}:{})};
 }
 
 
@@ -18530,8 +18651,11 @@ function taxStubDerive(rows,gross,k401,fedTaxableStated,hsa,dcfsa){
   
 
   const medT=rows.med?rows.med.taxable:(rows.addl?rows.addl.taxable:null);
-  const fedT=rows.fed?rows.fed.taxable:(fedTaxableStated!=null?fedTaxableStated:null);
+  
+  const fedT=(rows.fed&&rows.fed.taxable!=null)?rows.fed.taxable:(fedTaxableStated!=null?fedTaxableStated:null);
   if(d.deferral==null&&medT!=null&&fedT!=null&&medT>fedT) d.deferral=r2v(medT-fedT);
+  
+  if(fedT!=null) d.fedTaxable=fedT;
   
 
   if(rows.oasdi&&rows.oasdi.ytd>0&&rows.oasdi.amt===0){
@@ -18608,7 +18732,9 @@ function taxWithheldPace(year,from){
   const d=st.derived;
   if(d.fedYtd==null&&d.stateYtd==null) return null;
   const p=taxPaydaysLeft(year,from||_stubNext(st));
-  const n=p?p.n:null;
+  
+  const cad=!p&&!from&&typeof taxStubCadence==='function'?taxStubCadence(st.period):null;
+  const n=p?p.n:(cad?cad.left:null);
   const proj=function(ytd,per){
     if(ytd==null) return null;
     if(n==null||per==null) return r2v(ytd);
@@ -18740,7 +18866,7 @@ function taxStubPanel(){
 
   const yr=todayISO().slice(0,4);
   const cur=taxStubGet(yr);
-  const verdict=_stubVerdict(yr);
+  const verdict=_stubVerdict(yr)+(typeof taxStubYearHtml==='function'?taxStubYearHtml(typeof taxYearKey==='function'?taxYearKey(yr):yr):'');
   if(!st){
     const kept=cur?_stubHeld(cur):'';
     return '<div class="sheet nofold"><h3>Your pay stub</h3>'
@@ -18833,7 +18959,8 @@ function _taxPlayList(){
     typeof TAX_PLAYS_INVINT!=='undefined'?TAX_PLAYS_INVINT:[],
     typeof TAX_PLAYS_SELFEMP!=='undefined'?TAX_PLAYS_SELFEMP:[],
     typeof TAX_PLAYS_FAMILY!=='undefined'?TAX_PLAYS_FAMILY:[],
-    typeof TAX_PLAYS_AMT!=='undefined'?TAX_PLAYS_AMT:[]);
+    typeof TAX_PLAYS_AMT!=='undefined'?TAX_PLAYS_AMT:[],
+    typeof TAX_PLAYS_STUBYEAR!=='undefined'?TAX_PLAYS_STUBYEAR:[]);
 }
 function taxPlayById(id){
   const all=_taxPlayList();
@@ -19678,25 +19805,27 @@ const TAX_PLAYS_ACCOUNTS=[
   blind:'no 401k line on this sheet',
   hedge:'flag',
   lv:'note',
-  when:function(F){ return F.open&&F.k401>=F.elective*0.9&&(F.c415-F.elective)>1000; },
+  when:function(F){ return F.open&&F.k401>=F.elective*0.9&&(F.c415-F.elective-(F.erProj||0))>1000; },
   dollars:function(){ return null; },
   window:function(F){ return null; },
   say:function(F){
-    const room=r2v(F.c415-F.elective);
+    
+    const er=F.erProj>0?F.erProj:0, room=r2v(F.c415-F.elective-er);
     return {
       what:'Put up to '+money(room,0)+' more into your 401(k)',
       why:'You have filled the '+money(F.elective,0)+' deferral limit, but the account itself can take '
-        +money(F.c415,0)+' a year from all sources. The '+money(room,0)+' between them — less whatever your '
-        +'employer matches — can go in as AFTER-TAX contributions if the plan allows them, and be '
+        +money(F.c415,0)+' a year from all sources. '+(er?'Your employer is putting in '+money(er,0)+' this year (the match and its own contribution, from your pay stub), so <b>'+money(room,0)+'</b> is left. It'
+          :'The '+money(room,0)+' between them — less whatever your employer matches —')+' can go in as AFTER-TAX contributions if the plan allows them, and be '
         +'converted to Roth inside the plan. No income limit, no tax on the way in beyond what you already '
         +'paid, and none on the growth. It is the largest Roth lever a W-2 earner has, and it is a question '
         +'for HR, not for this app.',
-      chip:'<code>'+money(F.c415,0)+' §415(c) − '+money(F.elective,0)+' deferred = '+money(room,0)
-        +' before the employer match</code>'};
+      chip:'<code>'+money(F.c415,0)+' §415(c) − '+money(F.elective,0)+' deferred'+(er?' − '+money(er,0)+' from your employer = '+money(room,0)
+        :' = '+money(room,0)+' before the employer match')+'</code>'};
   },
   guards:function(F){ return [
     'Two things the plan has to allow and many do not: after-tax (not Roth) contributions, and in-plan conversion or in-service withdrawal of them. The summary plan description says; HR can confirm.',
-    'The employer match counts against the same ceiling, so the real room is the figure above less the year’s match — which this app reads off no document.',
+    F.erProj>0?'Your employer’s '+money(F.erProj,0)+' is the stub’s year to date, with the match projected on the paychecks that still defer. A true-up or a year-end contribution would add to it.'
+      :'The employer match counts against the same ceiling, so the real room is the figure above less the year’s match — add a pay stub (Taxes → Pay stub) and it is taken off here.',
     'Highly-paid employees can have after-tax contributions refunded after the plan’s nondiscrimination test; a refund is not a penalty, but it undoes the move.',
     'No tax saving on this year’s return — the value is growth that is never taxed, which is why this claims no dollars.',
     F.est?'The '+F.year+' §415(c) limit is an indexed estimate until the IRS publishes.':null]; }
@@ -43284,6 +43413,14 @@ function _imgLossOk(what){
       .catch(function(){ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select();
         try{ document.execCommand('copy'); done(); }catch(e){ toast('Could not copy','warn'); } ta.remove(); });
     return;
+  }
+  
+  if(act==='stubuse'){
+    const on=b.dataset.on==='1'; snap('pay stub in use');
+    const r=taxStubUseSet(b.dataset.y,on);
+    if(!r.ok){ snapCancel(); return toast(r.why,'warn'); }
+    save(); render();
+    return toast((on?'The estimate now uses the stub’s figures for '+b.dataset.y:'Back to the sheet’s figures for '+b.dataset.y)+' · ⌘Z to undo','ok');
   }
   if(act==='taxnewdedsave'){
     const y=Number(b.dataset.y), v=id=>{ const e=document.getElementById(id); return e?String(e.value||'').trim():null; };
