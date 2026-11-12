@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-9nVA+dWklO5ktqj/EUVeWVwjcXhOV2CsRoSHD8eNA38=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-EUDK1xxwOJaRx8qtfgEvtZ2jd8zvFAgUM8egU+482Vg=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2906,7 +2906,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.18";
+const APP_V="v29.19";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2920,7 +2920,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="f0ff685";
+const APP_BUILD="6314864";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -12060,11 +12060,11 @@ const TAX_LIMITS={
  2024:{salt:10000,elective:23000,c415:69000,dcfsa:{mfj:5000,single:5000,mfs:2500},charFloor:0},
  
 
- 2025:{salt:40000,saltPhase:500000,saltRate:0.30,saltFloor:10000,hsa:{self:4300,family:8550},
+ 2025:{salt:40000,saltPhase:500000,saltRate:0.30,saltFloor:10000,hsa:{self:4300,family:8550},hfsa:3300,hfsaCarry:660,commuter:325,
        elective:23500,c415:70000,dcfsa:{mfj:5000,single:5000,mfs:2500},charFloor:0},
  
 
- 2026:{salt:40400,saltPhase:505000,saltRate:0.30,saltFloor:10000,hsa:{self:4400,family:8750},
+ 2026:{salt:40400,saltPhase:505000,saltRate:0.30,saltFloor:10000,hsa:{self:4400,family:8750},hfsa:3400,hfsaCarry:680,commuter:340,
        elective:24500,c415:72000,dcfsa:{mfj:7500,single:7500,mfs:3750},charFloor:0.005,npChar:{mfj:2000,other:1000}}
 };
 
@@ -12547,6 +12547,8 @@ function taxFacts(year,today){
   const _ans=function(id){ return (_ask.find(function(q){ return q.id===id; })||{}).a||''; };
   F.hdhp=_ans('hdhp');
   
+  if(typeof taxEnrollFacts==='function') taxEnrollFacts(F,R,L,_ans('commute'));
+  
 
   F.spouseEarns=F.filing==='mfj'?_ans('spouse'):'yes';
   
@@ -12792,7 +12794,7 @@ const TAX_INTAKE=[
   {id:'commute', per:false, q:'Do you pay for a commute — train, bus, ferry or parking at work?',
    yes:'Transit and parking can come out of pay before tax through a §132(f) commuter benefit, '
       +'escaping federal, state and payroll tax alike — the same rate as the dependent-care '
-      +'account. The monthly ceiling is a figure this app has not been given; the benefits portal '
+      +'account. Say yes and Ways to pay less prices it at the year’s monthly ceiling; the benefits portal '
       +'says whether the employer offers it, and it is the cheapest thing on this list to switch on.',
    ask:'Your benefits portal, under commuter or transit benefits.'},
   {id:'spouse', per:false, q:'Does your spouse earn income too — a job, self-employment — or study full-time?',
@@ -15397,6 +15399,152 @@ const TAX_PLAYS_KIDS=[
 
 
 
+
+function taxStubCadence(period){
+  if(!period||!period.from||!period.to) return null;
+  const days=cfDaysBetween(period.from,period.to)+1, m=Number(period.to.slice(5,7)), d=Number(period.to.slice(8,10));
+  const left=cfDaysBetween(period.to,period.to.slice(0,4)+'-12-31');
+  if(days>=27) return {per:12,left:12-m,word:'monthly'};
+  if(days===14) return {per:26,left:Math.floor(left/14),word:'every two weeks'};
+  if(days<=7) return {per:52,left:Math.floor(left/7),word:'weekly'};
+  
+  return {per:24,left:(12-m)*2+(d<=15?1:0),word:'twice a month'};
+}
+function taxEnrollFacts(F,R,L,commuteAns){
+  const keys=Object.keys((R&&R.pairs)||{});
+  F.hfsaCap=L.hfsa!=null?L.hfsa:null; F.hfsaCarry=L.hfsaCarry!=null?L.hfsaCarry:null;
+  F.commuteCap=L.commuter!=null?L.commuter:null; F.commuteAns=commuteAns||'';
+  
+  F.hfsaOn=F.fsaPerCheck>0; F.hfsaPer=F.fsaPerCheck>0?F.fsaPerCheck:null;
+  F.commuteOn=keys.some(function(k){ return /transit|commut|parking/i.test(k); }); F.commutePer=null; F.commuteMonthly=null;
+  F.matchPer=null; F.matchYtd=null; F.k401Per=null; F.payLeft=null; F.payPer=null; F.stubTo=null;
+  const st=F.open&&typeof taxStubGet==='function'?taxStubGet(F.year):null, d=st&&st.derived?st.derived:null;
+  if(d){
+    const c=taxStubCadence(st.period);
+    F.stubTo=st.period?st.period.to:null; F.payLeft=c?c.left:null; F.payPer=c?c.per:null; F.payWord=c?c.word:'';
+    if(d.hfsaYtd>0){ F.hfsaOn=true; if(d.hfsa>0) F.hfsaPer=d.hfsa; }
+    if(d.commuterYtd>0){ F.commuteOn=true; F.commutePer=d.commuter>0?d.commuter:null;
+      F.commuteMonthly=(F.commutePer>0&&c)?r2v(F.commutePer*c.per/12):null; }
+    if(d.matchYtd!=null){ F.matchPer=d.match; F.matchYtd=d.matchYtd; }
+    if(d.deferral!=null) F.k401Per=d.deferral;
+  }
+  
+  let spend=0; const cols=[];
+  (DB.months||[]).forEach(function(mo){ if(mo.y!==F.year) return;
+    (mo.cats||[]).forEach(function(cn,ci){ if(!/commut|transit|\blirr\b|metro.?north|subway|\bmta\b|railroad/i.test(cn)) return;
+      let s=0; (mo.entries||[]).forEach(function(e){ if(e[1]===ci&&e[2]>0) s+=e[2]; });
+      if(s){ spend=r2v(spend+s); if(cols.indexOf(cn)<0) cols.push(cn); } }); });
+  F.commuteSpend=spend>0?spend:null; F.commuteCols=cols;
+  
+
+  F.matchGap=null;
+  if(F.matchYtd!=null&&F.elective!=null&&F.k401!=null&&F.k401Src==='stub'&&F.payLeft!=null){
+    const room=Math.max(0,r2v(F.elective-F.k401)), n=F.payLeft, per=F.k401Per||0;
+    
+    const m=F.matchPer>0?F.matchPer:0;
+    if(n>0&&per>0&&per*n>room+0.5){
+      const fed=Math.ceil(room/per-1e-9), dry=Math.max(0,n-fed);
+      F.matchGap={room:room,n:n,per:per,dry:dry,match:m,even:r2v(room/n),lost:r2v(m*dry),stopped:false};
+    } else if(n>0&&per===0&&room<1&&F.matchPer===0&&F.matchYtd>0){
+      F.matchGap={room:0,n:n,per:0,dry:n,match:0,even:0,lost:0,stopped:true};
+    }
+  }
+}
+const TAX_PLAYS_ENROLL=[
+{ id:'match-gap', dec31:'whether your 401(k) reaches its limit early and the last paychecks go unmatched: add your latest pay stub (Taxes → Pay stub)',
+  family:'payroll',
+  law:'§401(m) (matching contributions) · §402(g) (the deferral limit)',
+  needs:['matchGap'],
+  blind:'no pay stub this year showing a 401(k) deferral and an employer match',
+  
+  hedge:function(F){ return F.matchGap&&!F.matchGap.stopped&&F.matchGap.lost>0?'ceiling':'flag'; },
+  lv:function(){ return 'act'; },
+  when:function(F){ return !!F.open&&!!F.matchGap&&F.matchGap.dry>0; },
+  dollars:function(F){ return F.matchGap&&!F.matchGap.stopped&&F.matchGap.lost>0?F.matchGap.lost:null; },
+  window:function(F){ return {closes:F.year+'-12-31',why:'the election has to change before the paychecks it is for'}; },
+  say:function(F){
+    const G=F.matchGap, lim=money(F.elective,0);
+    if(G.stopped) return {what:'Your 401(k) hit its '+lim+' limit and the employer match stopped with it',
+      why:'The latest stub shows no deferral and no match, with '+G.n+' paycheck'+(G.n===1?'':'s')+' still to come this year. '
+        +'Unless the plan “trues up” the match at year end, those earn none. Next year, '+money(r2v(F.elective/(F.payPer||24)),0)
+        +' a paycheck reaches the limit on the last one instead.',
+      chip:'<code>'+G.n+' paycheck'+(G.n===1?'':'s')+' left · no deferral · no match</code>'};
+    return {what:'Spread your last 401(k) deferrals — '+G.dry+' paycheck'+(G.dry===1?'':'s')+' would earn no match',
+      why:'At '+money(G.per,0)+' a paycheck you reach the '+lim+' limit with '+G.dry+' of the '+G.n+' paychecks left still to come ('
+        +money(G.room,0)+' of room as of '+fD(F.stubTo)+'). Where an employer matches paycheck by paycheck, those '+G.dry+' earn no match'
+        +(G.match>0?' — <b>'+money(G.lost,0)+'</b> at the '+money(G.match)+' it is paying now':'')+'. Set the deferral to <b>'+money(G.even)
+        +'</b> a paycheck and it reaches the limit on the last one, with a deferral in every one.',
+      chip:'<code>'+money(G.room,0)+' room ÷ '+G.n+' paychecks = '+money(G.even)+' each'+(G.match>0?' · '+G.dry+' × '+money(G.match)+' = '+money(G.lost,0)+' of match':'')+'</code>'};
+  },
+  guards:function(F){ return [
+    'Ask HR one thing first: does the plan “true up” the match at year end? If it does, nothing is lost and nothing needs changing.',
+    'The match formula is not on a pay stub. If the full match needs a bigger deferral than the even amount, part of it is still missed this year.',
+    F.payPer?'For next year, the limit divided by '+F.payPer+' paychecks lasts all year.':null]; }
+},
+{ id:'commuter-benefit', family:'payroll',
+  law:'§132(f) (qualified transportation fringe)',
+  needs:['commuteCap','s125Rate'],
+  blind:'no commuter-benefit ceiling carried for this year — the table covers 2025 and 2026',
+  
+  
+  hedge:function(F){ return F.commuteCap==null||F.s125Rate==null?'flag':F.commuteOn||!F.commuteSpend?'ceiling':'est'; },
+  lv:function(){ return 'act'; },
+  when:function(F){
+    if(!F.open||F.commuteAns==='no') return false;
+    
+    if(F.commuteOn) return F.commuteMonthly!=null&&F.commuteCap-F.commuteMonthly>=10;
+    return F.commuteAns==='yes'||F.commuteSpend>0;
+  },
+  dollars:function(F){
+    if(F.commuteCap==null||F.s125Rate==null) return null;
+    if(F.commuteOn) return F.commuteMonthly!=null?r2v((F.commuteCap-F.commuteMonthly)*12*F.s125Rate):null;
+    return r2v((F.commuteSpend?Math.min(F.commuteSpend,F.commuteCap*24):F.commuteCap*12)*F.s125Rate);
+  },
+  say:function(F){
+    const cap=money(F.commuteCap,0), rate=(Math.round(F.s125Rate*1000)/10)+'%';
+    if(F.commuteOn){ const room=r2v(F.commuteCap-F.commuteMonthly);
+      return {what:money(room,0)+' a month of your transit benefit is unused',
+        why:'Your stub shows '+money(F.commuteMonthly,0)+' a month going to transit, against a ceiling of '+cap+' a month in '+F.year
+          +'. If the commute costs more than that, the next '+money(room,0)+' a month can come out of pay before tax — and parking at a station or at work has a '
+          +cap+' a month ceiling of its own.',
+        chip:'<code>'+money(room,0)+' × 12 × '+rate+' = '+money(room*12*F.s125Rate,0)+' a year, at most</code>'}; }
+    const base=F.commuteSpend?Math.min(F.commuteSpend,F.commuteCap*24):F.commuteCap*12;
+    return {what:'Pay for the commute before tax: up to '+cap+' a month',
+      why:(F.commuteSpend?'About '+money(F.commuteSpend,0)+' went on the commute this year ('+esc(F.commuteCols.join(', '))+'). ':'You said you pay for a commute. ')
+        +'Through a commuter benefit, transit and parking each come out of pay before federal, state and payroll tax, up to '+cap+' a month apiece in '+F.year
+        +'. It can be switched on any month, not only at open enrolment.',
+      chip:'<code>'+money(base,0)+' × '+rate+' = '+money(base*F.s125Rate,0)+(F.commuteSpend?'':' a year, at most')+'</code>'};
+  },
+  guards:function(){ return [
+    'The employer has to offer it; in New York City an employer of twenty or more must.',
+    'Transit means a pass, fare card or vanpool; tolls, fuel and ride-hailing do not count.']; }
+},
+{ id:'health-fsa-next', dec31:'whether a health FSA would pay next year: write down this year’s out-of-pocket medical costs (Taxes → Check-up, medical)',
+  family:'payroll',
+  law:'§125 (cafeteria plans) · §105(b) (medical reimbursement)',
+  needs:['hfsaCap','s125Rate','medical'],
+  blind:'no out-of-pocket medical costs written down this year',
+  hedge:function(){ return 'est'; },
+  lv:function(){ return 'act'; },
+  
+  when:function(F){ return !!F.current&&F.medical>=200&&!F.hfsaOn&&F.hdhp!=='yes'&&!(F.hsaDoc>0); },
+  dollars:function(F){ return r2v(Math.min(F.medical,F.hfsaCap)*F.s125Rate); },
+  window:function(F){ return {closes:F.year+'-12-31',why:'a health FSA is elected at open enrolment, usually in November, for the whole year ahead'}; },
+  say:function(F){
+    const e=Math.min(F.medical,F.hfsaCap), rate=(Math.round(F.s125Rate*1000)/10)+'%';
+    return {what:'Elect a health FSA for '+(F.year+1)+': '+money(e,0)+' of medical costs paid before tax',
+      why:'You paid about '+money(F.medical,0)+' out of pocket for medical, dental and vision this year, with after-tax money. Through a health FSA up to '
+        +money(F.hfsaCap,0)+' of it escapes federal, state and payroll tax — about <b>'+money(e*F.s125Rate,0)+'</b> at '+rate+'.',
+      chip:'<code>'+money(e,0)+' × '+rate+' ≈ '+money(e*F.s125Rate,0)+'</code>'};
+  },
+  guards:function(F){ return [
+    'Use it or lose it: elect what you are sure to spend.'+(F.hfsaCarry?' Where the plan allows, up to '+money(F.hfsaCarry,0)+' carries into the next year.':''),
+    'Not alongside a health savings account: a general health FSA makes you ineligible for an HSA.',
+    'Priced at this year’s costs, rates and limit.']; }
+}];
+
+
+
 function taxMortTable1(g,pre,post,filing){
   const h=filing==='mfs'?0.5:1;
   const L1=r2v(g), L2=r2v(pre), L7=r2v(post);
@@ -17548,10 +17696,18 @@ function taxStubParse(text){
 
   const hsa=_stubLabelled(lines,/\b(HSA|H\.S\.A\.?|HEALTH\s+SAV\w*)\b/i,true);
   const dcfsa=_stubLabelled(lines,/\b(DEP(?:ENDENT)?\s*CARE|DCFSA|DCAP|DAY\s*CARE|CHILD\s*CARE)\b/i,false);
-  return {ok:true,period:period,gross:gross,net:net,rows:rows,k401:k401,hsa:hsa,dcfsa:dcfsa,
+  
+
+  const match=_stubRun(lines,/\b(401\s*\(?K\)?\s*(?:ER\s*)?MATC\w*|(?:EMPLOYER|COMPANY|ER|CO)\s+MATCH\w*)/i);
+  
+  const commuter=_stubRun(lines,/\b(TRANSIT|COMMUT\w*|PARKING|WAGEWORKS)\b[A-Z ]*/i);
+  const hfsa=_stubRun(lines,/\b(FLEX\w*\s+SPEND\w*(?:\s+ACC\w*)?|(?:HEALTH|MEDICAL|MED)\s*(?:CARE\s*)?FSA|HCFSA)\b/i);
+  return {ok:true,period:period,gross:gross,net:net,rows:rows,k401:k401,hsa:hsa,dcfsa:dcfsa,match:match,commuter:commuter,hfsa:hfsa,
     taxes:_stubTotalLine(lines,'Taxes')||_stubTile(t,'TAXES'),
     deductions:_stubTotalLine(lines,'Deductions')||_stubTile(t,'DEDUCTIONS'),
-    derived:taxStubDerive(rows,gross,k401,fedTaxableStated,hsa,dcfsa)};
+    derived:Object.assign(taxStubDerive(rows,gross,k401,fedTaxableStated,hsa,dcfsa),
+      match&&match.ytd>=0?{match:match.amt,matchYtd:match.ytd}:{},commuter&&commuter.ytd>0?{commuter:commuter.amt,commuterYtd:commuter.ytd}:{},
+      hfsa&&hfsa.ytd>0?{hfsa:hfsa.amt,hfsaYtd:hfsa.ytd}:{})};
 }
 
 
@@ -17567,6 +17723,17 @@ function _stubLabelled(lines,re,sum){
     out=out?{amt:r2v(out.amt+amt),ytd:r2v(out.ytd+ytd)}:{amt:amt,ytd:ytd};
   });
   return out;
+}
+
+
+function _stubRun(lines,re){
+  for(let i=0;i<lines.length;i++){
+    const m=re.exec(lines[i]); if(!m) continue;
+    const run=/^(?:\s*\$?\s?-?[0-9][0-9,]*\.[0-9]{2})+/.exec(lines[i].slice(m.index+m[0].length));
+    const f=run?_stubFigs(run[0]):[];
+    if(f.length>=2) return {amt:f[f.length-2],ytd:f[f.length-1]};
+  }
+  return null;
 }
 
 function taxStubDerive(rows,gross,k401,fedTaxableStated,hsa,dcfsa){
@@ -17880,7 +18047,8 @@ function _taxPlayList(){
     typeof TAX_PLAYS_ACCOUNTS!=='undefined'?TAX_PLAYS_ACCOUNTS:[],
     typeof TAX_PLAYS_BROKERAGE!=='undefined'?TAX_PLAYS_BROKERAGE:[],
     typeof TAX_PLAYS_NEWDED!=='undefined'?TAX_PLAYS_NEWDED:[],
-    typeof TAX_PLAYS_KIDS!=='undefined'?TAX_PLAYS_KIDS:[]);
+    typeof TAX_PLAYS_KIDS!=='undefined'?TAX_PLAYS_KIDS:[],
+    typeof TAX_PLAYS_ENROLL!=='undefined'?TAX_PLAYS_ENROLL:[]);
 }
 function taxPlayById(id){
   const all=_taxPlayList();
