@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-ipKCr045fEZx1IQqIpn+EOJuCxD6vq1whmzJV0OdB80=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-QfDi59Ez2pI6xAk74Vf2BQ9su5bNVZzzswvIo8mquIU=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -160,6 +160,10 @@ button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:none;box-s
 .emo{font-family:var(--emoji);font-style:normal;font-weight:400;line-height:1;
   display:inline-block;vertical-align:-.08em;letter-spacing:normal}
 .emo.txt{font-family:var(--sans);color:inherit;vertical-align:-.04em}
+
+.eico{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.2em;line-height:1;flex:none}
+.eico>svg{width:100%;height:100%;display:block}
+.eix{display:none}
 .logo-text{font:600 14.5px/1.15 var(--sans);letter-spacing:-.01em;color:var(--ink)}
 
 .logo-sub{display:none}
@@ -2967,7 +2971,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.29";
+const APP_V="v29.30";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2981,7 +2985,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="6d9577d";
+const APP_BUILD="e5ade1a";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -3573,7 +3577,57 @@ const ICONS={
   expand:'M6 9l6 6 6-6',
   collapse:'M6 15l6-6 6 6',
   taxpack:'M3 6.5h6l2 2h10v11H3zM7 13h8M7 16h5',
-  bell:'M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0'
+  bell:'M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0',
+  
+  trenddown:'M4 7l5.5 6 3.5-3.5L20 17M20 12v5h-5',
+  
+  sliders:'M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4',
+  party:'M4 20l4.5-11 6.5 6.5zM13 4.5c1 1 1 2.5 0 3.5M16.5 8c1.2-.8 2.8-.8 4 0M18 3.500v.01M20 13v.01M9 4v.01',
+  belloff:'M6 16V11a6 6 0 0 1 1.2-3.600M9.5 5.500A6 6 0 0 1 18 11v5M18 18H4.500L6 16M10 20a2 2 0 0 0 4 0M4 4l16 16',
+  spark:'M11 4l1.7 4.800L17.5 10.500l-4.8 1.700L11 17l-1.7-4.800L4.5 10.500l4.8-1.700zM18.5 15l.70 1.8 1.8.70-1.8.70-.70 1.8-.70-1.8-1.8-.70 1.8-.700z',
+  tv:'M3.5 7h17v11h-17zM8.5 3.5 12 7l3.5-3.500M8 21h8',
+  printer:'M7 9V4h10v5M7 17H4.500V9h15v8H17M7 14h10v6H7zM16.5 11.500h.01',
+  trash:'M4.5 7h15M9.5 7V4.500h5V7M6.5 7l1 12.500h9l1-12.500M10 10.500v6M14 10.500v6',
+  shield:'M12 3.500l7 2.500v5.500c0 4.2-2.9 7.4-7 9-4.1-1.6-7-4.8-7-9V6zM9 12l2.2 2.200L15.2 10',
+  unlock:'M5.5 11h13v9.500h-13zM8.5 11V7.500a3.5 3.5 0 0 1 6.8-1.200M12 14.500v2.5',
+  fork:'M7 3.500v6a2.5 2.5 0 0 0 5 0v-6M9.5 3.500V20.500M17 20.500V3.500c-2 1.5-3 4-3 7.500h3',
+  cart:'M3 4.500h2.500l2.3 10.500h9.700l2-7.500H6.600M9.5 19.500a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM16.5 19.500a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+  fuel:'M5 20.500V5a1.5 1.5 0 0 1 1.5-1.500h6A1.5 1.5 0 0 1 14 5v15.500M3.5 20.500h12M7.5 7h4v4h-4zM14 11h1.500a1.5 1.5 0 0 1 1.5 1.500V16a1.5 1.5 0 0 0 3 0V9l-2.5-2.5',
+  plane:'M10.5 13.5 3.5 11l1.5-1.5 7.5 1 4.5-4.500c1.2-1.2 3.5-1.5 3.5-1.500s-.3 2.3-1.5 3.500L14.5 12.500l1 7.5-1.5 1.5-2.5-7M7 14.500l-2 .5 4 4 .50-2',
+  parking:'M4.5 4.500h15v15h-15zM9.5 16.500v-9h3a2.75 2.75 0 0 1 0 5.500h-3',
+  car:'M5 11l1.5-4.500h11L19 11M3.5 11h17v6h-17zM6 17v2M18 17v2M7 14h.01M17 14h.01',
+  telescope:'M4 13.500l11-5.5 1.5 3-11 5.500zM15 8l3.5-1.7 1.5 3L16.5 11M10.5 15.5 8 21M11.5 15l3.5 6',
+  globe:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3z',
+  medal:'M12 21a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM8.5 11 6 3.500h4l2 4.5 2-4.500h4L15.5 11M12 13.500v4',
+  pie:'M12 3a9 9 0 1 0 9 9h-9zM15 3.500A9 9 0 0 1 20.5 9H15z',
+  flag:'M5.5 21V4M5.5 4.500h12l-2.5 4 2.5 4h-12',
+  key:'M8 18.500a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zM11.2 10.8 19.5 3.500M16 7l2.5 2.500M13.5 9.500l1.5 1.5',
+  plus:'M12 5v14M5 12h14',
+  pause:'M9 5v14M15 5v14',
+  play:'M8 5l11 7-11 7z',
+  copy:'M8.5 8.500h11v11h-11zM5.5 15.500h-1v-11h11v1',
+  gem:'M7 4.500h10l4 5-9 10.500L3 9.500zM3 9.500h18M9.5 9.5 12 20M14.5 9.5 12 20M9.5 9.500l1-5M14.5 9.500l-1-5',
+  music:'M9 17.500V5.500l10-2v12M9 17.500a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM19 15.500a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z',
+  device:'M5 5.500h14v10H5zM2.5 18.500h19M10 18.500h4',
+  phone:'M7.5 3h9v18h-9zM11 18h2',
+  flame:'M12 21c-3.5 0-6-2.5-6-6 0-3 2-4.5 3-7 .50 1.5 1.5 2.5 2.5 3 0-3 .50-5.5 2.5-7.5 0 3.5 4 6 4 11.5 0 3.5-2.5 6-6 6z',
+  heart:'M12 20S4 15 4 9.500A4.25 4.25 0 0 1 12 7.5 4.25 4.25 0 0 1 20 9.500C20 15 12 20 12 20z',
+  cup:'M5 9h11v5a5.5 5.5 0 0 1-11 0zM16 10.500h1.500a2.5 2.5 0 0 1 0 5H16M4 20.500h13M8 3.500v2.500M12 3.500v2.5',
+  clip:'M19 11.500l-7.5 7.500a4.25 4.25 0 0 1-6-6l8-8a2.85 2.85 0 0 1 4 4l-8 8a1.4 1.4 0 0 1-2-2l7-7',
+  chat:'M4 5.500h16v11H11l-4.5 3.500v-3.500H4zM8 10h8M8 13h5',
+  game:'M7 8h10a4 4 0 0 1 4 4v1.500a3 3 0 0 1-5.5 1.700L15 14.500H9l-.50.700A3 3 0 0 1 3 13.500V12a4 4 0 0 1 4-4zM7 10.500v3M5.5 12h3M15.5 11h.01M17.5 13h.01',
+  dumbbell:'M3 12h18M6.5 7.500v9M3.5 9.500v5M17.5 7.500v9M20.5 9.500v5',
+  clock:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7.500V12l3 2',
+  hand:'M8 12V6a1.4 1.4 0 0 1 2.8 0v5M10.8 10V4.500a1.4 1.4 0 0 1 2.8 0V10M13.6 10V5.500a1.4 1.4 0 0 1 2.8 0V11M16.4 11V8a1.4 1.4 0 0 1 2.8 0v6c0 4-2.7 7-6.5 7-3 0-4.5-1.5-6-4L4.2 13a1.4 1.4 0 0 1 2.4-1.400L8 13.5',
+  cap:'M2.5 9.5 12 5l9.5 4.500L12 14zM6.5 11.500V16c1.5 1.5 3.5 2 5.5 2s4-.50 5.5-2v-4.500M21.5 9.500v5',
+  news:'M4 5h13v14.500H5.500A1.5 1.5 0 0 1 4 18zM17 9h3v9a1.5 1.5 0 0 1-3 0M7 8.500h7M7 12h7M7 15.500h4',
+  bag:'M5 8.500h14v11.500H5zM9 8.500V5h6v3.500M5 12.500h14',
+  ticket:'M3.5 7h17v3.500a1.5 1.5 0 0 0 0 3V17h-17v-3.500a1.5 1.5 0 0 0 0-3zM14.5 7v10',
+  shuffle:'M3.5 7h3.500l8 10h5.500M3.5 17h3.500l2.5-3.200M12.5 10.2 15 7h5.500M18 4.5 20.5 7 18 9.500M18 14.500l2.5 2.5-2.5 2.5',
+  umbrella:'M12 3.500v1.500M3.5 13a8.5 8.5 0 0 1 17 0zM12 13v5.500a2 2 0 0 1-4 0',
+  help:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9.500a2.5 2.5 0 1 1 3.8 2.100c-.80.5-1.3 1-1.3 1.900M12 16.500v.01',
+  film:'M4 5h16v14H4zM8 5v14M16 5v14M4 9.500h4M4 14.500h4M16 9.500h4M16 14.500h4',
+  tooth:'M7.5 4c1.5 0 3 1 4.5 1s3-1 4.5-1c2 0 3.5 1.8 3 4.5-.30 1.8-1.2 3-1.5 5-.30 2.5-.50 7-2 7s-1.5-5-4-5-2.5 5-4 5-1.7-4.5-2-7c-.30-2-1.2-3.2-1.5-5C4 5.8 5.5 4 7.5 4z'
 };
 
 const EMOJI={
@@ -3602,6 +3656,68 @@ function ico(name,size){
   return '<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="currentColor" '
     +'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
     +d.split('M').filter(Boolean).map(p=>'<path d="M'+p.trim()+'"/>').join('')+'</svg>';
+}
+
+
+
+const ICO_EMOJI={
+  '🧾':'receipts','💳':'cards','📈':'trends','📉':'trenddown','📊':'bars','🥧':'pie','🗓':'year','📅':'months','📆':'months','📋':'clipboard','📑':'statement',
+  '✅':'check','⚠':'alert','❓':'help','ℹ':'info','🏦':'checking','🏧':'checking','📄':'bills','📦':'archive','🔁':'subs','🔄':'sync','🔀':'shuffle','♻':'restore',
+  '💵':'cashflow','💰':'rewards','🪙':'coins','💲':'coins','🐖':'coins','💸':'charges','🎯':'goals','🏠':'dash','🏡':'amortize','🏛':'worth','🗽':'worth',
+  '📬':'mail','📭':'mail','📮':'mail','✉':'mail','📥':'import','📤':'export','⚙':'sliders','🧭':'advice','🎉':'party','🔍':'search','🔎':'search','🔕':'belloff','🔔':'bell',
+  '👋':'spark','✨':'spark','🤖':'spark','🆕':'spark','🎁':'gift','🎗':'gift','🔒':'lock','🔓':'unlock','🔑':'key','🛡':'shield','☂':'umbrella','📺':'tv','🎬':'film','⚡':'bolt','🧮':'taxes',
+  '✏':'pen','✍':'pen','🖨':'printer','🗑':'trash','💡':'insights','🏪':'stores','🏬':'stores','🍽':'fork','🛒':'cart','⛽':'fuel','💊':'medical','⚕':'medical','🩺':'medical','🦷':'tooth',
+  '🔨':'renos','🏗':'renos','🧱':'bricks','✈':'plane','🅿':'parking','🚗':'car','🚙':'car','🚕':'car','🚇':'trains','🚂':'trains','🔭':'telescope','📍':'pin','📌':'pin','🌐':'globe','⚖':'reconcile',
+  '🥇':'medal','🏁':'flag','🗂':'taxpack','🌱':'greenhouse','➕':'plus','👯':'copy','🎟':'ticket','💎':'gem','📒':'ledger','⚔':'alert','✋':'hand','🔝':'trends','🎵':'music','🎧':'music',
+  '☁':'cloud','💻':'device','📱':'phone','📲':'install','📰':'news','💪':'dumbbell','🎮':'game','🍏':'cart','🔥':'flame','💧':'water','🎓':'cap','📜':'scroll','❤':'heart','☕':'cup','☀':'sun','🌙':'moon',
+  '💾':'floppy','🏷':'tag','📎':'clip','🧳':'bag','💼':'work','🕓':'clock','⏳':'clock','⏱':'clock','⏸':'pause','▶':'play','↩\uFE0F':'undo','💬':'chat','📷':'camera','🖼':'image','🧸':'family','👨‍👩‍👧':'family','🌼':'flower'
+};
+
+const ICO_EMOJI_RE=new RegExp('('+Object.keys(ICO_EMOJI).sort(function(a,b){ return b.length-a.length; })
+  .map(function(k){ return k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }).join('|')+')\\uFE0F?','gu');
+const ICO_SKIP='script,style,title,textarea,option,select,svg,[contenteditable],.eico,.noico';
+
+function icoFor(emoji){ const e=String(emoji||''); return ICO_EMOJI[e]||ICO_EMOJI[e.replace(/\uFE0F/g,'')]||''; }
+function _icoSpan(emoji){
+  const sp=document.createElement('span'); sp.className='eico'; sp.setAttribute('aria-hidden','true');
+  sp.innerHTML=ico(icoFor(emoji),16)+'<span class="eix"></span>'; sp.lastChild.textContent=emoji;
+  return sp;
+}
+
+function icoSweep(root){
+  root=root||document.getElementById('page'); if(!root||typeof document.createTreeWalker!=='function') return 0;
+  if(root.nodeType===3){ root=root.parentNode; if(!root) return 0; }
+  if(root.nodeType!==1||(root.closest&&root.closest(ICO_SKIP))) return 0;
+  const w=document.createTreeWalker(root,4 ), hits=[];
+  while(w.nextNode()){ const n=w.currentNode;
+    ICO_EMOJI_RE.lastIndex=0; if(!ICO_EMOJI_RE.test(n.nodeValue)) continue;
+    const el=n.parentNode; if(!el||el.nodeType!==1||el.closest(ICO_SKIP)) continue;
+    hits.push(n); }
+  let k=0;
+  hits.forEach(function(n){
+    const s=n.nodeValue, f=document.createDocumentFragment(); let at=0, m; ICO_EMOJI_RE.lastIndex=0;
+    while((m=ICO_EMOJI_RE.exec(s))){
+      if(m.index>at) f.appendChild(document.createTextNode(s.slice(at,m.index)));
+      f.appendChild(_icoSpan(m[0])); at=m.index+m[0].length; k++; }
+    if(at<s.length) f.appendChild(document.createTextNode(s.slice(at)));
+    
+
+    if(f.childNodes.length>1){ const one=document.createElement('span'); one.className='etx'; one.appendChild(f); n.parentNode.replaceChild(one,n); }
+    else n.parentNode.replaceChild(f,n);
+  });
+  return k;
+}
+
+let _icoWatching=false;
+function icoWatch(){
+  if(_icoWatching||typeof MutationObserver!=='function'||!document.body) return; _icoWatching=true;
+  new MutationObserver(function(list){
+    for(const r of list){
+      if(r.type==='characterData'){ if(r.target.parentNode) icoSweep(r.target); continue; }
+      for(const n of r.addedNodes){ if(n.nodeType===1){ if(!n.classList.contains('eico')) icoSweep(n); } else if(n.nodeType===3) icoSweep(n); }
+    }
+  }).observe(document.body,{childList:true,subtree:true,characterData:true});
+  icoSweep(document.body);   
 }
 
 
@@ -7754,6 +7870,7 @@ function _render(){
   _chartBand=chartBand();
   tilesWire(shut);
   labelsWire();
+  if(typeof icoSweep==='function'){ icoSweep(); icoWatch(); }   
   uiEntered(shut); uiDecorate(); if(typeof tabsReveal==='function') tabsReveal();
   headFit();   
   plateFit();  
@@ -50000,7 +50117,7 @@ function renderOnce(name,fn){
     RCP,RCP_PROMPT,mailVouched,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
-    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
+    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
     BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,mailOldScriptWords,MAIL_STMT_NOTICE_RE,mailAssistUnread,_maUnread,MAIL_ASSIST_V22,MAIL_FX_AMT,mailHasFx,mailRbsStmtSettle,mailRbsSelf,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,NY_TUITION_CAP,nyCareCredit,nyTuitionCredit,nyCareFedRate,nyCareRate,nyCareApplicable,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
