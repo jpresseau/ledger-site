@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-vy10OIuEBEVT/2CtsB0hBxa1Z0uN5OBh4/QzZUm47jw=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-IGM9GdGIL9aq4JyySwiTJPCPx5r+VzLJSO56z/3LP+E=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2906,7 +2906,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.22";
+const APP_V="v29.23";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2920,7 +2920,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="9ac2646";
+const APP_BUILD="01d3ab4";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -12035,7 +12035,7 @@ function taxFactsLive(year){
         stateName='New York';
       }
     }
-    return {agi:E.agi,taxable:E.taxable,taken:r2v(E.agi-E.taxable),fedRate:fedRate,stateRate:stateRate,stateName:stateName};
+    return {agi:E.agi,taxable:E.taxable,taken:r2v(E.agi-E.taxable),fedRate:fedRate,stateRate:stateRate,stateName:stateName,amtWork:E.amtWork||null};
   }catch(e){ return null; }
   finally{ _tfLiveBusy=false; }
 }
@@ -12376,7 +12376,10 @@ function taxFacts(year,today){
 
   F.amtAnswer=FD.amt;
   F.amtHit=FD.amt==='yes';
-  F.amtOpen=!F.amtSeen&&!FD.amt;
+  
+
+  F.amtWork=LV?(LV.amtWork||null):((typeof _tfLiveBusy!=='undefined'&&_tfLiveBusy)||typeof taxAmtFor!=='function')?null:taxAmtFor(year);
+  F.amtOpen=!F.amtSeen&&!FD.amt&&!F.amtWork;
   
 
   F.grossPerCheck=P('GROSS PAY');
@@ -15147,13 +15150,17 @@ function taxFedEstimate(inp){
   
 
   const care=Math.max(0,inp.care||0), ctcAll=Math.max(0,inp.ctc||0);
-  const ctc=r2v(Math.min(ctcAll,beforeCredits)), careUsed=r2v(Math.min(care,beforeCredits-ctc));
+  
+  const AM=inp.amtAdd!=null&&typeof taxAmt==='function'?taxAmt({year:y,filing:f,taxable:taxable,addBack:inp.amtAdd,iso:inp.iso!=null?inp.iso:(inp.isoTyped||0),pref:pref,ordTaxable:ordTaxable,regular:beforeCredits}):null;
+  const amt=AM?AM.amt:0, line18=r2v(beforeCredits+amt);
+  const ctc=r2v(Math.min(ctcAll,line18)), careUsed=r2v(Math.min(care,line18-ctc));
   const earned=r2v((inp.earned!=null?inp.earned:r2v(wages+other))+(SE?se-SE.half:0)), left=r2v(ctcAll-ctc);
   const actc=left<=0?0:y===2021?left
     :r2v(Math.min(left,(TAX_ACTC[y]||0)*Math.max(0,inp.ctcKids||0),Math.max(0,earned-2500)*0.15));
-  const tax=r2v(beforeCredits-ctc-careUsed+addlMed+niit+(SE?SE.seTax:0));
+  const tax=r2v(line18-ctc-careUsed+addlMed+niit+(SE?SE.seTax:0));
   return {agi,taxable,ordTaxable,pref,ordTax:r2v(ordTax),prefTax:r2v(prefTax),
     se:se,seTax:SE?SE.seTax:0,seHalf:SE?SE.half:0,seBase:SE?SE.base:0,seSs:SE?SE.ss:0,qbi:QB?QB.deduction:0,
+    amt:amt,amtWork:AM,
     addlMed,niit,ctc,care:careUsed,actc,tax,est:!!(T.est||G.est),
     held:inp.held!=null?r2v(inp.held):null,
     owed:inp.held!=null?r2v(tax-inp.held-actc):null};
@@ -15227,7 +15234,16 @@ function taxEstimateInputs(year){
     docs.some(d=>d.boxes&&(d.boxes['2']!=null||d.boxes['4']!=null))
       ?r2v(sum(w2,'2')+sum(docs.filter(d=>/^1099/.test(d.kind)),'4')):null,
     R.sum.fedHeld);
+  
+
+  let amtAdd=null;
+  if(ded==null) amtAdd=itemize?IT.salt:(C?C.std[_fil]:null);
+  else if(C&&Math.abs(ded-C.std[_fil])<=1) amtAdd=C.std[_fil];
+  else if(C){ let F2=null; try{ F2=taxFacts(year); }catch(e){ F2=null; }
+    amtAdd=F2&&F2.mort!=null?r2v(Math.max(0,Math.min(ded-F2.mort,F2.saltInAmt!=null?F2.saltInAmt:Infinity))):null; }
+  const _wk=(DB.taxwork&&typeof DB.taxwork==='object'&&DB.taxwork[y])||{};
   return {year:y,filing:_fil,wages,interest,ordDiv,qualDiv,ltcg,other,se,
+    amtAdd:amtAdd,isoTyped:_wk.iso>0?_wk.iso:0,
     
     ssWages:w2.length&&sum(w2,'3')>0?sum(w2,'3'):null,
     ltPref:SD&&src.ltcg==='documents'?SD.pref:null,schD:SD,
@@ -15271,6 +15287,7 @@ function taxSecondOpinionHtml(year){
   const out=[
     ['Ordinary tax (IRS '+inp.year+' table'+(est.est?', indexed estimate':'')+')',est.ordTax],
     est.prefTax?['Qualified/LTCG stack (0/15/20)',est.prefTax]:null,
+    est.amt?['Alternative minimum tax (6251)',est.amt]:null,
     est.addlMed?['Additional Medicare (8959)',est.addlMed]:null,
     est.niit?['Net investment tax (8960)',est.niit]:null,
     est.ctc?['Child Tax Credit',-est.ctc]:null,
@@ -15279,9 +15296,10 @@ function taxSecondOpinionHtml(year){
   return '<div class="sheet"><h3>The second opinion</h3>'
     +mut('A federal return computed from first principles — IRS tables kept in the app, income from '
       +'the photographed documents where they exist, the sheet’s inputs where they do not — and laid '
-      +'beside the hand-worked answer. New York’s return is worked out below it; AMT is not attempted, and '
-      +'no sheet in this book computes one either — so nothing here can tell you whether a year '
-      +'met it. Schedule 2 line 1 on a prepared return is where that answer lives.')
+      +'beside the hand-worked answer. New York’s return is worked out below it. The alternative minimum tax '
+      +'(Form 6251) is worked too'+(est.amtWork?': '+(est.amt>0?money(est.amt,0)+' this year':'none this year, with '+money(est.amtWork.margin,0)+' to spare')
+        :', where the year’s state and local taxes are known — not on this one')
+      +'. Schedule 2 line 1 on a prepared return is where the filed answer lives.')
     +'<div class="tblwrap"><table class="tbl tight"><tbody>'+rows+out
     +'<tr><td><b>Computed federal tax</b></td><td class="n num"><b>'+money(est.tax)+'</b></td></tr>'
     +(sheet!=null?'<tr><td>The sheet’s own answer</td><td class="n num">'+money(sheet)+'</td></tr>'
@@ -15966,6 +15984,100 @@ const TAX_PLAYS_FAMILY=[
 
 
 
+const TAX_AMT={
+  2018:{ex:{single:70300,mfj:109400,mfs:54700},po:{single:500000,mfj:1000000,mfs:500000},brk:191100,rate:0.25},
+  2019:{ex:{single:71700,mfj:111700,mfs:55850},po:{single:510300,mfj:1020600,mfs:510300},brk:194800,rate:0.25},
+  2020:{ex:{single:72900,mfj:113400,mfs:56700},po:{single:518400,mfj:1036800,mfs:518400},brk:197900,rate:0.25},
+  2021:{ex:{single:73600,mfj:114600,mfs:57300},po:{single:523600,mfj:1047200,mfs:523600},brk:199900,rate:0.25},
+  2022:{ex:{single:75900,mfj:118100,mfs:59050},po:{single:539900,mfj:1079800,mfs:539900},brk:206100,rate:0.25},
+  2023:{ex:{single:81300,mfj:126500,mfs:63250},po:{single:578150,mfj:1156300,mfs:578150},brk:220700,rate:0.25},
+  2024:{ex:{single:85700,mfj:133300,mfs:66650},po:{single:609350,mfj:1218700,mfs:609350},brk:232600,rate:0.25},
+  2025:{ex:{single:88100,mfj:137000,mfs:68500},po:{single:626350,mfj:1252700,mfs:626350},brk:239100,rate:0.25},
+  2026:{ex:{single:90100,mfj:140200,mfs:70100},po:{single:500000,mfj:1000000,mfs:500000},brk:244500,rate:0.5}};
+
+
+function taxAmt(o){
+  const y=Number(String(o&&o.year).slice(0,4)), T=TAX_AMT[y];
+  if(!T) return null;
+  const n=function(v){ return Math.max(0,Number(v)||0); };
+  const k=typeof taxFilingKey==='function'?taxFilingKey(o.filing):String(o.filing||'single');
+  const f=(k==='mfj'||k==='qss')?'mfj':k==='mfs'?'mfs':'single';
+  const addBack=n(o.addBack), iso=n(o.iso);
+  const amti=r2v(n(o.taxable)+addBack+iso);
+  const exFull=T.ex[f], exemption=r2v(Math.max(0,exFull-T.rate*Math.max(0,amti-T.po[f])));
+  const base=Math.max(0,r2v(amti-exemption));
+  const brk=f==='mfs'?T.brk/2:T.brk;
+  const flat=function(x){ return x<=brk?0.26*x:0.28*x-0.02*brk; };
+  let tmt=flat(base);
+  
+
+  const pref=Math.min(n(o.pref),base), G=(typeof TAX_LTCG==='object'&&TAX_LTCG[y])?(TAX_LTCG[y][k]||TAX_LTCG[y][f]||TAX_LTCG[y].single):null;
+  if(pref>0&&G){
+    const ord=n(o.ordTaxable);
+    const zero=Math.min(pref,Math.max(0,G[0]-ord));
+    const fif=Math.min(pref-zero,Math.max(0,G[1]-Math.max(G[0],ord)));
+    tmt=Math.min(tmt,flat(base-pref)+0.15*fif+0.20*(pref-zero-fif));
+  }
+  tmt=r2v(tmt);
+  const regular=r2v(n(o.regular)), amt=r2v(Math.max(0,tmt-regular));
+  return {year:y,filing:f,taxable:r2v(n(o.taxable)),addBack:addBack,iso:iso,amti:amti,exFull:exFull,exemption:exemption,base:base,
+    tmt:tmt,regular:regular,amt:amt,margin:r2v(Math.max(0,regular-tmt))};
+}
+
+let _taxAmtBusy=false;
+function taxAmtFor(year){
+  if(_taxAmtBusy||typeof taxEstimateInputs!=='function'||typeof taxFedEstimate!=='function') return null;
+  _taxAmtBusy=true;
+  try{ const I=taxEstimateInputs(year), E=I?taxFedEstimate(I):null; return E&&E.amtWork?E.amtWork:null; }
+  catch(e){ return null; }
+  finally{ _taxAmtBusy=false; }
+}
+
+
+function taxAmtKeeps(F,worth){
+  const A=F&&F.amtWork;
+  if(!A||!(worth>0)||F.amtAnswer==='no') return worth;
+  return r2v(Math.min(worth,A.margin));
+}
+
+
+function taxAmtRoom(F){
+  const A=F&&F.amtWork; if(!A||!(F.fedRate>0)) return null;
+  return r2v(A.margin/F.fedRate);
+}
+const TAX_PLAYS_AMT=[
+{ id:'amt-watch', family:'income',
+  law:'§55 (alternative minimum tax), §56(b)(1)(A) (no deduction for taxes), §56(b)(3) (incentive stock options) · Form 6251',
+  needs:['amtWork','fedRate'],
+  blind:'not enough of the year to work Form 6251 — income and deductions for it',
+  hedge:function(){ return 'flag'; },
+  
+  lv:function(F){ return F.amtWork.amt>0&&F.open?'act':'note'; },
+  
+  when:function(F){ const A=F.amtWork; return !F.expired&&F.amtAnswer!=='no'&&(A.amt>0||(A.tmt>0&&A.margin<0.1*A.regular)); },
+  dollars:function(){ return null; },
+  window:function(F){ return F.open?{closes:F.year+'-12-31',why:'what is paid, exercised or deducted by the last day of the year is what the form counts'}:null; },
+  say:function(F){
+    const A=F.amtWork, room=taxAmtRoom(F);
+    const how='Your Form 6251 starts from taxable income of '+money(A.taxable,0)+', adds back '+money(A.addBack,0)+(A.iso>0?' and the '+money(A.iso,0)+' option spread':'')
+      +', takes off the '+money(A.exemption,0)+' exemption and taxes the rest at 26% and 28%: '+money(A.tmt,0)+', against a regular tax of '+money(A.regular,0)+'.';
+    if(A.amt>0) return {what:'The minimum tax adds '+money(A.amt,0)+' this year',
+      why:how+' The difference, <b>'+money(A.amt,0)+'</b>, is owed on top. While it applies, another dollar of state or property tax deducted saves nothing'
+        +(A.iso>0?', and each $1,000 less of options exercised and held this year saves about '+money(A.base>(A.filing==='mfs'?TAX_AMT[A.year].brk/2:TAX_AMT[A.year].brk)?280:260,0):'')+'.',
+      chip:'<code>'+money(A.tmt,0)+' minimum − '+money(A.regular,0)+' regular = '+money(A.amt,0)+'</code>'};
+    return {what:'You are '+money(A.margin,0)+' of tax from the minimum tax',
+      why:how+' None is owed, with <b>'+money(A.margin,0)+'</b> to spare'+(room!=null?' — about '+money(room,0)+' more of state or property tax could be deducted before it stopped saving anything':'')+'.',
+      chip:'<code>'+money(A.regular,0)+' regular − '+money(A.tmt,0)+' minimum = '+money(A.margin,0)+' to spare</code>'};
+  },
+  guards:function(F){ const A=F.amtWork; return [
+    A.amt>0?'Mortgage interest and gifts to charity still count under the minimum tax; state and local taxes and the standard deduction do not.':null,
+    A.iso>0?'Minimum tax paid because of stock options comes back as a credit in later years (Form 8801). Keep the form.':
+      'Exercising incentive stock options and holding the shares adds the spread to this form. Type it on File it → Build before you exercise, and see.',
+    'Worked from this book’s estimate of the year. Depreciation, private-activity bond interest and the foreign tax credit are not in it.']; }
+}];
+
+
+
 function taxMortTable1(g,pre,post,filing){
   const h=filing==='mfs'?0.5:1;
   const L1=r2v(g), L2=r2v(pre), L7=r2v(post);
@@ -16026,10 +16138,12 @@ function taxFilePackWorked(year){
     F('14','Total deductions',r2v(inp.deduction+(est.qbi||0))),
     F('15','Taxable income',est.taxable),
     F('16','Tax'+(est.prefTax?' (with the qualified dividends and capital gain worksheet)':''),tax16),
+    est.amt?F('17','Amount from Schedule 2 line 3 — the alternative minimum tax (Form 6251)',est.amt):null,
+    est.amt?F('18','Lines 16 and 17',r2v(tax16+est.amt)):null,
     F('19','Child tax credit or credit for other dependents (Schedule 8812)',nz(est.ctc)),
     F('20','Amount from Schedule 3 line 8 — the child and dependent care credit',nz(est.care)),
     cr?F('21','Lines 19 and 20',cr):null,
-    F('22','Line 18 less line 21',r2v(Math.max(0,tax16-cr))),
+    F('22','Line 18 less line 21',r2v(Math.max(0,tax16+(est.amt||0)-cr))),
     F('23','Other taxes from Schedule 2 ('+(est.seTax?'Schedule SE, ':'')+'Forms 8959, 8960)',nz(sch2)),
     F('24','Total tax',est.tax),
     F('25d','Federal income tax withheld',inp.held||0),
@@ -16058,6 +16172,18 @@ function taxFilePackWorked(year){
     if(est.qbi) forms.push({form:'Form 8995 · Qualified business income deduction',note:'Worked as a service business with no payroll.',lines:[
       F('1c','Qualified business income: the profit less half the self-employment tax',r2v(se-est.seHalf)),
       F('15','The deduction',est.qbi)].filter(Boolean)}); }
+  
+  if(est.amt>0&&est.amtWork){ const A=est.amtWork;
+    forms.push({form:'Form 6251 · Alternative minimum tax',note:'Owed where the minimum tax comes to more than the regular one. Not in it: depreciation, private-activity bond interest, the foreign tax credit.',lines:[
+      F('1','Taxable income (Form 1040 line 15)',A.taxable),
+      F('2a',itemize?'Taxes from Schedule A line 7':'The standard deduction',A.addBack),
+      A.iso?F('2i','Incentive stock options: what the shares were worth over what you paid',A.iso):null,
+      F('4','Alternative minimum taxable income',A.amti),
+      F('5','Exemption',A.exemption),
+      F('6','Line 4 less line 5',A.base),
+      F('7','Tentative minimum tax: 26% and 28%'+(est.pref>0?', the capital gain and qualified dividends at their own rates (Part III)':''),A.tmt),
+      F('10','Regular tax (Form 1040 line 16)',A.regular),
+      F('11','Alternative minimum tax (to Schedule 2 line 2)',A.amt)].filter(Boolean)}); }
   if(itemize){ const I=seed.itemized;
     forms.push({form:'Schedule A · Itemized deductions',note:'The Ledger itemizes because these come to more than the standard deduction.',lines:[
       F('5d','State and local taxes paid (income and property)',I.saltPaid),
@@ -16085,7 +16211,7 @@ function taxFilePackWorked(year){
   if(est.est) notes.push({what:'This year’s federal tables are the indexed estimate',text:true,
     why:'The brackets are projected until the IRS publishes the year’s own; the pack follows the moment they are in.'});
   notes.push({what:'Not worked out here',text:true,
-    why:'The alternative minimum tax (Form 6251), self-employment tax and education credits. If any of them apply to you, the return needs them.'});
+    why:(est.amtWork?'':'The alternative minimum tax (Form 6251). ')+'Education credits, the foreign tax credit, and a business’s own expenses and depreciation. If any of them apply to you, the return needs them.'});
   return {year:year,forms:forms,flags:[],notes:notes,worked:true};
 }
 
@@ -17867,6 +17993,7 @@ const TAXWORK_FIELDS=[
   ['other','Other income (1099-MISC, misc)','8'],
   ['se','Self-employment profit (Schedule C line 31)','S1·3'],
   ['deduction','Deduction taken','12'],
+  ['iso','Stock options exercised and held: the spread (Form 6251 line 2i)','6251'],
   ['ctc','Child tax credit','19'],
   ['care','Child and dependent care credit (Form 2441)','20'],
   ['held','Federal tax withheld','25'],
@@ -17905,7 +18032,7 @@ function taxWorkInputs(year){
     if(w[f]!=null){ out[f]=w[f]; out.src[f]='hand'; }
     else{ out[f]=r2v(sv); out.src[f]=f==='estPaid'?(logged!=null?'log':'none'):(seed.src[f]||'none'); }
   });
-  out.medWages=seed.medWages; out.ctcKids=seed.ctcKids; out.earned=seed.earned; out.invInt=seed.invInt; out.ssWages=seed.ssWages;
+  out.medWages=seed.medWages; out.ctcKids=seed.ctcKids; out.earned=seed.earned; out.invInt=seed.invInt; out.ssWages=seed.ssWages; out.amtAdd=seed.amtAdd;
   
   out.ltPref=out.src.ltcg==='hand'?null:seed.ltPref; out.schD=out.src.ltcg==='hand'?null:seed.schD;
   return out;
@@ -17960,6 +18087,7 @@ function taxBuildHtml(year){
     +out('15','Taxable income',est.taxable)
     +out('16','Tax ('+taxFilingLabel(inp.filing)+' table'
       +(est.prefTax?', incl. '+money(est.prefTax)+' on the 0/15/20 stack':'')+')',r2v(est.ordTax+est.prefTax))
+    +(est.amt?out('17','Alternative minimum tax (Form 6251)',est.amt):'')
     +(surtax||est.seTax?out('23','Other taxes ('+(est.seTax?'self-employment tax '+money(est.seTax)+(surtax?', ':''):'')+(surtax?'8959 + 8960':'')+')',r2v(surtax+est.seTax)):'')
     +out('24','Total tax',est.tax,true)
     +(est.actc?out('28','Additional child tax credit (refundable)',est.actc):'')
@@ -18492,7 +18620,8 @@ function _taxPlayList(){
     typeof TAX_PLAYS_ENROLL!=='undefined'?TAX_PLAYS_ENROLL:[],
     typeof TAX_PLAYS_INVINT!=='undefined'?TAX_PLAYS_INVINT:[],
     typeof TAX_PLAYS_SELFEMP!=='undefined'?TAX_PLAYS_SELFEMP:[],
-    typeof TAX_PLAYS_FAMILY!=='undefined'?TAX_PLAYS_FAMILY:[]);
+    typeof TAX_PLAYS_FAMILY!=='undefined'?TAX_PLAYS_FAMILY:[],
+    typeof TAX_PLAYS_AMT!=='undefined'?TAX_PLAYS_AMT:[]);
 }
 function taxPlayById(id){
   const all=_taxPlayList();
@@ -18575,7 +18704,7 @@ const TAX_PLAYS_DEDUCT=[
   
 
   when:function(F){ return F.trueItem>F.std&&(F.missedDed>0.5||(F.saltRoom>0.5&&F.open)); },
-  dollars:function(F){ return F.amtHit?null:taxDedWorth(F,F.missedDed); },
+  dollars:function(F){ return F.amtHit?null:taxAmtKeeps(F,taxDedWorth(F,F.missedDed)); },
   
 
   window:function(F){
@@ -18588,15 +18717,17 @@ const TAX_PLAYS_DEDUCT=[
       why:'a property-tax bill paid after 31 December lands in the next year — and only a bill the town has already assessed counts'});
     return w.length?(w.length===1?w[0]:w):null; },
   say:function(F){
-    const worth=taxDedWorth(F,F.missedDed);
-    const more=r2v(taxDedWorth(F,F.missedDed+F.saltRoom)-worth);
+    
+    const full=taxDedWorth(F,F.missedDed), worth=taxAmtKeeps(F,full);
+    const more=r2v(taxAmtKeeps(F,taxDedWorth(F,F.missedDed+F.saltRoom))-worth);
+    const trim=' The minimum tax (Form 6251, worked on this page) takes the rest back.';
     
 
     if(F.amtHit) return {
       what:'Under AMT this deduction is worth nothing on '+F.year,
       why:'You recorded that '+F.year+' paid the alternative minimum tax. AMT allows no deduction '
         +'for state and local tax at all — it adds back every dollar of the '+money(F.saltInAmt,0)
-        +' this return deducted — so the '+money(worth,0)+' this would otherwise have been worth '
+        +' this return deducted — so the '+money(full,0)+' this would otherwise have been worth '
         +'is not there to claim. Nothing to do on this year. It matters on the next one: if AMT '
         +'is likely again, a property-tax bill prepaid in December buys nothing.',
       chip:'<code>AMT recorded · '+money(F.saltInAmt,0)+' of SALT added back</code>'};
@@ -18612,10 +18743,10 @@ const TAX_PLAYS_DEDUCT=[
       why:'You paid '+money(F.saltPaid,0)+' of state and local tax and the sheet deducted '
         +money(Math.max(0,r2v(F.taken-F.mort)),0)+' beyond the mortgage interest. Your cap this year is '
         +money(F.saltCap,0)+'.'+logs+' '
-        +(F.missedDed>0.5?'So <b>'+money(worth,0)+'</b> of federal tax is sitting on the table. ':'The sheet deducted all of it. ')
+        +(F.missedDed>0.5?'So <b>'+money(worth,0)+'</b> of federal tax is sitting on the table.'+(full>worth+0.5?' It would be '+money(full,0)+'.'+trim:'')+' ':'The sheet deducted all of it. ')
         +(F.saltRoom>0.5&&F.open
-          ?'Pay an already-assessed '+money(F.saltRoom,0)+' bill before 31 December and you keep '
-           +money(more,0)+' more.'
+          ?(more>0.5?'Pay an already-assessed '+money(F.saltRoom,0)+' bill before 31 December and you keep '
+           +money(more,0)+' more.':'Paying an assessed '+money(F.saltRoom,0)+' bill before 31 December would save nothing this year.'+trim)
           :F.saltRoom>0.5?'':'The cap is full.'),
       chip:'<code>cap '+money(F.saltCap,0)+' · paid '+money(F.prop,0)+' property + '
         +(F.saltState&&F.saltState.src==='none'?'no '+esc(F.stateName)+' income tax'
@@ -18624,7 +18755,11 @@ const TAX_PLAYS_DEDUCT=[
   
 
   guards:function(F){ return [
-    (F.saltInAmt>1000&&F.amtOpen)
+    (F.saltInAmt>1000&&F.amtWork&&!F.amtAnswer&&!F.amtSeen)
+      ?'Form 6251 is worked on this page from the year’s estimate: '+(F.amtWork.amt>0?'the minimum tax applies ('+money(F.amtWork.amt,0)+'), and under it state and local tax saves nothing.'
+        :'no minimum tax, with '+money(F.amtWork.margin,0)+' to spare — the most this deduction can still save.')
+        +' A prepared return shows it on Schedule 2 line 1; record what yours says at the top of this page.'
+      :(F.saltInAmt>1000&&F.amtOpen)
       ?'Under the alternative minimum tax, state and local tax is not deductible at all, so if '
         +'this return falls under AMT the figure above is worth nothing. Nothing on this sheet '
         +'computes a Form 6251, so this app cannot tell you whether it does — on a prepared '
@@ -18654,9 +18789,9 @@ const TAX_PLAYS_DEDUCT=[
     &&(F.trueItem==null||F.std>=F.trueItem); },
   
 
-  dollars:function(F){ return F.amtHit?null:taxDedWorth(F,F.missedDed); },
+  dollars:function(F){ return F.amtHit?null:taxAmtKeeps(F,taxDedWorth(F,F.missedDed)); },
   say:function(F){
-    const gap=F.missedDed;
+    const gap=F.missedDed, full=taxDedWorth(F,gap), keeps=taxAmtKeeps(F,full);
     if(F.amtHit) return {
       what:'Under AMT the standard deduction does not apply to '+F.year,
       why:'You recorded that '+F.year+' paid the alternative minimum tax, which has an exemption '
@@ -18669,7 +18804,8 @@ const TAX_PLAYS_DEDUCT=[
       why:'The sheet deducted '+money(F.taken,0)+'. The standard deduction for '
         +(F.filing==='mfj'?'a joint return':'a '+taxFilingLabel(F.filing)+' return')+' in '+F.year+' is '
         +money(F.std,0)+', and nobody has to itemise to get it. That is <b>'
-        +money(taxDedWorth(F,gap),0)+'</b> of federal tax, with no receipt to keep.',
+        +money(keeps,0)+'</b> of federal tax, with no receipt to keep.'
+        +(full>keeps+0.5?' It would be '+money(full,0)+', but the minimum tax (Form 6251, worked on this page) does not allow the standard deduction and takes the rest back.':''),
       chip:'<code>'+money(F.std,0)+' standard − '+money(F.taken,0)+' taken = '+money(gap,0)+'</code>'};
   },
   guards:function(F){ return [
