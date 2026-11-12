@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-e3l6wS0sWwUgStaQN7hk6CqyDXc1eYo9Jwe/PpFLgiU=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-SpoUyj/Ix1AoiEF5t9YM9rfR9tWxjO7D+pJAYq6J4OA=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2906,7 +2906,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.24";
+const APP_V="v29.25";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2920,7 +2920,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="fda69fd";
+const APP_BUILD="9b23a6a";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -12575,6 +12575,9 @@ function taxFacts(year,today){
 
   F.spouseEarns=F.filing==='mfj'?_ans('spouse'):'yes';
   
+  
+  F.invBack=(function(){ if(!F.current||!(F.invInt>0||F.stubLoanYtd>0||_ans('invloan')==='yes')||typeof taxInvIntBack!=='function') return null;
+    const B=taxInvIntBack(year,now); return B.length?B:null; })();
   if(typeof taxFamilyFacts==='function') taxFamilyFacts(F,_ans,F.wageTotal!=null?F.wageTotal:(R.L('1040','01')||0));
   
 
@@ -15765,6 +15768,22 @@ function _tiiRate(F){
   const thr=F.filing==='mfj'?250000:F.filing==='mfs'?125000:200000;
   return (F.fedRate||0)+(F.stateRate||0)+((F.niit||(F.agi!=null&&F.agi>thr))?0.038:0);
 }
+
+
+function taxInvIntBack(year,today){
+  const y=Number(String(year).slice(0,4)), now=today instanceof Date?today:new Date(), out=[];
+  if(!Number.isFinite(y)) return out;
+  const iso=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  for(let k=y-1;k>=y-4;k--){
+    const key=Object.keys(DB.taxes||{}).filter(function(x){ return String(x).slice(0,4)===String(k); }).sort()[0];
+    if(!key) continue;                                             
+    if(taxInvIntAnswers(k).paid>0) continue;                       
+    const by=typeof taxAmendByFor==='function'?taxAmendByFor(k,typeof taxFiledRead==='function'?taxFiledRead(key):null):null;
+    if(!by||by<iso) continue;                                      
+    out.push({year:k,by:by});
+  }
+  return out.sort(function(a,b){ return a.year-b.year; });
+}
 const TAX_PLAYS_INVINT=[
 { id:'investment-interest', family:'deduction',
   law:'§163(d) (investment interest) · Form 4952 · Schedule A line 9',
@@ -15803,6 +15822,29 @@ const TAX_PLAYS_INVINT=[
     'If the shares come with a Schedule K-1 (a partnership or LLC), the interest follows the business instead and may be deductible in full on Schedule E — ask a preparer which applies.',
     F.invCarry>0?'Qualified dividends and long-term gains can be elected into the limit (Form 4952 line 4g), at the cost of their lower rate: worth it only for interest that would otherwise never be used.':null,
     'Take the standard deduction and the part allowed that year is lost; only what the limit refuses carries forward.']; }
+},
+{ id:'invint-lookback', family:'deduction',
+  law:'§163(d) (investment interest) · §6511(a) (three years to claim a refund) · Form 1040-X',
+  needs:['invBack'],
+  blind:'no loan to buy investments shows this year — interest entered on Check-up, a repayment on the pay stub, or the interview’s yes',
+  hedge:function(){ return 'flag'; },
+  lv:function(){ return 'note'; },
+  
+  when:function(F){ return !!(F.invBack&&F.invBack.length); },
+  dollars:function(){ return null; },
+  window:function(F){ return {closes:F.invBack[0].by,why:'the '+F.invBack[0].year+' return can be amended until then; the later years shut a year apart'}; },
+  say:function(F){
+    const B=F.invBack, ys=B.map(function(b){ return b.year; });
+    const list=ys.length===1?String(ys[0]):ys.slice(0,-1).join(', ')+' and '+ys[ys.length-1];
+    return {what:'Did the same loan charge interest in '+(ys.length>2?ys[0]+'–'+ys[ys.length-1]:list)+'?',
+      why:'Your book shows a loan to buy investments this year, and no interest entered for '+list+'. If the loan ran then, each of those returns could have deducted its interest, '
+        +'and '+(B.length===1?'it is':'all '+B.length+' are')+' still open to amend: '+B.map(function(b){ return b.year+' until '+fD(b.by); }).join(', ')
+        +'. Enter each year’s interest on that year’s Check-up, under “A loan to buy investments”, and its own row says what it was worth.',
+      chip:'<code>'+B.map(function(b){ return b.year+' → '+b.by; }).join(' · ')+'</code>'};
+  },
+  guards:function(F){ return [
+    'Start with the earliest year: what a year’s investment income could not absorb carries into the next, so each year’s answer feeds the one after.',
+    'Each year takes its own amended return (Form 1040-X'+(F.state==='NY'?', and New York’s IT-201-X':'')+'), and only helps a year that itemized.']; }
 }];
 
 
@@ -16232,8 +16274,8 @@ async function taxReviewAsk(year,today){
 function taxReviewAskHtml(year,today){
   const m=(S.tax&&S.tax.missed&&S.tax.missed.year===year)?S.tax.missed:null;
   let text=''; try{ text=taxReviewAskText(year,today); }catch(e){ return ''; }
-  return '<div class="tra" style="margin-top:12px"><div style="font-weight:650;font-size:13px">What did this miss?</div>'
-    +'<div class="mut" style="font-size:12px;line-height:1.55;margin:3px 0 8px">This page can only say what it was written to look for. A review request sums up your position — figures, no names — '
+  return '<div class="tra">'
+    +'<div class="mut" style="font-size:12px;line-height:1.55;margin:0 0 8px">This page can only say what it was written to look for. A review request sums up your position — figures, no names — '
     +'and asks a second adviser what is not on it.</div>'
     +'<button class="btn" data-act="reviewask"'+(m&&m.busy?' disabled':'')+'>'+(m&&m.busy?'Asking…':'Ask the advisor what this missed')+'</button> '
     +'<button class="btn ghost" data-act="reviewcopy">Copy the request for your preparer</button>'
@@ -20053,13 +20095,16 @@ function taxPlaysHtml(year,today){
     +(D.live.length||D.done.length
       ?'<div style="margin-top:11px"><button class="btn" data-act="playscopy">Copy the brief for your preparer</button></div>'
       :'')
-    
-    +(F.current&&typeof taxReviewAskHtml==='function'?taxReviewAskHtml(year,today):'')
+
     +'<div class="mut" style="font-size:11.5px;line-height:1.55;margin-top:11px">'
     +'Every one of these is a deduction or a credit the law allows and this return did not take, '
     +'priced on your own figures. Nothing here hides income or invents an expense — the point is '
     +'to pay what you owe and not a dollar more. It is not professional advice, and a year with '
-    +'anything unusual in it deserves a CPA’s eyes.</div>')+gifts;
+    +'anything unusual in it deserves a CPA’s eyes.</div>')
+    
+
+    +(F.current&&typeof taxReviewAskHtml==='function'?foldSheet('tax.missed','What did this miss?','<span class="mut">ask a second adviser</span>',taxReviewAskHtml(year,today)):'')
+    +gifts;
 }
 
 
