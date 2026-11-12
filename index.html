@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-LZXyrhAr8Ygc89IzyKzeZXmdjlxf5gohJ1+ytpPJbGs=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-oGOrv40XYABLIUIKz7WR5dAqlwhyulVHGEmU8b+YKJw=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2906,7 +2906,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.27";
+const APP_V="v29.28";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2920,7 +2920,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="7e6f68e";
+const APP_BUILD="2274131";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -12035,7 +12035,9 @@ function taxFactsLive(year){
         stateName='New York';
       }
     }
-    return {agi:E.agi,taxable:E.taxable,taken:r2v(E.agi-E.taxable),fedRate:fedRate,stateRate:stateRate,stateName:stateName,amtWork:E.amtWork||null};
+    return {agi:E.agi,taxable:E.taxable,taken:r2v(E.agi-E.taxable),fedRate:fedRate,stateRate:stateRate,stateName:stateName,amtWork:E.amtWork||null,
+      
+      tax:E.tax,held:I.held||0,heldSrc:I.src.held,actc:E.actc||0};
   }catch(e){ return null; }
   finally{ _tfLiveBusy=false; }
 }
@@ -12575,7 +12577,8 @@ function taxFacts(year,today){
 
   F.spouseEarns=F.filing==='mfj'?_ans('spouse'):'yes';
   
-  F.stubYear=F.current&&typeof taxStubYear==='function'?taxStubYear(year):null;   
+  F.stubYear=F.current&&typeof taxStubYear==='function'?taxStubYear(year):null;
+  if(typeof taxRefundFacts==='function') taxRefundFacts(F,R,LV,year);      
   
   F.invBack=(function(){ if(!F.current||!(F.invInt>0||F.stubLoanYtd>0||_ans('invloan')==='yes')||typeof taxInvIntBack!=='function') return null;
     const B=taxInvIntBack(year,now); return B.length?B:null; })();
@@ -16434,6 +16437,59 @@ const TAX_PLAYS_STUBYEAR=[
 
 
 
+const TAX_REFUND_MIN=2000;
+
+
+function taxRefundFacts(F,R,LV,year){
+  F.liveTax=null; F.liveHeld=null; F.liveOwed=null;
+  if(!F.current) return;
+  const est=typeof taxEstPayFed==='function'?(taxEstPayFed(year)||0):0;
+  if(LV){ if(LV.heldSrc==='none'||LV.tax==null) return;
+    F.liveTax=LV.tax; F.liveHeld=LV.held; F.liveOwed=r2v(LV.tax-LV.held-(LV.actc||0)-est); return; }
+  const s=R&&R.sum; if(!s||s.fedTax==null) return;
+  let pace=null; try{ pace=typeof taxWithheldPace==='function'?taxWithheldPace(String(F.year)):null; }catch(e){ pace=null; }
+  const held=(pace&&pace.fedProj!=null)?pace.fedProj:s.fedHeld;
+  if(held==null) return;
+  F.liveTax=s.fedTax; F.liveHeld=held; F.liveOwed=r2v(s.fedTax-held-est);
+}
+function taxRefundAhead(F){
+  if(!F||!F.current||F.liveOwed==null||!(F.liveTax>0)) return null;
+  const back=r2v(-F.liveOwed);
+  if(!(back>=TAX_REFUND_MIN&&back>=0.05*F.liveTax)) return null;
+  const Y=F.stubYear||null, n=F.payLeft!=null?F.payLeft:(Y?Y.n:null);
+  
+  let per=null; try{ const p=typeof taxWithheldPace==='function'?taxWithheldPace(F.year):null; per=p&&p.fedPer>0?p.fedPer:null; }catch(e){ per=null; }
+  const each=(n>0&&per!=null)?r2v(Math.min(per,back/n)):null;
+  return {back:back,n:n>0?n:null,per:per,each:each,keep:each!=null?r2v(each*n):null};
+}
+const TAX_PLAYS_REFUND=[
+{ id:'refund-ahead', family:'payroll',
+  law:'§3402 (withholding; Form W-4) · §6654(d) (the safe harbours that withholding still has to meet)',
+  needs:['liveOwed','liveTax'],
+  blind:'no withholding figure for this year yet — a pay stub (Taxes → Pay stub) or the sheet’s own',
+  hedge:function(){ return 'flag'; },
+  lv:function(){ return 'note'; },
+  when:function(F){ return !!taxRefundAhead(F); },
+  dollars:function(){ return null; },
+  window:function(F){ const R=taxRefundAhead(F); return R&&R.n?{closes:F.year+'-12-31',why:'a new W-4 only changes the paychecks still to come this year'}:null; },
+  say:function(F){
+    const R=taxRefundAhead(F);
+    return {what:'A '+money(R.back,0)+' refund is on the way: adjust withholding',
+      why:'Your year so far comes to '+money(F.liveTax,0)+' of federal tax against '+money(F.liveHeld,0)+' withheld by year end, so about <b>'+money(R.back,0)+'</b> comes back in April. '
+        +'It is your own money, lent at no interest. '
+        +(R.each!=null?'A new W-4 could keep up to '+money(R.each,0)+' more in each of the '+R.n+' paycheck'+(R.n===1?'':'s')+' left — '+money(R.keep,0)+' now rather than in the spring — and '
+          :'A new W-4 ')+'sets next year’s withholding right from January.',
+      chip:'<code>'+money(F.liveHeld,0)+' withheld − '+money(F.liveTax,0)+' tax = '+money(R.back,0)+' back</code>'};
+  },
+  guards:function(F){ return [
+    'Counted on the income this book knows of. Interest, dividends, a sale, or pay not yet on it would use some of this up: add them before changing a W-4.',
+    'Withholding still has to cover a safe harbour — this year’s tax, or last year’s with the margin the rule asks at higher incomes — or a penalty runs. The Pay stub tab says how far clear you are.',
+    'A flat rate on a bonus is the usual cause, and it repeats every year the bonus does: step 3 or 4(b) of the W-4 is where it is corrected.',
+    'No tax is saved either way; this is when the money is yours.']; }
+}];
+
+
+
 function taxMortTable1(g,pre,post,filing){
   const h=filing==='mfs'?0.5:1;
   const L1=r2v(g), L2=r2v(pre), L7=r2v(post);
@@ -18994,7 +19050,8 @@ function _taxPlayList(){
     typeof TAX_PLAYS_SELFEMP!=='undefined'?TAX_PLAYS_SELFEMP:[],
     typeof TAX_PLAYS_FAMILY!=='undefined'?TAX_PLAYS_FAMILY:[],
     typeof TAX_PLAYS_AMT!=='undefined'?TAX_PLAYS_AMT:[],
-    typeof TAX_PLAYS_STUBYEAR!=='undefined'?TAX_PLAYS_STUBYEAR:[]);
+    typeof TAX_PLAYS_STUBYEAR!=='undefined'?TAX_PLAYS_STUBYEAR:[],
+    typeof TAX_PLAYS_REFUND!=='undefined'?TAX_PLAYS_REFUND:[]);
 }
 function taxPlayById(id){
   const all=_taxPlayList();
@@ -20243,10 +20300,13 @@ function taxPlaysHtml(year,today){
     +_taxPlaysDoneHtml(D,year)
     +_taxPlaysStage(P)
     +(P.skipped.length
-      ?'<div class="mut" style="font-size:11.5px;line-height:1.55;margin-top:11px">'
+      
+
+      ?'<details class="mut playskip" style="font-size:11.5px;line-height:1.55;margin-top:11px"><summary style="cursor:pointer">'
         +'<b>'+(P.published?'Not looked at, for want of a figure:':
           'Not looked at, because this app has no '+P.year+' figures to look with:')+'</b> '
-        +P.skipped.map(function(s){ return esc(s.why); }).join('; ')+'.</div>'
+        +P.skipped.length+' move'+(P.skipped.length===1?'':'s')+'</summary>'
+        +'<ul style="margin:6px 0 0;padding-left:18px">'+P.skipped.map(function(s){ return '<li>'+esc(s.why)+'</li>'; }).join('')+'</ul></details>'
       :'')
     
 
