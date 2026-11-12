@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-MP555c7LB6f4QXQLpEpcJhJt8of1d0BXrQWrLUT+0WA=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-LZXyrhAr8Ygc89IzyKzeZXmdjlxf5gohJ1+ytpPJbGs=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2906,7 +2906,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.26";
+const APP_V="v29.27";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2920,7 +2920,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="9cf10aa";
+const APP_BUILD="7e6f68e";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -12455,7 +12455,7 @@ function taxFacts(year,today){
   const logMed=(scan&&scan.medical&&scan.medical.fromLog)?r2v(taxMedDeductible(F.medical,agi)):0;
   
   let II=null; try{ II=typeof taxInvInt==='function'?taxInvInt(year):null; }catch(e){ II=null; }
-  F.invInt=II?II.paid:null; F.invCarryIn=II?II.carryIn:null; F.invNii=II?II.nii:null; F.invAllowed=II?II.allowed:null; F.invCarry=II?II.carry:null;
+  F.invInt=II?II.paid:null; F.invCarryIn=II?II.carryIn:null; F.invNii=II?II.nii:null; F.invAllowed=II?II.allowed:null; F.invCarry=II?II.carry:null; F.invBus=II&&II.bus>0?II.bus:null;
   F.logItem=r2v(logGift+logMed+(II?II.allowed:0));
   if(F.dedBase!=null&&II) F.dedBase=r2v(F.dedBase+II.allowed);
   if(F.trueItem!=null&&F.logItem>0){
@@ -15192,7 +15192,9 @@ function taxFedEstimate(inp){
   
   const se=Math.max(0,inp.se||0);
   const SE=se>0&&typeof taxSelfEmp==='function'?taxSelfEmp({year:y,net:se,ssWages:inp.ssWages!=null?inp.ssWages:Math.min(wages,(typeof TAX_SS_BASE==='object'&&TAX_SS_BASE[y])||Infinity)}):null;
-  const agi=r2v(wages+interest+ordDiv+ltcg+other+se-(SE?SE.half:0));
+  
+  const busInt=Math.max(0,inp.busInt||0);
+  const agi=r2v(wages+interest+ordDiv+ltcg+other+se-(SE?SE.half:0)-busInt);
   const ded=inp.deduction||0;
   const tb4qbi=Math.max(0,r2v(agi-ded));
   const prefRaw=Math.max(0,(qualDiv||0)+(inp.ltPref!=null?Math.max(0,inp.ltPref):(ltcg>0?ltcg:0)));
@@ -15233,7 +15235,7 @@ function taxFedEstimate(inp){
   const tax=r2v(line18-ctc-careUsed+addlMed+niit+(SE?SE.seTax:0));
   return {agi,taxable,ordTaxable,pref,ordTax:r2v(ordTax),prefTax:r2v(prefTax),
     se:se,seTax:SE?SE.seTax:0,seHalf:SE?SE.half:0,seBase:SE?SE.base:0,seSs:SE?SE.ss:0,qbi:QB?QB.deduction:0,
-    amt:amt,amtWork:AM,
+    amt:amt,amtWork:AM,busInt:busInt,
     addlMed,niit,ctc,care:careUsed,actc,tax,est:!!(T.est||G.est),
     held:inp.held!=null?r2v(inp.held):null,
     owed:inp.held!=null?r2v(tax-inp.held-actc):null};
@@ -15287,7 +15289,9 @@ function taxEstimateInputs(year){
   const _fil=taxFilingFor(year).filing;
   
 
-  const _agi=r2v(wages+interest+ordDiv+ltcg+other+se), ND=ded==null&&typeof taxNewDed==='function'?taxNewDed(y,_agi,_fil):null;
+  let _II=null; try{ _II=typeof taxInvInt==='function'?taxInvInt(year):null; }catch(e){ _II=null; }
+  const busInt=_II&&_II.bus>0?_II.bus:0;
+  const _agi=r2v(wages+interest+ordDiv+ltcg+other+se-busInt), ND=ded==null&&typeof taxNewDed==='function'?taxNewDed(y,_agi,_fil):null;
   
 
   let F=null; if(ded==null){ try{ F=taxFacts(year); }catch(e){ F=null; } }
@@ -15321,7 +15325,7 @@ function taxEstimateInputs(year){
     amtAdd=F2&&F2.mort!=null?r2v(Math.max(0,Math.min(ded-F2.mort,F2.saltInAmt!=null?F2.saltInAmt:Infinity))):null; }
   const _wk=(DB.taxwork&&typeof DB.taxwork==='object'&&DB.taxwork[y])||{};
   return {year:y,filing:_fil,wages,interest,ordDiv,qualDiv,ltcg,other,se,
-    amtAdd:amtAdd,isoTyped:_wk.iso>0?_wk.iso:0,
+    amtAdd:amtAdd,isoTyped:_wk.iso>0?_wk.iso:0,busInt:busInt,
     
     ssWages:w2.length&&sum(w2,'3')>0?sum(w2,'3'):(src.wages==='stub'&&SY.ssWages!=null?SY.ssWages:null),
     ltPref:SD&&src.ltcg==='documents'?SD.pref:null,schD:SD,
@@ -15717,13 +15721,15 @@ function taxInvIntAnswers(year){
   return a&&typeof a==='object'?a:{};
 }
 
-function taxInvIntSet(year,paid,carry){
+function taxInvIntSet(year,paid,carry,kind){
   const y=Number(String(year).slice(0,4)); if(!(y>=2000&&y<=2100)) return {ok:false,why:'That year has no record to write to.'};
   const amt=function(s){ const t=String(s==null?'':s).trim(); if(t==='') return null; const n=pnum(t); return n!=null&&isFinite(n)&&n>=0&&n<1e8?r2v(n):NaN; };
   const p=amt(paid), c=amt(carry);
   if(Number.isNaN(p)||Number.isNaN(c)) return {ok:false,why:'An amount is a number of dollars, like 1,250'};
   DB.meta=DB.meta||{}; const M=DB.meta.taxInvInt=Object.assign({},DB.meta.taxInvInt), A={};
   if(p!=null) A.paid=p; if(c!=null) A.carry=c;
+  
+  if(kind==='biz'&&p!=null) A.kind='biz';
   if(Object.keys(A).length) M[String(y)]=A; else delete M[String(y)];
   if(!Object.keys(M).length) delete DB.meta.taxInvInt;
   return {ok:true};
@@ -15748,9 +15754,11 @@ function taxInvIntNii(year){
   return {nii:nii,interest:interest||0,ordDiv:ordDiv||0,qualDiv:qualDiv||0,st:st,src:src};
 }
 
+
 let _tiiDepth=0;
 function taxInvInt(year){
   const y=Number(String(year).slice(0,4)), a=taxInvIntAnswers(y);
+  if(a.kind==='biz') return a.paid>0?{year:y,kind:'biz',paid:a.paid,carryIn:0,carrySrc:'',total:a.paid,nii:0,allowed:0,carry:0,bus:a.paid,parts:null}:null;
   let carryIn=a.carry!=null?a.carry:0, carrySrc=a.carry!=null?'you':'';
   
   if(a.carry==null&&_tiiDepth<3&&Object.keys(taxInvIntAnswers(y-1)).length){
@@ -15758,7 +15766,7 @@ function taxInvInt(year){
   }
   const paid=a.paid||0; if(!(paid>0)&&!(carryIn>0)) return null;
   const N=taxInvIntNii(year), total=r2v(paid+carryIn), allowed=r2v(Math.min(total,N.nii));
-  return {year:y,paid:paid,carryIn:carryIn,carrySrc:carrySrc,total:total,nii:N.nii,allowed:allowed,carry:r2v(total-allowed),parts:N};
+  return {year:y,kind:'',paid:paid,carryIn:carryIn,carrySrc:carrySrc,total:total,nii:N.nii,allowed:allowed,carry:r2v(total-allowed),bus:0,parts:N};
 }
 
 function taxInvIntCard(year){
@@ -15766,11 +15774,16 @@ function taxInvIntCard(year){
   const a=taxInvIntAnswers(y), I=taxInvInt(year);
   const inp=function(id,label,val,ph){ return '<label>'+label+'<input id="'+id+'" inputmode="decimal" value="'+esc(val==null?'':String(val))+'" placeholder="'+esc(ph)+'"></label>'; };
   const row=function(k,v,note){ return '<tr><td>'+k+(note?' <span class="mut">— '+note+'</span>':'')+'</td><td class="n num">'+money(v,0)+'</td></tr>'; };
-  return '<div class="sheet"><h3>A loan to buy investments <span class="r">'+(I?money(I.allowed,0)+' deductible':'none entered')+'</span></h3>'
+  const biz=a.kind==='biz';
+  return '<div class="sheet"><h3>A loan to buy investments <span class="r">'+(I?money(biz?I.bus:I.allowed,0)+' deductible':'none entered')+'</span></h3>'
     +'<div class="mut" style="font-size:12px;margin-bottom:8px">Interest on money borrowed to buy shares or other investments — a loan for company stock, a margin loan — '
     +'is an itemized deduction (Form 4952), up to what your investments paid you in interest and ordinary dividends that year. What is left over carries forward. '
     +'The lender’s year-end statement splits each payment into interest and principal; only the interest counts.</div>'
-    +(I?'<div class="tblwrap"><table class="tbl tight"><tbody>'
+    +'<div class="mut" style="font-size:12px;margin-bottom:8px">If the loan bought a stake in a business that sends you a <b>Schedule K-1</b> — a partnership, an LLC, an S corporation — and you work in it, '
+    +'say so below: the interest is then deducted in full on Schedule E beside the K-1’s income, not limited by what your investments paid.</div>'
+    +(I&&biz?'<div class="tblwrap"><table class="tbl tight"><tbody>'+row('Interest paid in '+y,I.paid)
+      +row('<b>Deducted on Schedule E</b>, beside the K-1’s income',I.bus,'off adjusted gross income; no limit, nothing carried')+'</tbody></table></div>'
+    :I?'<div class="tblwrap"><table class="tbl tight"><tbody>'
       +row('Interest paid in '+y,I.paid)+(I.carryIn>0?row('Carried in from earlier years',I.carryIn,I.carrySrc==='last year'?'worked out from '+(y-1):'as you typed it'):'')
       +row('Net investment income (the limit)',I.nii,money(I.parts.interest,0)+' interest + '+money(Math.max(0,I.parts.ordDiv-I.parts.qualDiv),0)+' ordinary dividends'
         +(I.parts.st?' + '+money(I.parts.st,0)+' short-term gain':'')+(I.parts.src==='sheet'?'; off the sheet’s total, an upper bound':I.parts.src==='none'?'; no 1099-INT or 1099-DIV in yet':''))
@@ -15778,6 +15791,8 @@ function taxInvIntCard(year){
       +'</tbody></table></div>':'')
     +'<div class="formrow" style="flex-wrap:wrap;gap:8px">'
     +inp('tiiPaid','Interest paid in '+y+' ($)',a.paid,'0')+inp('tiiCarry','Unused from earlier years ($)',a.carry,I&&I.carrySrc==='last year'?String(I.carryIn):'0')
+    +'<label>What the loan bought<select id="tiiKind"><option value=""'+(biz?'':' selected')+'>Shares or funds that pay dividends or interest</option>'
+      +'<option value="biz"'+(biz?' selected':'')+'>A stake in a business that sends a K-1, where I work</option></select></label>'
     +'<button class="btn sm" data-act="taxinvintsave" data-y="'+y+'">Save</button></div></div>';
 }
 
@@ -15808,13 +15823,24 @@ const TAX_PLAYS_INVINT=[
   blind:'no bracket for this year to price a deduction at',
   
 
-  hedge:function(F){ return F.invAllowed>0&&F.invItemizes&&(F.open||F.beforeDue)?'exact':'flag'; },
+  hedge:function(F){ return (F.invBus>0||(F.invAllowed>0&&F.invItemizes))&&(F.open||F.beforeDue)?'exact':'flag'; },
   lv:function(F){ return (F.open||F.beforeDue)?'act':'note'; },
   when:function(F){ return F.invInt>0||F.invCarryIn>0||(F.stubLoanYtd>0&&!F.expired); },
-  dollars:function(F){ return F.invAllowed>0&&F.invItemizes&&(F.open||F.beforeDue)?r2v(F.invAllowed*_tiiRate(F)):null; },
+  dollars:function(F){ if(!(F.open||F.beforeDue)) return null;
+    return F.invBus>0?r2v(F.invBus*((F.fedRate||0)+(F.stateRate||0))):(F.invAllowed>0&&F.invItemizes)?r2v(F.invAllowed*_tiiRate(F)):null; },
   window:function(F){ return F.amendable&&F.amendBy&&(F.invInt>0||F.invCarryIn>0)?{closes:F.amendBy,why:'an amended return can still claim it until then'}:null; },
   say:function(F){
     const rate=(Math.round(_tiiRate(F)*1000)/10)+'%';
+    
+    if(F.invBus>0){ const br=(F.fedRate||0)+(F.stateRate||0), bl=(Math.round(br*1000)/10)+'%';
+      if(!(F.open||F.beforeDue)) return {what:'Check that '+F.year+'’s return deducted '+money(F.invBus,0)+' of interest on Schedule E',
+        why:'You paid '+money(F.invBus,0)+' of interest in '+F.year+' on the loan that bought your stake in the business. It belongs on Schedule E, beside the K-1’s income, in full. '
+          +'Look for it on the return as filed; if it is not there, an amended return can still claim it'+(F.amendBy?' until '+fD(F.amendBy):'')+' — about '+money(F.invBus*br,0)+' at '+bl+'.',
+        chip:'<code>Schedule E, Part II: '+money(F.invBus,0)+' of business interest</code>'};
+      return {what:'Deduct '+money(F.invBus,0)+' of interest on your business-stake loan',
+        why:'You paid '+money(F.invBus,0)+' of interest on the loan that bought your stake in a business you work in. It comes off income on Schedule E, beside the K-1’s income — '
+          +'in full, whatever your investments paid and whether or not you itemize: about <b>'+money(F.invBus*br,0)+'</b> at '+bl+'.',
+        chip:'<code>'+money(F.invBus,0)+' × '+bl+' = '+money(F.invBus*br,0)+'</code>'}; }
     if(!(F.invInt>0)&&!(F.invCarryIn>0)) return {what:'A loan is being repaid from your pay — is its interest deductible?',
       why:'Your pay stub shows '+money(F.stubLoanYtd,0)+' repaid on a loan this year. If the loan bought investments or company shares, the interest part of that is an '
         +'itemized deduction, up to what your investments paid you. Enter the interest on Check-up, under “A loan to buy investments”.',
@@ -15834,9 +15860,12 @@ const TAX_PLAYS_INVINT=[
         +'</b> at '+rate+(F.invCarry>0?' — and '+money(F.invCarry,0)+' carries forward to '+(F.year+1):'')+'.',
       chip:'<code>'+money(F.invAllowed,0)+' × '+rate+' = '+money(F.invAllowed*_tiiRate(F),0)+'</code>'};
   },
-  guards:function(F){ return [
+  guards:function(F){ return F.invBus>0?[
     'Only the interest counts, not the principal repaid: the lender’s year-end statement has the split.',
-    'If the shares come with a Schedule K-1 (a partnership or LLC), the interest follows the business instead and may be deductible in full on Schedule E — ask a preparer which applies.',
+    'This is the rule for an operating business you work in. A K-1 from a fund or a business you only invest in is different: the interest is then investment or passive interest — choose the other answer on the card.',
+    'It is entered on Schedule E, Part II, on its own line as business interest, against the K-1’s entity. A preparer should confirm the tracing (Notice 89-35) the first year.']:[
+    'Only the interest counts, not the principal repaid: the lender’s year-end statement has the split.',
+    'If the shares come with a Schedule K-1 (a partnership, an LLC or an S corporation) and you work in the business, the interest is deducted in full on Schedule E instead: say so on the Check-up card, under “What the loan bought”.',
     F.invCarry>0?'Qualified dividends and long-term gains can be elected into the limit (Form 4952 line 4g), at the cost of their lower rate: worth it only for interest that would otherwise never be used.':null,
     'Take the standard deduction and the part allowed that year is lost; only what the limit refuses carries forward.']; }
 },
@@ -16446,7 +16475,7 @@ function taxFilePackWorked(year){
   const F=function(box,label,v){ return v==null||(typeof v==='number'&&!isFinite(v))?null:{box:box,label:label,v:r2v(v),note:''}; };
   const nz=function(v){ return v?v:null; };
   const nd=!hand&&seed.newDed?seed.newDed.total:0, itemize=!hand&&seed.itemize&&seed.itemized;
-  const se=inp.se||0, total=r2v(inp.wages+inp.interest+inp.ordDiv+inp.ltcg+inp.other+se);
+  const se=inp.se||0, bus=est.busInt||0, total=r2v(inp.wages+inp.interest+inp.ordDiv+inp.ltcg+inp.other+se-bus);
   const tax16=r2v(est.ordTax+est.prefTax), cr=r2v(est.ctc+est.care), sch2=r2v(est.addlMed+est.niit+(est.seTax||0));
   const owe=r2v(est.tax-W.paid);
   const forms=[{form:'Form 1040',note:'Worked out here, not read off a filed sheet: the Build tab’s figures, which you can type over there.',lines:[
@@ -16455,7 +16484,7 @@ function taxFilePackWorked(year){
     F('3a','Qualified dividends',nz(inp.qualDiv)),
     F('3b','Ordinary dividends',nz(inp.ordDiv)),
     F('7a','Capital gain or (loss)'+(inp.schD&&inp.schD.b?' (Schedule D line 16, or 21 for a loss)':''),nz(inp.ltcg)),
-    F('8','Additional income from Schedule 1'+(se?' (with Schedule C’s profit)':''),nz(r2v(inp.other+se))),
+    F('8','Additional income from Schedule 1'+(se?' (with Schedule C’s profit)':'')+(bus?' (less Schedule E’s business interest)':''),nz(r2v(inp.other+se-bus))),
     F('9','Total income',total),
     est.seHalf?F('10','Adjustments to income from Schedule 1 (half the self-employment tax)',est.seHalf):null,
     F('11a','Adjusted gross income',est.agi),
@@ -16499,6 +16528,10 @@ function taxFilePackWorked(year){
     if(est.qbi) forms.push({form:'Form 8995 · Qualified business income deduction',note:'Worked as a service business with no payroll.',lines:[
       F('1c','Qualified business income: the profit less half the self-employment tax',r2v(se-est.seHalf)),
       F('15','The deduction',est.qbi)].filter(Boolean)}); }
+  
+  if(bus>0) forms.push({form:'Schedule E · Supplemental income and loss (Part II)',note:'Beside the K-1’s own income, which this pack does not hold: add it on the same form.',lines:[
+    F('28(i)','Business interest on the loan that bought your stake — a nonpassive loss, on its own line',bus),
+    F('41','Its share of Schedule 1 line 5 (a loss)',-bus)].filter(Boolean)});
   
   if(est.amt>0&&est.amtWork){ const A=est.amtWork;
     forms.push({form:'Form 6251 · Alternative minimum tax',note:'Owed where the minimum tax comes to more than the regular one. Not in it: depreciation, private-activity bond interest, the foreign tax credit.',lines:[
@@ -18361,7 +18394,7 @@ function taxWorkInputs(year){
     if(w[f]!=null){ out[f]=w[f]; out.src[f]='hand'; }
     else{ out[f]=r2v(sv); out.src[f]=f==='estPaid'?(logged!=null?'log':'none'):(seed.src[f]||'none'); }
   });
-  out.medWages=seed.medWages; out.ctcKids=seed.ctcKids; out.earned=seed.earned; out.invInt=seed.invInt; out.ssWages=seed.ssWages; out.amtAdd=seed.amtAdd;
+  out.medWages=seed.medWages; out.ctcKids=seed.ctcKids; out.earned=seed.earned; out.invInt=seed.invInt; out.ssWages=seed.ssWages; out.amtAdd=seed.amtAdd; out.busInt=seed.busInt;
   
   out.ltPref=out.src.ltcg==='hand'?null:seed.ltPref; out.schD=out.src.ltcg==='hand'?null:seed.schD;
   return out;
@@ -18410,6 +18443,7 @@ function taxBuildHtml(year){
     +'<div class="tblwrap"><table class="tbl tight"><tbody>'
     +'<tr><th></th><th>line</th><th class="n">amount</th><th>where it came from</th></tr>'
     +TAXWORK_FIELDS.map(fld).join('')
+    +(est.busInt?out('S1·5','Less interest on the loan that bought your business stake (Schedule E)',-est.busInt):'')
     +(est.seHalf?out('S1·15','Less half the self-employment tax',-est.seHalf):'')
     +out('11','Adjusted gross income',est.agi)
     +(est.qbi?out('13a','Less the qualified business income deduction (Form 8995)',-est.qbi):'')
@@ -43397,11 +43431,11 @@ function _imgLossOk(what){
   if(act==='taxinvintsave'){
     const v=id=>{ const e=document.getElementById(id); return e?e.value:''; };
     snap('investment interest');
-    const r=taxInvIntSet(b.dataset.y,v('tiiPaid'),v('tiiCarry'));
+    const r=taxInvIntSet(b.dataset.y,v('tiiPaid'),v('tiiCarry'),v('tiiKind'));
     if(!r.ok){ snapCancel(); return toast(r.why,'warn'); }
     save(); render();
     const I=taxInvInt(typeof taxYearKey==='function'?taxYearKey(b.dataset.y):b.dataset.y);
-    return toast(I?money(I.allowed,0)+' deductible in '+b.dataset.y+(I.carry>0?', '+money(I.carry,0)+' carried forward':'')+' · ⌘Z to undo':'Cleared','ok');
+    return toast(I?money(I.bus>0?I.bus:I.allowed,0)+' deductible in '+b.dataset.y+(I.bus>0?', on Schedule E':'')+(I.carry>0?', '+money(I.carry,0)+' carried forward':'')+' · ⌘Z to undo':'Cleared','ok');
   }
   
   if(act==='reviewask'){ const py=_taxYear(); if(py) taxReviewAsk(py); return; }
