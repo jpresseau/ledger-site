@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-6oCyefHbW86Je6Iu259hCGOoh7D3HKM0q4MbLlAz6nE=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-4b4povNdhaGvxXDCu79TT5xMaolXDEilFg+tKAMs05o=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2906,7 +2906,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.20";
+const APP_V="v29.21";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2920,7 +2920,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="96e26a3";
+const APP_BUILD="8b8abdf";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -12553,6 +12553,20 @@ function taxFacts(year,today){
   const _ans=function(id){ return (_ask.find(function(q){ return q.id===id; })||{}).a||''; };
   F.hdhp=_ans('hdhp');
   
+  (function(){ const _w=(DB.taxwork&&typeof DB.taxwork==='object'&&DB.taxwork[y])||{};
+    const _nec=(typeof taxDocsFor==='function'?taxDocsFor(y):[]).filter(function(d){ return d&&d.kind==='1099-NEC'; });
+    const net=_w.se!=null?_w.se:_nec.length?r2v(_nec.reduce(function(s,d){ return s+(Number((d.boxes||{})['1'])||0); },0)):null;
+    F.seNet=net>0?net:null; F.seTax=null; F.seHalf=null; F.seQbi=null; F.seSsOpen=false;
+    if(F.seNet&&typeof taxSelfEmp==='function'){
+      
+      const _w2=(typeof taxDocsFor==='function'?taxDocsFor(y):[]).filter(function(d){ return d&&d.kind==='W-2'; });
+      const _b3=r2v(_w2.reduce(function(s,d){ return s+(Number((d.boxes||{})['3'])||0); },0)), _wg=_b3>0?_b3:(F.wageTotal!=null?F.wageTotal:(R.L('1040','01')||0));
+      const ssW=(typeof TAX_SS_BASE==='object'&&TAX_SS_BASE[y]!=null)?Math.min(_wg,TAX_SS_BASE[y]):_wg;
+      const S0=taxSelfEmp({year:y,net:F.seNet,ssWages:ssW});
+      F.seTax=S0.seTax; F.seHalf=S0.half; F.seSsOpen=S0.ss>0;
+      F.seQbi=(typeof taxQbi==='function'&&taxable!=null)?taxQbi({year:y,filing:fil.filing,qbi:r2v(F.seNet-S0.half),taxableBefore:taxable,netCapGain:0}).deduction:null;
+    } })();
+  
   if(typeof taxEnrollFacts==='function') taxEnrollFacts(F,R,L,_ans('commute'));
   
 
@@ -15084,12 +15098,18 @@ function taxFedEstimate(inp){
   const wages=inp.wages||0, interest=inp.interest||0;
   const ordDiv=inp.ordDiv||0, qualDiv=Math.min(inp.qualDiv||0,ordDiv||Infinity);
   const ltcg=inp.ltcg||0, other=inp.other||0;
-  const agi=r2v(wages+interest+ordDiv+ltcg+other);
+  
+  const se=Math.max(0,inp.se||0);
+  const SE=se>0&&typeof taxSelfEmp==='function'?taxSelfEmp({year:y,net:se,ssWages:inp.ssWages!=null?inp.ssWages:Math.min(wages,(typeof TAX_SS_BASE==='object'&&TAX_SS_BASE[y])||Infinity)}):null;
+  const agi=r2v(wages+interest+ordDiv+ltcg+other+se-(SE?SE.half:0));
   const ded=inp.deduction||0;
-  const taxable=Math.max(0,r2v(agi-ded));
+  const tb4qbi=Math.max(0,r2v(agi-ded));
+  const prefRaw=Math.max(0,(qualDiv||0)+(inp.ltPref!=null?Math.max(0,inp.ltPref):(ltcg>0?ltcg:0)));
+  const QB=SE&&typeof taxQbi==='function'?taxQbi({year:y,filing:f,qbi:r2v(se-SE.half),taxableBefore:tb4qbi,netCapGain:Math.min(prefRaw,tb4qbi)}):null;
+  const taxable=Math.max(0,r2v(tb4qbi-(QB?QB.deduction:0)));
   
 
-  const pref=Math.min(Math.max(0,(qualDiv||0)+(inp.ltPref!=null?Math.max(0,inp.ltPref):(ltcg>0?ltcg:0))),taxable);
+  const pref=Math.min(prefRaw,taxable);
   const ordTaxable=r2v(taxable-pref);
   const ordTax=taxFedBrackets(ordTaxable,y,f)||0;
   
@@ -15105,7 +15125,7 @@ function taxFedEstimate(inp){
 
   const thr=taxSurtaxThreshold(f);
   const medWages=inp.medWages!=null?inp.medWages:wages;
-  const addlMed=r2v(Math.max(0,medWages-thr)*0.009);
+  const addlMed=r2v(Math.max(0,medWages+(SE?SE.base:0)-thr)*0.009);
   const netInv=r2v(Math.max(0,interest+ordDiv+Math.max(0,ltcg)-Math.max(0,inp.invInt||0)));
   const niit=r2v(Math.min(netInv,Math.max(0,agi-thr))*0.038);
   const beforeCredits=r2v(ordTax+prefTax);
@@ -15113,11 +15133,12 @@ function taxFedEstimate(inp){
 
   const care=Math.max(0,inp.care||0), ctcAll=Math.max(0,inp.ctc||0);
   const ctc=r2v(Math.min(ctcAll,beforeCredits)), careUsed=r2v(Math.min(care,beforeCredits-ctc));
-  const earned=inp.earned!=null?inp.earned:r2v(wages+other), left=r2v(ctcAll-ctc);
+  const earned=r2v((inp.earned!=null?inp.earned:r2v(wages+other))+(SE?se-SE.half:0)), left=r2v(ctcAll-ctc);
   const actc=left<=0?0:y===2021?left
     :r2v(Math.min(left,(TAX_ACTC[y]||0)*Math.max(0,inp.ctcKids||0),Math.max(0,earned-2500)*0.15));
-  const tax=r2v(beforeCredits-ctc-careUsed+addlMed+niit);
+  const tax=r2v(beforeCredits-ctc-careUsed+addlMed+niit+(SE?SE.seTax:0));
   return {agi,taxable,ordTaxable,pref,ordTax:r2v(ordTax),prefTax:r2v(prefTax),
+    se:se,seTax:SE?SE.seTax:0,seHalf:SE?SE.half:0,seBase:SE?SE.base:0,seSs:SE?SE.ss:0,qbi:QB?QB.deduction:0,
     addlMed,niit,ctc,care:careUsed,actc,tax,est:!!(T.est||G.est),
     held:inp.held!=null?r2v(inp.held):null,
     owed:inp.held!=null?r2v(tax-inp.held-actc):null};
@@ -15152,8 +15173,11 @@ function taxEstimateInputs(year){
   
   const SD=typeof taxSchD==='function'?taxSchD(docs,taxFilingFor(year).filing):null;
   const ltcg=pick('ltcg',SD?SD.line7a:(divs.length?sum(divs,'2a'):null),null);
-  const nec=docs.filter(d=>d.kind==='1099-NEC'||d.kind==='1099-MISC');
-  const other=pick('other',nec.length?sum(nec,'1'):null,null);
+  
+
+  const nec=docs.filter(d=>d.kind==='1099-NEC'), misc=docs.filter(d=>d.kind==='1099-MISC');
+  const other=pick('other',misc.length?sum(misc,'1'):null,null);
+  const se=pick('se',nec.length?sum(nec,'1'):null,null);
   
 
   const ded=R.sum.agi!=null&&R.sum.taxable!=null?r2v(R.sum.agi-R.sum.taxable):null;
@@ -15163,7 +15187,7 @@ function taxEstimateInputs(year){
   const _fil=taxFilingFor(year).filing;
   
 
-  const _agi=r2v(wages+interest+ordDiv+ltcg+other), ND=ded==null&&typeof taxNewDed==='function'?taxNewDed(y,_agi,_fil):null;
+  const _agi=r2v(wages+interest+ordDiv+ltcg+other+se), ND=ded==null&&typeof taxNewDed==='function'?taxNewDed(y,_agi,_fil):null;
   
 
   let F=null; if(ded==null){ try{ F=taxFacts(year); }catch(e){ F=null; } }
@@ -15188,7 +15212,9 @@ function taxEstimateInputs(year){
     docs.some(d=>d.boxes&&(d.boxes['2']!=null||d.boxes['4']!=null))
       ?r2v(sum(w2,'2')+sum(docs.filter(d=>/^1099/.test(d.kind)),'4')):null,
     R.sum.fedHeld);
-  return {year:y,filing:_fil,wages,interest,ordDiv,qualDiv,ltcg,other,
+  return {year:y,filing:_fil,wages,interest,ordDiv,qualDiv,ltcg,other,se,
+    
+    ssWages:w2.length&&sum(w2,'3')>0?sum(w2,'3'):null,
     ltPref:SD&&src.ltcg==='documents'?SD.pref:null,schD:SD,
     medWages:w2.length?(sum(w2,'5')||null):null,
     deduction,newDed:ND&&ND.total>0?ND:null,itemized:ded==null?IT:null,itemize:itemize,
@@ -15682,6 +15708,92 @@ const TAX_PLAYS_INVINT=[
 
 
 
+const TAX_SS_BASE={2018:128400,2019:132900,2020:137700,2021:142800,2022:147000,2023:160200,2024:168600,2025:176100,2026:184500};
+
+const TAX_QBI={
+  2018:{t:{single:157500,mfj:315000,mfs:157500},r:{single:50000,mfj:100000}},
+  2019:{t:{single:160700,mfj:321400,mfs:160725},r:{single:50000,mfj:100000}},
+  2020:{t:{single:163300,mfj:326600,mfs:163300},r:{single:50000,mfj:100000}},
+  2021:{t:{single:164900,mfj:329800,mfs:164925},r:{single:50000,mfj:100000}},
+  2022:{t:{single:170050,mfj:340100,mfs:170050},r:{single:50000,mfj:100000}},
+  2023:{t:{single:182100,mfj:364200,mfs:182100},r:{single:50000,mfj:100000}},
+  2024:{t:{single:191950,mfj:383900,mfs:191950},r:{single:50000,mfj:100000}},
+  2025:{t:{single:197300,mfj:394600,mfs:197300},r:{single:50000,mfj:100000}},
+  2026:{t:{single:201775,mfj:403500,mfs:201750},r:{single:75000,mfj:150000},min:400}};
+
+function taxSelfEmp(o){
+  const y=Number(String(o.year).slice(0,4)), net=Math.max(0,Number(o.net)||0), base=r2v(net*0.9235);
+  if(base<400) return {net:net,base:base,ss:0,medicare:0,seTax:0,half:0};
+  const cap=TAX_SS_BASE[y], room=cap!=null?Math.max(0,cap-Math.max(0,Number(o.ssWages)||0)):base;
+  const ss=r2v(0.124*Math.min(base,room)), medicare=r2v(0.029*base), seTax=r2v(ss+medicare);
+  return {net:net,base:base,ss:ss,medicare:medicare,seTax:seTax,half:r2v(seTax/2)};
+}
+
+function taxQbi(o){
+  const y=Number(String(o.year).slice(0,4)), T=TAX_QBI[y], qbi=Math.max(0,Number(o.qbi)||0), tb=Math.max(0,Number(o.taxableBefore)||0);
+  if(!T||!(qbi>0)) return {qbi:qbi,deduction:0,pct:T?1:0};
+  const f=o.filing==='mfj'||o.filing==='qss'?'mfj':o.filing==='mfs'?'mfs':'single';
+  const thr=T.t[f], range=f==='mfj'?T.r.mfj:T.r.single;
+  const pct=tb<=thr?1:Math.max(0,1-(tb-thr)/range);
+  
+  let ded=0.2*qbi*(pct<1?pct*pct:1);
+  if(T.min&&qbi>=1000&&pct>0) ded=Math.max(ded,T.min);
+  ded=Math.min(ded,0.2*Math.max(0,tb-Math.max(0,Number(o.netCapGain)||0)));
+  return {qbi:qbi,deduction:r2v(Math.max(0,ded)),pct:pct};
+}
+
+
+function taxSeRetire(F){
+  if(!(F.seNet>0)) return 0;
+  const room=F.c415!=null?F.c415:Infinity;
+  return r2v(Math.max(0,Math.min(0.2*(F.seNet-(F.seHalf||0)),room)));
+}
+const TAX_PLAYS_SELFEMP=[
+{ id:'se-retirement', family:'income',
+  law:'§404(a)(8), §401(c) (plans of the self-employed) · §415(c) · SEP: §408(k)',
+  needs:['seNet','fedRate'],
+  blind:'no self-employment profit this year — a 1099-NEC among the documents, or the line on File it → Build',
+  
+  hedge:function(F){ return F.seNet>0&&F.fedRate!=null?'ceiling':'flag'; },
+  lv:function(F){ return (F.open||F.beforeDue)?'act':'note'; },
+  when:function(F){ return (F.open||F.beforeDue)&&F.seNet>=1000; },
+  dollars:function(F){ return F.seNet>0&&F.fedRate!=null?r2v(taxSeRetire(F)*((F.fedRate||0)+(F.stateRate||0))):null; },
+  window:function(F){ return {closes:F.dueDate||(F.year+1)+'-04-15',why:'a SEP can be opened and paid into until the return is due, extensions included'}; },
+  say:function(F){
+    const c=taxSeRetire(F), rate=(Math.round(((F.fedRate||0)+(F.stateRate||0))*1000)/10)+'%';
+    return {what:'Your side income can fund a retirement plan of its own: up to '+money(c,0),
+      why:'You have '+money(F.seNet,0)+' of self-employment profit. A SEP-IRA or solo 401(k) takes the employer’s share — 20% of the profit after half its tax — as a deduction, '
+        +'on top of whatever your job’s 401(k) already holds: <b>'+money(c,0)+'</b>, worth about '+money(c*((F.fedRate||0)+(F.stateRate||0)),0)+' at '+rate+'.',
+      chip:'<code>20% × ('+money(F.seNet,0)+' − '+money(F.seHalf||0,0)+') = '+money(c,0)+' × '+rate+'</code>'};
+  },
+  guards:function(){ return [
+    'This is the employer’s share only. The employee deferral is one limit across all your plans, and a job’s 401(k) usually uses it.',
+    'A SEP-IRA holds pre-tax money, which taxes a later Roth “back door” in proportion. A solo 401(k) does not; if you use the back door, choose that.',
+    'The contribution lowers income tax, not the self-employment tax.']; }
+},
+{ id:'se-expenses', family:'income',
+  law:'§162 (trade or business expenses) · Schedule C',
+  needs:['seNet','fedRate'],
+  blind:'no self-employment profit this year',
+  hedge:function(){ return 'flag'; },
+  lv:function(){ return 'note'; },
+  when:function(F){ return (F.open||F.beforeDue)&&F.seNet>=600; },
+  dollars:function(){ return null; },
+  say:function(F){
+    
+    const per=Math.round(1000*(((F.fedRate||0)+(F.stateRate||0))*(F.seQbi>0?0.8:1)+(F.seTax>0?0.9235*(F.seSsOpen?0.153:0.029):0)));
+    return {what:'Every expense against your side income is taxed at nothing',
+      why:'The '+money(F.seNet,0)+' is taxed on profit, not on what was paid to you. What the work cost comes off first — the share of a phone and internet it uses, software, '
+        +'travel to a client, a professional licence, a home office used only for it — and each $1,000 of that saves about <b>'+money(per,0)+'</b> here.',
+      chip:'<code>per $1,000 of expenses ≈ '+money(per,0)+' of tax</code>'};
+  },
+  guards:function(){ return [
+    'Keep the receipt and what it was for. An expense has to be ordinary and necessary for the work; a personal one does not become business by being paid from the same account.',
+    'A home office counts only for space used regularly and only for the business.']; }
+}];
+
+
+
 function taxMortTable1(g,pre,post,filing){
   const h=filing==='mfs'?0.5:1;
   const L1=r2v(g), L2=r2v(pre), L7=r2v(post);
@@ -15717,14 +15829,14 @@ function taxMortLimit(y,filing,T){
 function taxFilePackWorked(year){
   if(typeof taxWorkEstimate!=='function') return null;
   let W=null; try{ W=taxWorkEstimate(year); }catch(e){ W=null; }
-  if(!W||!(W.inp.wages>0||W.inp.interest>0||W.inp.ordDiv>0||W.inp.other>0)) return null;
+  if(!W||!(W.inp.wages>0||W.inp.interest>0||W.inp.ordDiv>0||W.inp.other>0||W.inp.se>0)) return null;
   const inp=W.inp, est=W.est, y=Number(String(year).slice(0,4));
   const seed=taxEstimateInputs(year), hand=inp.src.deduction==='hand';
   const F=function(box,label,v){ return v==null||(typeof v==='number'&&!isFinite(v))?null:{box:box,label:label,v:r2v(v),note:''}; };
   const nz=function(v){ return v?v:null; };
   const nd=!hand&&seed.newDed?seed.newDed.total:0, itemize=!hand&&seed.itemize&&seed.itemized;
-  const total=r2v(inp.wages+inp.interest+inp.ordDiv+inp.ltcg+inp.other);
-  const tax16=r2v(est.ordTax+est.prefTax), cr=r2v(est.ctc+est.care), sch2=r2v(est.addlMed+est.niit);
+  const se=inp.se||0, total=r2v(inp.wages+inp.interest+inp.ordDiv+inp.ltcg+inp.other+se);
+  const tax16=r2v(est.ordTax+est.prefTax), cr=r2v(est.ctc+est.care), sch2=r2v(est.addlMed+est.niit+(est.seTax||0));
   const owe=r2v(est.tax-W.paid);
   const forms=[{form:'Form 1040',note:'Worked out here, not read off a filed sheet: the Build tab’s figures, which you can type over there.',lines:[
     F('1a','Wages (W-2 box 1)',inp.wages),
@@ -15732,19 +15844,21 @@ function taxFilePackWorked(year){
     F('3a','Qualified dividends',nz(inp.qualDiv)),
     F('3b','Ordinary dividends',nz(inp.ordDiv)),
     F('7a','Capital gain or (loss)'+(inp.schD&&inp.schD.b?' (Schedule D line 16, or 21 for a loss)':''),nz(inp.ltcg)),
-    F('8','Additional income from Schedule 1',nz(inp.other)),
+    F('8','Additional income from Schedule 1'+(se?' (with Schedule C’s profit)':''),nz(r2v(inp.other+se))),
     F('9','Total income',total),
+    est.seHalf?F('10','Adjustments to income from Schedule 1 (half the self-employment tax)',est.seHalf):null,
     F('11a','Adjusted gross income',est.agi),
     F('12e',hand?'Standard or itemized deduction (as typed on the Build tab)':itemize?'Itemized deductions (Schedule A)':'Standard deduction',r2v(inp.deduction-nd)),
+    est.qbi?F('13a','Qualified business income deduction (Form 8995)',est.qbi):null,
     nd?F('13b','Additional deductions from Schedule 1-A (the 2025 law’s)',nd):null,
-    F('14','Total deductions',inp.deduction),
+    F('14','Total deductions',r2v(inp.deduction+(est.qbi||0))),
     F('15','Taxable income',est.taxable),
     F('16','Tax'+(est.prefTax?' (with the qualified dividends and capital gain worksheet)':''),tax16),
     F('19','Child tax credit or credit for other dependents (Schedule 8812)',nz(est.ctc)),
     F('20','Amount from Schedule 3 line 8 — the child and dependent care credit',nz(est.care)),
     cr?F('21','Lines 19 and 20',cr):null,
     F('22','Line 18 less line 21',r2v(Math.max(0,tax16-cr))),
-    F('23','Other taxes from Schedule 2 (Forms 8959, 8960)',nz(sch2)),
+    F('23','Other taxes from Schedule 2 ('+(est.seTax?'Schedule SE, ':'')+'Forms 8959, 8960)',nz(sch2)),
     F('24','Total tax',est.tax),
     F('25d','Federal income tax withheld',inp.held||0),
     F('26','Estimated tax payments',nz(inp.estPaid)),
@@ -15762,6 +15876,16 @@ function taxFilePackWorked(year){
       F('15','Net long-term capital gain or (loss)',D.lt),
       F('16','Lines 7 and 15 combined',D.net),
       D.net<0?F('21','The loss you can take this year (at most '+money(D.cap,0)+')',D.line7a):null].filter(Boolean)}); }
+  if(est.seTax||se){ forms.push({form:'Schedule SE · Self-employment tax',note:'On your Schedule C profit. Half of it comes off income (Schedule 1 line 15); the rest of Schedule C — what was paid to you and what the work cost — is yours to fill in.',lines:[
+      F('2','Net profit from Schedule C',se),
+      F('4a','92.35% of it',est.seBase),
+      F('10','Social Security part: 12.4%, up to what the W-2s left of the year’s wage base',est.seSs),
+      F('11','Medicare part: 2.9%',r2v((est.seTax||0)-(est.seSs||0))),
+      F('12','Self-employment tax',est.seTax),
+      F('13','Deduction for half of it',est.seHalf)].filter(Boolean)});
+    if(est.qbi) forms.push({form:'Form 8995 · Qualified business income deduction',note:'Worked as a service business with no payroll.',lines:[
+      F('1c','Qualified business income: the profit less half the self-employment tax',r2v(se-est.seHalf)),
+      F('15','The deduction',est.qbi)].filter(Boolean)}); }
   if(itemize){ const I=seed.itemized;
     forms.push({form:'Schedule A · Itemized deductions',note:'The Ledger itemizes because these come to more than the standard deduction.',lines:[
       F('5d','State and local taxes paid (income and property)',I.saltPaid),
@@ -17568,7 +17692,8 @@ const TAXWORK_FIELDS=[
   ['qualDiv','Qualified dividends','3a'],
   ['ordDiv','Ordinary dividends','3b'],
   ['ltcg','Capital gain or (loss)','7'],
-  ['other','Other income (1099-NEC, misc)','8'],
+  ['other','Other income (1099-MISC, misc)','8'],
+  ['se','Self-employment profit (Schedule C line 31)','S1·3'],
   ['deduction','Deduction taken','12'],
   ['ctc','Child tax credit','19'],
   ['care','Child and dependent care credit (Form 2441)','20'],
@@ -17608,7 +17733,7 @@ function taxWorkInputs(year){
     if(w[f]!=null){ out[f]=w[f]; out.src[f]='hand'; }
     else{ out[f]=r2v(sv); out.src[f]=f==='estPaid'?(logged!=null?'log':'none'):(seed.src[f]||'none'); }
   });
-  out.medWages=seed.medWages; out.ctcKids=seed.ctcKids; out.earned=seed.earned; out.invInt=seed.invInt;
+  out.medWages=seed.medWages; out.ctcKids=seed.ctcKids; out.earned=seed.earned; out.invInt=seed.invInt; out.ssWages=seed.ssWages;
   
   out.ltPref=out.src.ltcg==='hand'?null:seed.ltPref; out.schD=out.src.ltcg==='hand'?null:seed.schD;
   return out;
@@ -17657,11 +17782,13 @@ function taxBuildHtml(year){
     +'<div class="tblwrap"><table class="tbl tight"><tbody>'
     +'<tr><th></th><th>line</th><th class="n">amount</th><th>where it came from</th></tr>'
     +TAXWORK_FIELDS.map(fld).join('')
+    +(est.seHalf?out('S1·15','Less half the self-employment tax',-est.seHalf):'')
     +out('11','Adjusted gross income',est.agi)
+    +(est.qbi?out('13a','Less the qualified business income deduction (Form 8995)',-est.qbi):'')
     +out('15','Taxable income',est.taxable)
     +out('16','Tax ('+taxFilingLabel(inp.filing)+' table'
       +(est.prefTax?', incl. '+money(est.prefTax)+' on the 0/15/20 stack':'')+')',r2v(est.ordTax+est.prefTax))
-    +(surtax?out('23','Other taxes (8959 + 8960)',surtax):'')
+    +(surtax||est.seTax?out('23','Other taxes ('+(est.seTax?'self-employment tax '+money(est.seTax)+(surtax?', ':''):'')+(surtax?'8959 + 8960':'')+')',r2v(surtax+est.seTax)):'')
     +out('24','Total tax',est.tax,true)
     +(est.actc?out('28','Additional child tax credit (refundable)',est.actc):'')
     +out('33','Total payments',W.paid)
@@ -18191,7 +18318,8 @@ function _taxPlayList(){
     typeof TAX_PLAYS_NEWDED!=='undefined'?TAX_PLAYS_NEWDED:[],
     typeof TAX_PLAYS_KIDS!=='undefined'?TAX_PLAYS_KIDS:[],
     typeof TAX_PLAYS_ENROLL!=='undefined'?TAX_PLAYS_ENROLL:[],
-    typeof TAX_PLAYS_INVINT!=='undefined'?TAX_PLAYS_INVINT:[]);
+    typeof TAX_PLAYS_INVINT!=='undefined'?TAX_PLAYS_INVINT:[],
+    typeof TAX_PLAYS_SELFEMP!=='undefined'?TAX_PLAYS_SELFEMP:[]);
 }
 function taxPlayById(id){
   const all=_taxPlayList();
