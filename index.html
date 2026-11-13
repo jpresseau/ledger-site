@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-VuKa0vXgeYbc/Du+liAEEeEnDuGoje+9quumTajJdGs=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-yBK1Ku8Fvo7t2G4Sf0y7obRiJsI4dilUXx9Ss/YEsi4=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -344,6 +344,19 @@ body.dark{color-scheme:dark}
 .tblwrap.moreR,.gridpane.moreR{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 36px),rgba(0,0,0,.18));mask-image:linear-gradient(to right,#000 calc(100% - 36px),rgba(0,0,0,.18))}
 .tblwrap.moreR.moreL,.gridpane.moreR.moreL{-webkit-mask-image:linear-gradient(to right,rgba(0,0,0,.18),#000 36px,#000 calc(100% - 36px),rgba(0,0,0,.18));mask-image:linear-gradient(to right,rgba(0,0,0,.18),#000 36px,#000 calc(100% - 36px),rgba(0,0,0,.18))}
 .tblwrap.moreL:not(.moreR),.gridpane.moreL:not(.moreR){-webkit-mask-image:linear-gradient(to right,rgba(0,0,0,.18),#000 36px);mask-image:linear-gradient(to right,rgba(0,0,0,.18),#000 36px)}
+
+
+.pgsecs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.pgsecs.after{margin:16px 0 0}
+.pgsecs:empty{display:none}
+.pgsec{display:flex;align-items:center;gap:8px;flex:1 1 200px;min-width:0;min-height:40px;padding:8px 12px;text-align:left;font:inherit;font-size:13.5px;font-weight:600;
+  color:var(--ink);background:var(--card);border:1px solid var(--hair);border-radius:10px;cursor:pointer}
+.pgsec:hover{border-color:var(--accent);color:var(--accent)}
+.pgsec .cv{flex:none;width:12px;color:var(--sub2);font-size:11px}
+.pgsec .ic{flex:none;display:inline-flex;color:var(--nc,var(--sub2))}
+.pgsec .pgn{flex:1;min-width:0}
+.pgsec .nbadge{flex:none;min-width:20px;padding:1px 6px;border-radius:999px;font-size:11px;font-weight:650;text-align:center;color:#fff;background:var(--accent)}
+@media(max-width:900px){ .pgsec{flex:1 1 auto;min-height:44px;font-size:15px} }
 
 
 
@@ -2985,7 +2998,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.40";
+const APP_V="v29.41";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2999,7 +3012,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="e33c81d";
+const APP_BUILD="c80117c";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -4041,13 +4054,15 @@ function macBadges(today){
 
 
 function macPages(){
-  return NAVDEF.filter(function(r){ return r[0]!=='grp'&&!(r[0]==='archive'&&typeof archHas==='function'&&!archHas()); }).map(function(r){ return r[0]; });
+  
+  return navEntries().map(function(e){ return e.views[0][0]; });
 }
 function macGoKey(e){
   if(!(e.metaKey||e.ctrlKey)) return false;   
   const m=/^Digit([1-9])$/.exec(e.code||''); if(!m) return false;
   const v=macPages()[Number(m[1])-1]; if(!v||(typeof bookShut==='function'&&bookShut())) return false;
-  if(S.view!==v){ S.view=v; render(); window.scrollTo(0,0); }
+  const ent=navEntryOf(v), to=ent?navTarget(ent):v;
+  if(S.view!==to){    S.view=to; render(); window.scrollTo(0,0); }
   return true;
 }
 
@@ -7836,27 +7851,22 @@ function nav(){
   let open=false;
   
   const bd=typeof macBadges==='function'?macBadges():{}, keyed=typeof macPages==='function'?macPages():[];
-  NAVDEF.forEach(function(row){
-    if(row[0]==='grp'){
-      if(open) html+='</div>';
-      html+='<div class="navseg"><div class="grp">'+esc(row[1])+'</div>';
-      open=true;
-    } else {
-      
+  
 
-      if(row[0]==='archive'&&typeof archHas==='function'&&!archHas()) return;
-      
-      const k=keyed.indexOf(row[0]);
-      html+='<button data-act="go" data-view="'+row[0]+'" class="'+(S.view===row[0]?'on':'')
-        +'" style="--nc:'+macTint(row[0])+'"'+(k>=0&&k<9?' title="'+row[2]+' — ⌘'+(k+1)+'"':'')+'><span class="ic">'+ico(row[1],13)+'</span>'+row[2]
-        +(bd[row[0]]?'<span class="nbadge" aria-label="'+bd[row[0]]+' waiting">'+bd[row[0]]+'</span>':'')+'</button>';
-    }
+  html+='<div class="navseg">'; open=true;
+  navEntries().forEach(function(e){
+    const to=navTarget(e), on=e.views.some(function(r){ return r[0]===S.view; }), k=keyed.indexOf(e.views[0][0]);
+    const n=e.views.reduce(function(s,r){ return s+(bd[r[0]]||0); },0);
+    
+    html+='<button data-act="go" data-view="'+to+'" data-entry="'+esc(e.name)+'" class="'+(on?'on':'')
+      +'" style="--nc:'+macTint(e.views[0][0])+'" title="'+esc(e.solo?e.name:e.name+': '+e.views.map(function(r){ return r[2]; }).join(', '))+(k>=0&&k<9?' — ⌘'+(k+1):'')+'"><span class="ic">'+ico(e.ico,13)+'</span>'+esc(e.name)
+      +(n?'<span class="nbadge" aria-label="'+n+' waiting">'+n+'</span>':'')+'</button>';
   });
   if(open) html+='</div>';
   el.innerHTML=html;
   
   el.style.setProperty('--navn',String(el.querySelectorAll('button[data-act=go]').length||1));
-  el.style.setProperty('--navg',String(el.querySelectorAll('.navseg').length||1));
+  el.style.setProperty('--navg','0');   
   el.classList.toggle('open',_navOpen);
   tabbar();
 }
@@ -7889,8 +7899,9 @@ function render(){
 function _render(){
   
   if(S.view==='insights'){ S.view='dash'; S.dashInsAll=true; }
-  macTrack(); nav(); footStat();
   const shut=bookShut();
+  if(!shut&&typeof navRemember==='function') navRemember(S.view);   
+  macTrack(); nav(); footStat();
   
 
   const v=shut?Views.locked:(Views[S.view]||Views.dash);
@@ -7901,6 +7912,7 @@ function _render(){
   
 
   let body; try{ body=v(); }catch(e){ const r=errNote(e,'draw '+(shut?'locked':S.view)); body=errCardHtml(r,shut); }
+  if(!shut&&typeof navSections==='function') body=navSections(S.view,body);   
   document.getElementById('page').innerHTML=(typeof ledgerMovedHtml==='function'?ledgerMovedHtml():'')+body;
   _chartBand=chartBand();
   tilesWire(shut);
@@ -8504,6 +8516,42 @@ function tabbar(){
   html+='<button data-act="navmenu" class="'+(more||_navOpen?'on':'')+'" aria-haspopup="true" aria-expanded="'+(_navOpen?'true':'false')+'">'
     +'<span class="ic">'+ico('more',20)+'</span>More'+badge(rest)+'</button>';
   el.innerHTML=html;
+}
+
+
+
+
+const NAV_SOLO=['betsy','taxes'];
+
+function navEntries(){
+  const out=[]; let cur=null;
+  NAVDEF.forEach(function(r){
+    if(r[0]==='grp'){ cur={name:r[1],ico:null,views:[],solo:false}; out.push(cur); return; }
+    if(r[0]==='archive'&&typeof archHas==='function'&&!archHas()) return;
+    if(NAV_SOLO.indexOf(r[0])>=0){ const solo={name:r[2],ico:r[1],views:[r],solo:true};
+      
+      if(cur&&!cur.views.length) out.splice(out.indexOf(cur),0,solo); else out.push(solo); return; }
+    cur.views.push(r); if(!cur.ico) cur.ico=r[1];
+  });
+  return out.filter(function(e){ return e.views.length; });
+}
+function navEntryOf(view){
+  return navEntries().find(function(e){ return e.views.some(function(r){ return r[0]===view; }); })||null;
+}
+
+const _navLast={};
+function navTarget(e){ const v=_navLast[e.name]; return v&&e.views.some(function(r){ return r[0]===v; })?v:e.views[0][0]; }
+function navForget(){ Object.keys(_navLast).forEach(function(k){ delete _navLast[k]; }); }
+function navRemember(view){ const e=navEntryOf(view); if(e&&!e.solo) _navLast[e.name]=view; }
+
+function navSections(view,body){
+  const e=navEntryOf(view); if(!e||e.solo||e.views.length<2) return body;
+  const bd=typeof macBadges==='function'?macBadges():{}, i=e.views.findIndex(function(r){ return r[0]===view; });
+  const bar=function(r){ return '<button class="pgsec" data-act="go" data-view="'+r[0]+'" style="--nc:'+macTint(r[0])+'"><span class="cv">▸</span><span class="ic">'+ico(r[1],14)+'</span><span class="pgn">'+esc(r[2])+'</span>'
+    +(bd[r[0]]?'<span class="nbadge" aria-label="'+bd[r[0]]+' waiting">'+bd[r[0]]+'</span>':'')+'</button>'; };
+  return '<div class="pgsecs" data-group="'+esc(e.name)+'">'+e.views.slice(0,i).map(bar).join('')+'</div>'
+    +'<div class="pgopen" data-view="'+esc(view)+'">'+body+'</div>'
+    +'<div class="pgsecs after" data-group="'+esc(e.name)+'">'+e.views.slice(i+1).map(bar).join('')+'</div>';
 }
 
 
@@ -50824,7 +50872,7 @@ function renderOnce(name,fn){
     RCP,RCP_PROMPT,mailVouched,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
-    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxEic,taxEduCredit,TAX_EIC,taxMtcCarryIn,taxSchedAI,taxDeprOf,taxDeprFor,taxAssetAdd,taxAssetDel,taxDeprCard,nyPenaltyOf,nyPenaltyFor,nyUnderpayRate,taxEicAgeOk,nycEicRate,taxForm1116,taxFtcSrcSet,taxFtcCard,taxFtcCarryIn,taxAiSet,taxAiFor,taxAiCard,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
+    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxEic,taxEduCredit,TAX_EIC,taxMtcCarryIn,taxSchedAI,navEntries,navEntryOf,navTarget,navSections,navForget,navRemember,taxDeprOf,taxDeprFor,taxAssetAdd,taxAssetDel,taxDeprCard,nyPenaltyOf,nyPenaltyFor,nyUnderpayRate,taxEicAgeOk,nycEicRate,taxForm1116,taxFtcSrcSet,taxFtcCard,taxFtcCarryIn,taxAiSet,taxAiFor,taxAiCard,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
     BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,mailOldScriptWords,MAIL_STMT_NOTICE_RE,mailAssistUnread,_maUnread,MAIL_ASSIST_V22,MAIL_FX_AMT,mailHasFx,mailRbsStmtSettle,mailRbsSelf,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,NY_TUITION_CAP,nyCareCredit,nyTuitionCredit,nyCareFedRate,nyCareRate,nyCareApplicable,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
@@ -51112,7 +51160,7 @@ function renderOnce(name,fn){
   try{
     var qs = new URLSearchParams(location.search);
     var want = qs.get('view');
-    if(want && PF.S && PF.render && document.querySelector('#nav [data-view="'+want.replace(/"/g,'')+'"]')){
+    if(want && PF.S && PF.render && PF.NAVDEF && PF.NAVDEF.some(function(r){ return r[0]!=='grp'&&r[0]===want; })){
       PF.S.view = want; PF.render();
     }
     
