@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-zSXWh0dJtCRGdc3BPUVkerruZgJXqwD5R+he+UzOTdE=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-srEP67uBOc8n4nz5JCKTDXLEAvdRDdrRROFgsQv1Hac=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2998,7 +2998,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.42";
+const APP_V="v29.43";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -3012,7 +3012,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="97655a1";
+const APP_BUILD="ef6a0e9";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -15354,6 +15354,7 @@ function taxAdvisorHtml(year){
     +(typeof taxReviewHtml==='function'?taxReviewHtml(year):'')
     +(typeof taxDocsHtml==='function'?taxDocsHtml(year):'')
     +(typeof taxSecondOpinionHtml==='function'?taxSecondOpinionHtml(year):'')
+    +(typeof taxBackTestHtml==='function'?taxBackTestHtml(year):'')
     +(typeof nyReturnHtml==='function'?nyReturnHtml(year):'')   
     +taxYoYHtml(year)
     +dedHtml+(typeof taxInvIntCard==='function'?taxInvIntCard(year):'')+(typeof taxCapCarryCard==='function'?taxCapCarryCard(year):'')+(typeof taxFtcCard==='function'?taxFtcCard(year):'')+(typeof taxDeprCard==='function'?taxDeprCard(year,(function(){ try{ return taxWorkEstimate(year).est.sePre; }catch(e){ return 0; } })()):'')+(typeof taxAiCard==='function'?taxAiCard(year):'')+(typeof taxNewDedHtml==='function'?taxNewDedHtml(year):'')+cHtml
@@ -15891,6 +15892,76 @@ function taxDeprCard(year,sePre){
 
 
 
+const TAX_BT_WHY={
+  agi:'Income or an adjustment with no document in: a K-1, a business or rental schedule, an HSA or IRA deduction, alimony, or a 1099 not photographed.',
+  deduction:'An itemized amount the book does not hold (a 1098, property tax, gifts, medical), or a deduction this app does not work.',
+  taxable:'It follows the two lines above: fix those and this one follows; the 20% business deduction is the only other thing in it.',
+  tax:'A tax or credit this app does not work for this return, or one it works from figures it does not have: see “Not worked out here” on the filing pack.',
+  held:'A W-2 or 1099 with tax withheld that is not in, or an estimated payment counted as withholding on the return.',
+  owed:'It follows the tax and the withholding, with any estimated payments and refundable credits.',
+  nyAgi:'A New York addition or subtraction not told to the New York page (other states’ bond interest, a 529 gift, a pension exclusion).',
+  nyTaxable:'New York’s own deduction or its dependent exemptions: its itemized rules differ from the federal ones.',
+  nyTax:'A New York credit or tax this app does not work (IT-201-ATT, Yonkers, the MCTMT), or New York City residence set the other way.',
+  nyOwed:'It follows New York’s tax and withholding, with any estimated payments and refundable credits.'};
+function _btState(filed,worked){
+  if(filed==null||worked==null) return 'nofiled';
+  const d=Math.abs(worked-filed);
+  return d<=1?'match':d<=Math.max(25,Math.abs(filed)*0.0025)?'close':'apart';
+}
+
+function taxBackTest(year){
+  const R=taxReturn(year); if(!R||R.sum.fedTax==null) return null;
+  let inp=null, est=null; try{ inp=taxEstimateInputs(year,{own:true}); est=taxFedEstimate(inp); }catch(e){ inp=null; est=null; }
+  if(!inp||!est) return null;
+  const rows=[], add=function(id,what,filed,worked){ const st=_btState(filed,worked);
+    rows.push({id:id,what:what,filed:filed,worked:worked,diff:filed!=null&&worked!=null?r2v(worked-filed):null,state:st,why:st==='apart'||st==='close'?TAX_BT_WHY[id]:''}); };
+  const fDed=R.sum.agi!=null&&R.sum.taxable!=null?r2v(R.sum.agi-R.sum.taxable):null;
+  add('agi','Adjusted gross income',R.sum.agi,est.agi);
+  add('deduction','Deduction',fDed,inp.deduction!=null?r2v(inp.deduction+(est.qbi||0)):null);
+  add('taxable','Taxable income',R.sum.taxable,est.taxable);
+  add('tax','Federal tax',R.sum.fedTax,est.tax);
+  add('held','Federal tax withheld',R.sum.fedHeld,inp.held);
+  add('owed','Owed (or refunded, if negative)',R.sum.fedOwed,est.owed);
+  
+  let ny=null; try{ ny=(typeof taxIsNY!=='function'||taxIsNY(year))&&typeof nySecondOpinion==='function'?nySecondOpinion(year):null; }catch(e){ ny=null; }
+  if(ny&&ny.ret&&ny.sheet&&(ny.sheet.ti!=null||ny.sheet.tax!=null)){ const L=ny.ret.lines;
+    add('nyAgi','New York adjusted gross income',ny.sheet.agi,L['33']);
+    add('nyTaxable','New York taxable income',ny.sheet.ti,L['37']);
+    add('nyTax','New York State tax',ny.sheet.tax,L['39']);
+    if(ny.sheet.due!=null) add('nyOwed','New York owed (or refunded, if negative)',ny.sheet.due,L['80']!=null?L['80']:(L['77']!=null?-L['77']:0));
+  }
+  
+  const S=inp.src||{}, lab={wages:'Wages',interest:'Interest',ordDiv:'Dividends',ltcg:'Capital gain or loss',other:'Other income',se:'Self-employment profit',held:'Federal tax withheld'};
+  const inputs=Object.keys(lab).filter(function(k){ return (Number(inp[k])||0)!==0||S[k]==='sheet'; }).map(function(k){ return {id:k,what:lab[k],v:inp[k],src:S[k]||'none'}; });
+  const tested=rows.filter(function(r){ return r.state!=='nofiled'; });
+  return {year:year,rows:rows,inputs:inputs,deduction:S.deduction||'',
+    fromDocs:inputs.filter(function(i){ return i.src==='documents'; }).length,fromSheet:inputs.filter(function(i){ return i.src==='sheet'; }).length,
+    match:tested.filter(function(r){ return r.state==='match'; }).length,close:tested.filter(function(r){ return r.state==='close'; }).length,
+    apart:tested.filter(function(r){ return r.state==='apart'; }).length,total:tested.length};
+}
+function taxBackTestHtml(year){
+  let B=null; try{ B=taxBackTest(year); }catch(e){ B=null; }
+  if(!B) return '';
+  const y=String(year).slice(0,4), mut=function(t){ return '<div class="mut" style="font-size:12px;margin-bottom:8px">'+t+'</div>'; };
+  const tag={match:'<span class="ok">matches</span>',close:'<span class="warn">close</span>',apart:'<b class="off">apart</b>',nofiled:'<span class="mut">not on the sheet</span>'};
+  const rows=B.rows.map(function(r){ return '<tr><td>'+esc(r.what)+(r.why?'<div class="mut" style="font-size:11px">'+esc(r.why)+'</div>':'')+'</td>'
+    +'<td class="n num">'+(r.filed!=null?money(r.filed):'—')+'</td><td class="n num">'+(r.worked!=null?money(r.worked):'—')+'</td>'
+    +'<td class="n num">'+(r.diff!=null&&Math.abs(r.diff)>1?money(r.diff):'')+'</td><td>'+tag[r.state]+'</td></tr>'; }).join('');
+  const srcLab={documents:'the documents',sheet:'the return itself — this one tests nothing',stub:'the pay stub',none:'nothing found'};
+  const ins=B.inputs.map(function(i){ return '<li>'+esc(i.what)+' <b>'+money(i.v,0)+'</b> — from '+srcLab[i.src]+'</li>'; }).join('')
+    +'<li>The deduction — worked out here ('+(B.deduction==='itemized'?'itemized from the book’s own figures':'the standard deduction')+'), not read off the return</li>';
+  const verdict=B.total&&B.match===B.total?'Every line matches to the dollar.'
+    :B.match+' of '+B.total+' lines match to the dollar'+(B.close?', '+B.close+' '+(B.close===1?'is':'are')+' close':'')+(B.apart?', and <b>'+B.apart+' '+(B.apart===1?'is':'are')+' apart</b>':'')+'.';
+  return '<div class="sheet" id="taxBackTest"><h3>The back-test <span class="r">'+B.match+' of '+B.total+' lines match</span></h3>'
+    +mut(y+' was filed, so it can be used as a test of this app: the year worked again by its own engine, set beside what was filed. '+verdict
+      +(B.fromSheet?' <b>'+B.fromSheet+' input'+(B.fromSheet===1?' was':'s were')+' read off the return itself</b> because no document is in for '+(B.fromSheet===1?'it':'them')+': add the '+y+' documents and the test stands on its own.':'')
+      +' A line that is apart is something this app does not work, a document that is not in, or a mistake on the return.')
+    +'<div class="tblwrap"><table class="tbl tight"><thead><tr><th>Line</th><th class="n">Filed</th><th class="n">Worked here</th><th class="n">Difference</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'<h4 style="margin:12px 0 4px">What it was worked from</h4><ul class="mut" style="font-size:12px;line-height:1.55">'+ins+'</ul></div>';
+}
+
+
+
 
 
 
@@ -16040,7 +16111,8 @@ function taxFedEstimate(inp){
 
 
 
-function taxEstimateInputs(year){
+
+function taxEstimateInputs(year,opt){
   const y=Number(String(year).slice(0,4));
   const R=taxReturn(year);
   const prof=taxProfile();
@@ -16081,7 +16153,7 @@ function taxEstimateInputs(year){
   const se=pick('se',nec.length?sum(nec,'1'):null,null);
   
 
-  const ded=R.sum.agi!=null&&R.sum.taxable!=null?r2v(R.sum.agi-R.sum.taxable):null;
+  const ded=!(opt&&opt.own)&&R.sum.agi!=null&&R.sum.taxable!=null?r2v(R.sum.agi-R.sum.taxable):null;
   const C=taxConst(y);
   
 
@@ -50885,7 +50957,7 @@ function renderOnce(name,fn){
     RCP,RCP_PROMPT,mailVouched,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
-    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxEic,taxEduCredit,TAX_EIC,taxMtcCarryIn,taxSchedAI,navEntries,navEntryOf,navTarget,navSections,navForget,navRemember,taxTabParent,taxTabSections,taxDeprOf,taxDeprFor,taxAssetAdd,taxAssetDel,taxDeprCard,nyPenaltyOf,nyPenaltyFor,nyUnderpayRate,taxEicAgeOk,nycEicRate,taxForm1116,taxFtcSrcSet,taxFtcCard,taxFtcCarryIn,taxAiSet,taxAiFor,taxAiCard,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
+    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxEic,taxEduCredit,TAX_EIC,taxMtcCarryIn,taxSchedAI,taxBackTest,taxBackTestHtml,navEntries,navEntryOf,navTarget,navSections,navForget,navRemember,taxTabParent,taxTabSections,taxDeprOf,taxDeprFor,taxAssetAdd,taxAssetDel,taxDeprCard,nyPenaltyOf,nyPenaltyFor,nyUnderpayRate,taxEicAgeOk,nycEicRate,taxForm1116,taxFtcSrcSet,taxFtcCard,taxFtcCarryIn,taxAiSet,taxAiFor,taxAiCard,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
     BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,mailOldScriptWords,MAIL_STMT_NOTICE_RE,mailAssistUnread,_maUnread,MAIL_ASSIST_V22,MAIL_FX_AMT,mailHasFx,mailRbsStmtSettle,mailRbsSelf,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,NY_TUITION_CAP,nyCareCredit,nyTuitionCredit,nyCareFedRate,nyCareRate,nyCareApplicable,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
