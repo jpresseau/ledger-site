@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-vyAZKcfpJWmy+NFLFFfTLqZ140Wlc+4ilOK5rnbX/RM=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-vK4TXD7jXQljVWBzEee97rlUVeMHUTr9MrsMcMTqjac=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2985,7 +2985,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.31";
+const APP_V="v29.32";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2999,7 +2999,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="35f6715";
+const APP_BUILD="d5f6d68";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -13898,6 +13898,96 @@ function taxEstPayDraftRead(){
 }
 
 
+const TAX_UNDERPAY_RATE={
+  2019:[6,6,5,5], 2020:[5,5,3,3], 2021:[3,3,3,3], 2022:[3,4,5,6], 2023:[7,7,7,8],
+  2024:[8,8,8,8], 2025:[7,7,7,7], 2026:[7,6,7,7]};
+
+function taxUnderpayRate(y,q){
+  const T=TAX_UNDERPAY_RATE[y]; if(T&&T[q]!=null) return {rate:T[q]/100,est:false};
+  const ys=Object.keys(TAX_UNDERPAY_RATE).map(Number).sort(function(a,b){ return a-b; });
+  if(y<ys[0]) return {rate:TAX_UNDERPAY_RATE[ys[0]][0]/100,est:true};
+  const last=TAX_UNDERPAY_RATE[ys[ys.length-1]]; return {rate:last[last.length-1]/100,est:true};
+}
+function _tpDay(iso){ const p=String(iso).split('-').map(Number); return Date.UTC(p[0],p[1]-1,p[2])/86400000; }
+function _tpIso(d){ return new Date(d*86400000).toISOString().slice(0,10); }
+
+function _tpCharge(amt,from,to,tail){
+  let cost=0, est=false, d=from;
+  while(d<to){
+    const dt=new Date(d*86400000), y=dt.getUTCFullYear(), q=Math.floor(dt.getUTCMonth()/3);
+    
+
+    const inTail=tail!=null&&d>=tail;
+    const end=inTail?to:Math.min(to,Date.UTC(q===3?y+1:y,q===3?0:(q+1)*3,1)/86400000), R=taxUnderpayRate(y,inTail?0:q);
+    const leap=(y%4===0&&y%100!==0)||y%400===0;
+    cost+=amt*R.rate*(end-d)/(leap?366:365); if(R.est) est=true; d=end;
+  }
+  return {cost:cost,est:est};
+}
+
+
+function taxPenalty2210(o){
+  const y=Number(String(o&&o.year).slice(0,4)), need=Math.max(0,Number(o&&o.need)||0);
+  if(!Number.isFinite(y)||!(need>0)) return null;
+  const dues=[y+'-04-15',y+'-06-15',y+'-09-15',(y+1)+'-01-15'], endDay=_tpDay((y+1)+'-04-15');
+  const wh=Math.max(0,Number(o.withheld)||0)/4;
+  const tail=_tpDay((y+1)+'-04-01');
+  
+  const P=dues.map(function(d){ return {day:_tpDay(d),amt:wh,w:1}; })
+    .concat((o.pays||[]).filter(function(p){ return p&&p.date&&Number(p.amt)>0; }).map(function(p){ return {day:_tpDay(p.date),amt:Number(p.amt),w:0}; }))
+    .sort(function(a,b){ return a.day-b.day||b.w-a.w; });
+  let i=0, est=false, total=0;
+  const rows=dues.map(function(due){
+    const dd=_tpDay(due); let left=need/4, short=null, pen=0;
+    while(left>0.005&&i<P.length){
+      if(P[i].amt<=0.005){ i++; continue; }
+      if(short==null&&P[i].day>dd) short=left;                       
+      if(P[i].day>=endDay) break;
+      const take=Math.min(left,P[i].amt);
+      if(P[i].day>dd){ const c=_tpCharge(take,dd,P[i].day,tail); pen+=c.cost; if(c.est) est=true; }
+      left-=take; P[i].amt-=take;
+    }
+    if(left>0.005){ if(short==null) short=left; const c=_tpCharge(left,dd,endDay,tail); pen+=c.cost; if(c.est) est=true; }
+    total+=pen;
+    return {due:due,required:r2v(need/4),short:r2v(short||0),penalty:r2v(pen)};
+  });
+  return {year:y,need:r2v(need),rows:rows,penalty:r2v(total),est:est,through:_tpIso(endDay)};
+}
+
+
+function taxPenaltyFor(year,tax,prevTax,pct,held,today){
+  const y=Number(String(year).slice(0,4));
+  if(!Number.isFinite(y)||tax==null||held==null) return null;
+  const need=prevTax!=null?Math.min(0.9*tax,(pct||1)*prevTax):0.9*tax;
+  const pays=(typeof taxEstPays==='function'?taxEstPays(y,'irs'):[]).map(function(p){ return {date:p.date,amt:p.amt}; });
+  const paid=r2v(pays.reduce(function(s,p){ return s+(Number(p.amt)||0); },0));
+  if(tax-held-paid<1000) return null;                               
+  const P=taxPenalty2210({year:y,need:need,withheld:held,pays:pays});
+  if(!P||!(P.penalty>0)) return null;
+  
+  const t=today||(typeof todayISO==='function'?todayISO():new Date().toISOString().slice(0,10)), short=r2v(Math.max(0,need-held-paid));
+  const N=short>0&&t<P.through?taxPenalty2210({year:y,need:need,withheld:held,pays:pays.concat([{date:t,amt:short}])}):null;
+  return {P:P,short:short,paid:paid,payNow:N?N.penalty:null,today:t};
+}
+
+function taxPenaltyOfYear(year,tax,held,today){
+  let prev=null;
+  try{ const ys=typeof _thYears==='function'?_thYears():Object.keys(DB.taxes||{}).sort(), i=ys.indexOf(year);
+    prev=i>0?taxReturn(ys[i-1]):null; }catch(e){ prev=null; }
+  const pt=prev&&prev.sum&&prev.sum.fedTax!=null?prev.sum.fedTax:null;
+  return taxPenaltyFor(year,tax,pt,typeof taxHarborPct==='function'?taxHarborPct(prev):1,held,today);
+}
+
+function taxPenaltySay(X,open){
+  if(!X) return '';
+  const P=X.P, about=(P.est?'about ':'')+'<b>'+money(P.penalty,0)+'</b>';
+  if(!open||!(X.short>0)) return ' The penalty on that (Form 2210) works out to '+about+': each quarter’s shortfall at the IRS’s rate for it, by the day, to '+fD(P.through)+'.';
+  return ' Left as it is, the penalty (Form 2210) comes to '+about+' by '+fD(P.through)+'.'
+    +(X.payNow!=null&&X.payNow>0.5?' Sent as an estimated payment today the same money still leaves '+money(X.payNow,0)+' of it, because a payment counts from the day it lands; through the W-4 it leaves none.':'');
+}
+
+
+
 function taxDoneRead(year){
   const y=String(year||'').slice(0,4);
   const all=(DB.taxdone&&typeof DB.taxdone==='object')?DB.taxdone:{};
@@ -14045,15 +14135,24 @@ function taxAdvice(R,prev,open){
         +fD(src.asOf)+' plus '+src.n+' more cheque'+(src.n===1?'':'s')+' at the same rate — not '
         +'the total on your sheet, which is only as current as the last time you wrote it down. '
         +'Change the rate and this changes with it.</div>':'');
+    
+
+    const fed=who==='Federal', paid=fed&&typeof taxEstPayFed==='function'?(taxEstPayFed(R.year)||0):0;
+    const X=fed&&typeof taxPenaltyFor==='function'?taxPenaltyFor(R.year,tax,prevTax,pct,held):null;
+    const pen=typeof taxPenaltySay==='function'?taxPenaltySay(X,open):'';
+    if(held<need&&held+paid>=need){ add(X?'note':'ok','Your '+who+' estimated payments close the gap'+(X?', late':''),
+      'Withholding of '+money(held,0)+' is '+money(need-held,0)+' under the target of '+money(need,0)+', and the '+money(paid,0)
+      +' of estimated payments you wrote down covers it.'+(X?' But a payment counts from the day it was sent, and some dates were short on their own day.'+pen:' Each was in by its date, so no penalty.')+derive); return; }
+    const short=r2v(need-held-paid), after=paid>0?' (after the '+money(paid,0)+' of estimated payments you wrote down)':'';
     if(held>=need){ add('ok','You’ve cleared the '+who+' safe harbor by '+money(held-need,0),
       'You’ve got '+money(held,0)+' withheld against a target of '+money(need,0)+', so no penalty. '
       +'The April balance still falls due — pay it then and you’re square.'+derive); return; }
-    if(!open){ add('note','Your '+who+' withholding came up '+money(need-held,0)+' short',
-      'Withholding reached '+money(held,0)+' against a target of '+money(need,0)+'. Worth knowing for '
-      +'the years still open.'+derive); return; }
-    add('act','Raise your '+who+' withholding by '+money(need-held,0),
-      'You’re <b>'+money(need-held,0)+' short</b> of the safe harbor, the cheapest number that keeps '
-      +'the penalty off you. Fix it on the W-4, not with a December check.'
+    if(!open){ add('note','Your '+who+' withholding came up '+money(short,0)+' short',
+      'Withholding reached '+money(held,0)+' against a target of '+money(need,0)+after+'.'+(pen||' Worth knowing for '
+      +'the years still open.')+derive); return; }
+    add('act','Raise your '+who+' withholding by '+money(short,0),
+      'You’re <b>'+money(short,0)+' short</b> of the safe harbor'+after+', the cheapest number that keeps '
+      +'the penalty off you. Fix it on the W-4, not with a December check.'+pen
       +(saidHarborRule?''
         :' Withholding counts as paid evenly through the year however late you start, which an '
          +'estimated payment sent in December does not.')
@@ -16498,7 +16597,8 @@ function _taxYearTables(){
     TAX_SS_BASE:T(has(function(){ return TAX_SS_BASE; }),'the Social Security wage base'),
     TAX_QBI:T(has(function(){ return TAX_QBI; }),'the business-income deduction’s thresholds'),
     TAX_CATCHUP:T(has(function(){ return TAX_CATCHUP; }),'the catch-up limit'),
-    TAX_ACTC:T(has(function(){ return TAX_ACTC; }),'the refundable child credit')};
+    TAX_ACTC:T(has(function(){ return TAX_ACTC; }),'the refundable child credit'),
+    TAX_UNDERPAY_RATE:T(has(function(){ return TAX_UNDERPAY_RATE; }),'the IRS’s underpayment rate')};
 }
 
 
@@ -16852,6 +16952,14 @@ function taxFilePackWorked(year){
       F('7','Tentative minimum tax: 26% and 28%'+(est.pref>0?', the capital gain and qualified dividends at their own rates (Part III)':''),A.tmt),
       F('10','Regular tax (Form 1040 line 16)',A.regular),
       F('11','Alternative minimum tax (to Schedule 2 line 2)',A.amt)].filter(Boolean)}); }
+  
+  { let X=null; try{ X=typeof taxPenaltyOfYear==='function'?taxPenaltyOfYear(year,est.tax,inp.held||0):null; }catch(e){ X=null; }
+    if(X){ const P=X.P;
+      forms.push({form:'Form 2210 · Underpayment of estimated tax',note:'The regular method: a quarter of the required payment due on each date, withholding counted a quarter on each, an estimated payment on the day it was sent.'
+        +(P.est?' A quarter whose rate the IRS has not published takes the last one that is.':'')+' If your income came late in the year, Schedule AI (the annualized method) can come to less; the IRS will also work the penalty out and bill it if you leave line 38 blank.',lines:[
+        F('9','Required annual payment (the safe harbor)',P.need)].concat(P.rows.map(function(r,i){
+          return F('18'+'abcd'[i],'Required by '+fD(r.due)+': '+money(r.required,0)+', short on the day by '+money(r.short,0)+' — its penalty',r.penalty); })).concat([
+        F('19','Penalty (to Form 1040 line 38)',P.penalty)]).filter(Boolean)}); } }
   if(itemize){ const I=seed.itemized;
     forms.push({form:'Schedule A · Itemized deductions',note:'The Ledger itemizes because these come to more than the standard deduction.',lines:[
       F('5d','State and local taxes paid (income and property)',I.saltPaid),
@@ -50153,7 +50261,7 @@ function renderOnce(name,fn){
     RCP,RCP_PROMPT,mailVouched,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
-    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
+    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
     BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,mailOldScriptWords,MAIL_STMT_NOTICE_RE,mailAssistUnread,_maUnread,MAIL_ASSIST_V22,MAIL_FX_AMT,mailHasFx,mailRbsStmtSettle,mailRbsSelf,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,NY_TUITION_CAP,nyCareCredit,nyTuitionCredit,nyCareFedRate,nyCareRate,nyCareApplicable,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
