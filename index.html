@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-vK4TXD7jXQljVWBzEee97rlUVeMHUTr9MrsMcMTqjac=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-CxupT+KNXlNNUwT2VlaQ3gwGv9My+/kwbzcXGwIk9+4=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2985,7 +2985,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.32";
+const APP_V="v29.33";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2999,7 +2999,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="d5f6d68";
+const APP_BUILD="cd7d2b2";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -12830,6 +12830,7 @@ function taxFacts(year,today){
   F.spouseEarns=F.filing==='mfj'?_ans('spouse'):'yes';
   
   F.stubYear=F.current&&typeof taxStubYear==='function'?taxStubYear(year):null;
+  if(typeof taxFtcFacts==='function') taxFtcFacts(F,year);   
   if(typeof taxRefundFacts==='function') taxRefundFacts(F,R,LV,year);      
   
   F.invBack=(function(){ if(!F.current||!(F.invInt>0||F.stubLoanYtd>0||_ans('invloan')==='yes')||typeof taxInvIntBack!=='function') return null;
@@ -15236,7 +15237,7 @@ function taxAdvisorHtml(year){
     +(typeof taxSecondOpinionHtml==='function'?taxSecondOpinionHtml(year):'')
     +(typeof nyReturnHtml==='function'?nyReturnHtml(year):'')   
     +taxYoYHtml(year)
-    +dedHtml+(typeof taxInvIntCard==='function'?taxInvIntCard(year):'')+(typeof taxNewDedHtml==='function'?taxNewDedHtml(year):'')+cHtml
+    +dedHtml+(typeof taxInvIntCard==='function'?taxInvIntCard(year):'')+(typeof taxCapCarryCard==='function'?taxCapCarryCard(year):'')+(typeof taxNewDedHtml==='function'?taxNewDedHtml(year):'')+cHtml
     +(typeof taxDepCareHtml==='function'?taxDepCareHtml(year):'')
     +(typeof taxEnergyHtml==='function'?taxEnergyHtml(year):'')
     +profHtml;
@@ -15452,17 +15453,124 @@ function taxDocsHtml(year){
 
 
 
-function taxSchD(docs,filing){
+
+
+function taxSchD(docs,filing,carry){
   const B=(docs||[]).filter(function(d){ return d&&d.kind==='1099-B'; }), D=(docs||[]).filter(function(d){ return d&&d.kind==='1099-DIV'; });
-  if(!B.length&&!D.length) return null;
+  const cSt=Math.max(0,Number(carry&&carry.st)||0), cLt=Math.max(0,Number(carry&&carry.lt)||0);
+  if(!B.length&&!D.length&&!(cSt+cLt>0)) return null;
   const s=function(ds,k){ return r2v(ds.reduce(function(t,d){ return t+(Number((d.boxes||{})[k])||0); },0)); };
-  const st=s(B,'st'), ltB=s(B,'lt'), dist=s(D,'2a'), lt=r2v(ltB+dist), net=r2v(st+lt);
+  const st=r2v(s(B,'st')-cSt), ltB=s(B,'lt'), dist=s(D,'2a'), lt=r2v(ltB+dist-cLt), net=r2v(st+lt);
   const cap=filing==='mfs'?1500:3000, line7a=r2v(net>=0?net:Math.max(net,-cap));
-  return {b:B.length,st:st,ltB:ltB,dist:dist,lt:lt,net:net,line7a:line7a,cap:cap,
+  return {b:B.length,st:st,ltB:ltB,dist:dist,lt:lt,net:net,line7a:line7a,cap:cap,carryInSt:cSt,carryInLt:cLt,
     pref:net>0&&lt>0?r2v(Math.min(lt,net)):0,
     carry:net<-cap?r2v(-cap-net):0,
     proceeds:s(B,'1d'),cost:s(B,'1e'),wash:s(B,'1g')};
 }
+
+
+function taxSchDCarryOut(SD,taxable){
+  if(!SD||!(SD.net<0)) return {st:0,lt:0};
+  const l2=Math.min(SD.cap,-SD.net), l3=taxable==null?l2:Math.max(0,r2v(taxable+l2)), l4=Math.min(l2,l3);
+  const stLoss=Math.max(0,-SD.st), ltLoss=Math.max(0,-SD.lt), stGain=Math.max(0,SD.st), ltGain=Math.max(0,SD.lt);
+  const st=Math.max(0,r2v(stLoss-(l4+ltGain)));
+  const lt=Math.max(0,r2v(ltLoss-(stGain+Math.max(0,r2v(l4-stLoss)))));
+  return {st:st,lt:lt};
+}
+
+
+
+function taxCapCarryAnswers(year){
+  const y=String(year).slice(0,4), A=(DB.meta&&DB.meta.taxCapCarry&&DB.meta.taxCapCarry[y])||null;
+  return A&&typeof A==='object'?{st:Math.max(0,Number(A.st)||0),lt:Math.max(0,Number(A.lt)||0)}:null;
+}
+function taxCapCarrySet(year,st,lt){
+  const y=Number(String(year).slice(0,4)); if(!Number.isFinite(y)) return {error:'no year'};
+  const num=function(v){ if(v==null||String(v).trim()==='') return null; const n=Number(String(v).replace(/[$,\s]/g,'')); return Number.isFinite(n)&&n>=0?r2v(n):NaN; };
+  const a=num(st), b=num(lt); if(Number.isNaN(a)||Number.isNaN(b)) return {error:'Type each loss as a plain amount, or leave it empty.'};
+  DB.meta=DB.meta||{}; const M=DB.meta.taxCapCarry=Object.assign({},DB.meta.taxCapCarry);
+  if(a==null&&b==null) delete M[String(y)]; else M[String(y)]={st:a||0,lt:b||0};
+  if(!Object.keys(M).length) delete DB.meta.taxCapCarry;
+  return {ok:true};
+}
+
+let _tccDepth=0;
+function taxCapCarryIn(year){
+  const y=Number(String(year).slice(0,4)), A=taxCapCarryAnswers(y);
+  if(A) return {st:A.st,lt:A.lt,src:'you'};
+  if(_tccDepth>=3||typeof taxDocsFor!=='function'||typeof taxSchD!=='function') return {st:0,lt:0,src:''};
+  _tccDepth++;
+  try{
+    const docs=taxDocsFor(y-1), pk=typeof taxYearKey==='function'?taxYearKey(y-1):String(y-1);
+    const before=taxCapCarryIn(pk);
+    if(!docs.some(function(d){ return d.kind==='1099-B'; })&&!(before.st+before.lt>0)) return {st:0,lt:0,src:''};
+    const SD=taxSchD(docs,typeof taxFilingFor==='function'?taxFilingFor(pk).filing:'single',before);
+    let taxable=null; try{ const R=typeof taxReturn==='function'?taxReturn(pk):null; taxable=R&&R.sum&&R.sum.taxable!=null?R.sum.taxable:null; }catch(e){ taxable=null; }
+    const O=taxSchDCarryOut(SD,taxable);
+    return O.st+O.lt>0?{st:O.st,lt:O.lt,src:'last year'}:{st:0,lt:0,src:''};
+  }catch(e){ return {st:0,lt:0,src:''}; }
+  finally{ _tccDepth--; }
+}
+
+
+function taxCapCarryCard(year){
+  const y=Number(String(year).slice(0,4)); if(!isFinite(y)) return '';
+  const A=taxCapCarryAnswers(y), C=taxCapCarryIn(year), has=C.st+C.lt>0;
+  const anyB=function(k){ try{ return taxDocsFor(k).some(function(d){ return d.kind==='1099-B'; }); }catch(e){ return false; } };
+  const asked=(function(){ try{ return typeof taxIntakeRead==='function'&&((taxIntakeRead(year).find(function(q){ return q.id==='carry'; })||{}).a||'')==='yes'; }catch(e){ return false; } })();
+  if(!A&&!has&&!anyB(y)&&!anyB(y-1)&&!asked) return '';
+  const inp=function(id,label,val,ph){ return '<label>'+label+'<input id="'+id+'" inputmode="decimal" value="'+esc(val==null?'':String(val))+'" placeholder="'+esc(ph)+'"></label>'; };
+  let out=null; try{ const SD=taxSchD(taxDocsFor(y),typeof taxFilingFor==='function'?taxFilingFor(year).filing:'single',C); out=SD&&SD.net<0?{SD:SD,O:taxSchDCarryOut(SD,null)}:null; }catch(e){ out=null; }
+  return '<div class="sheet"><h3>A capital loss carried in <span class="r">'+(has?money(C.st+C.lt,0)+' from '+(y-1):'none')+'</span></h3>'
+    +'<div class="mut" style="font-size:12px;margin-bottom:8px">A year can take at most $3,000 of capital loss against its other income. The rest is not lost: it carries to the next year’s Schedule D, '
+    +'short-term to line 6 and long-term to line 14, and keeps carrying until it is used. It is on no form that arrives — only on last year’s Capital Loss Carryover Worksheet.</div>'
+    +(has?'<div class="mut" style="font-size:12px;margin-bottom:8px">'+(C.src==='you'?'As you typed it: ':'Worked out from '+(y-1)+'’s 1099-Bs and its taxable income: ')
+      +'<b>'+money(C.st,0)+'</b> short-term and <b>'+money(C.lt,0)+'</b> long-term come into '+y+'.'
+      +(out?' After this year’s own sales, '+money(-out.SD.line7a,0)+' comes off income and <b>'+money(out.O.st+out.O.lt,0)+'</b> carries on to '+(y+1)+'.':'')
+      +(C.src==='last year'?' If last year’s return as filed says otherwise, type its figures here and they win.':'')+'</div>':'')
+    +'<div class="formrow" style="flex-wrap:wrap;gap:8px">'
+    +inp('tccSt','Short-term loss from '+(y-1)+' ($)',A?A.st:'',C.src==='last year'?String(C.st):'0')
+    +inp('tccLt','Long-term loss from '+(y-1)+' ($)',A?A.lt:'',C.src==='last year'?String(C.lt):'0')
+    +'<button class="btn sm" data-act="taxcapcarrysave" data-y="'+y+'">Save</button></div></div>';
+}
+
+
+
+const TAX_FTC_ELECT={single:300,mfj:600};
+function taxFtcLimit(filing){ const k=typeof taxFilingKey==='function'?taxFilingKey(filing):String(filing||''); return (k==='mfj'||k==='qss')?TAX_FTC_ELECT.mfj:TAX_FTC_ELECT.single; }
+
+function taxFtcFor(year){
+  const y=Number(String(year).slice(0,4)); let docs=[]; try{ docs=typeof taxDocsFor==='function'?taxDocsFor(y):[]; }catch(e){ docs=[]; }
+  const paid=r2v(docs.filter(function(d){ return d&&d.kind==='1099-DIV'; }).reduce(function(s,d){ return s+(Number(d.boxes&&d.boxes['7'])||0); },0));
+  const limit=taxFtcLimit(typeof taxFilingFor==='function'?taxFilingFor(year).filing:'single');
+  return {paid:paid,limit:limit,elect:paid>0&&paid<=limit?paid:0,over:paid>limit?paid:0};
+}
+function taxFtcFacts(F,year){
+  let X=null; try{ X=taxFtcFor(year); }catch(e){ X=null; }
+  F.ftcOver=X&&X.over>0?X.over:null; F.ftcLimit=X?X.limit:null;
+}
+const TAX_PLAYS_FTC=[
+{ id:'foreign-tax-1116', family:'credit',
+  law:'§901 (the credit for foreign tax) · §904(j) (no form up to $300, $600 joint) · Form 1116',
+  needs:['ftcOver'],
+  blind:'no foreign tax over the no-form limit on this year’s 1099-DIVs',
+  hedge:function(){ return 'flag'; },
+  lv:function(F){ return F.open?'act':'note'; },
+  when:function(F){ return F.ftcOver>0&&!F.expired; },
+  dollars:function(){ return null; },
+  window:function(){ return null; },
+  say:function(F){
+    return {what:'Claim the '+money(F.ftcOver,0)+' of foreign tax on Form 1116',
+      why:'Your funds paid <b>'+money(F.ftcOver,0)+'</b> of tax to other countries on your behalf (1099-DIV box 7). Up to '+money(F.ftcLimit,0)
+        +' it is a credit with no form. Over that it takes Form 1116, which allows no more than the US tax on the foreign income itself — a figure no 1099 box carries, '
+        +'so this return is worked <b>without</b> the credit. It is worth up to the whole '+money(F.ftcOver,0)+', dollar for dollar off the tax.',
+      chip:'<code>'+money(F.ftcOver,0)+' paid abroad · '+money(F.ftcLimit,0)+' allowed without the form</code>'};
+  },
+  guards:function(){ return [
+    'The fund’s year-end tax statement gives the foreign-source income Form 1116 asks for, usually as a percentage of each fund’s dividends.',
+    'What the form does not allow this year carries back one year and forward ten.',
+    'It can be deducted on Schedule A instead, which is almost always worth less than the credit.']; }
+}];
 
 
 
@@ -15586,11 +15694,13 @@ function taxFedEstimate(inp){
   const earned=r2v((inp.earned!=null?inp.earned:r2v(wages+other))+(SE?se-SE.half:0)), left=r2v(ctcAll-ctc);
   const actc=left<=0?0:y===2021?left
     :r2v(Math.min(left,(TAX_ACTC[y]||0)*Math.max(0,inp.ctcKids||0),Math.max(0,earned-2500)*0.15));
-  const tax=r2v(line18-ctc-careUsed+addlMed+niit+(SE?SE.seTax:0));
+  
+  const ftc=r2v(Math.min(Math.max(0,inp.ftc||0),Math.max(0,line18-ctc-careUsed)));
+  const tax=r2v(line18-ctc-careUsed-ftc+addlMed+niit+(SE?SE.seTax:0));
   return {agi,taxable,ordTaxable,pref,ordTax:r2v(ordTax),prefTax:r2v(prefTax),
     se:se,seTax:SE?SE.seTax:0,seHalf:SE?SE.half:0,seBase:SE?SE.base:0,seSs:SE?SE.ss:0,qbi:QB?QB.deduction:0,
     amt:amt,amtWork:AM,busInt:busInt,
-    addlMed,niit,ctc,care:careUsed,actc,tax,est:!!(T.est||G.est),
+    addlMed,niit,ctc,care:careUsed,ftc:ftc,actc,tax,est:!!(T.est||G.est),
     held:inp.held!=null?r2v(inp.held):null,
     owed:inp.held!=null?r2v(tax-inp.held-actc):null};
 }
@@ -15627,7 +15737,9 @@ function taxEstimateInputs(year){
   const ordDiv=pick('ordDiv',divs.length?sum(divs,'1a'):null,null);
   const qualDiv=divs.length?sum(divs,'1b'):0;
   
-  const SD=typeof taxSchD==='function'?taxSchD(docs,taxFilingFor(year).filing):null;
+  
+  const _cc=typeof taxCapCarryIn==='function'?taxCapCarryIn(year):null;
+  const SD=typeof taxSchD==='function'?taxSchD(docs,taxFilingFor(year).filing,_cc):null;
   const ltcg=pick('ltcg',SD?SD.line7a:(divs.length?sum(divs,'2a'):null),null);
   
 
@@ -15680,6 +15792,7 @@ function taxEstimateInputs(year){
   const _wk=(DB.taxwork&&typeof DB.taxwork==='object'&&DB.taxwork[y])||{};
   return {year:y,filing:_fil,wages,interest,ordDiv,qualDiv,ltcg,other,se,
     amtAdd:amtAdd,isoTyped:_wk.iso>0?_wk.iso:0,busInt:busInt,
+    ftc:(function(){ try{ return typeof taxFtcFor==='function'?taxFtcFor(year).elect:0; }catch(e){ return 0; } })(),
     
     ssWages:w2.length&&sum(w2,'3')>0?sum(w2,'3'):(src.wages==='stub'&&SY.ssWages!=null?SY.ssWages:null),
     ltPref:SD&&src.ltcg==='documents'?SD.pref:null,schD:SD,
@@ -16103,7 +16216,7 @@ function taxInvIntNii(year){
   let src=(ints.length||divs.length||W.interest!=null||W.ordDiv!=null)?'documents':'none';
   
   if(interest==null&&ordDiv==null&&L('06')!=null&&L('01')!=null){ interest=Math.max(0,r2v(L('06')-L('01'))); src='sheet'; }
-  let st=0; try{ const SD=typeof taxSchD==='function'?taxSchD(docs,taxFilingFor(year).filing):null; st=SD&&SD.st>0?SD.st:0; }catch(e){ st=0; }
+  let st=0; try{ const SD=typeof taxSchD==='function'?taxSchD(docs,taxFilingFor(year).filing,typeof taxCapCarryIn==='function'?taxCapCarryIn(year):null):null; st=SD&&SD.st>0?SD.st:0; }catch(e){ st=0; }
   const nii=r2v(Math.max(0,(interest||0)+Math.max(0,(ordDiv||0)-Math.min(qualDiv||0,ordDiv||0))+st));
   return {nii:nii,interest:interest||0,ordDiv:ordDiv||0,qualDiv:qualDiv||0,st:st,src:src};
 }
@@ -16884,7 +16997,7 @@ function taxFilePackWorked(year){
   const nz=function(v){ return v?v:null; };
   const nd=!hand&&seed.newDed?seed.newDed.total:0, itemize=!hand&&seed.itemize&&seed.itemized;
   const se=inp.se||0, bus=est.busInt||0, total=r2v(inp.wages+inp.interest+inp.ordDiv+inp.ltcg+inp.other+se-bus);
-  const tax16=r2v(est.ordTax+est.prefTax), cr=r2v(est.ctc+est.care), sch2=r2v(est.addlMed+est.niit+(est.seTax||0));
+  const tax16=r2v(est.ordTax+est.prefTax), cr=r2v(est.ctc+est.care+(est.ftc||0)), sch2=r2v(est.addlMed+est.niit+(est.seTax||0));
   const owe=r2v(est.tax-W.paid);
   const forms=[{form:'Form 1040',note:'Worked out here, not read off a filed sheet: the Build tab’s figures, which you can type over there.',lines:[
     F('1a','Wages (W-2 box 1)',inp.wages),
@@ -16905,7 +17018,7 @@ function taxFilePackWorked(year){
     est.amt?F('17','Amount from Schedule 2 line 3 — the alternative minimum tax (Form 6251)',est.amt):null,
     est.amt?F('18','Lines 16 and 17',r2v(tax16+est.amt)):null,
     F('19','Child tax credit or credit for other dependents (Schedule 8812)',nz(est.ctc)),
-    F('20','Amount from Schedule 3 line 8 — the child and dependent care credit',nz(est.care)),
+    F('20','Amount from Schedule 3 line 8 — '+(est.ftc?'the foreign tax credit (line 1, no Form 1116 needed)'+(est.care?' and ':''):'')+(est.care||!est.ftc?'the child and dependent care credit':''),nz(r2v(est.care+(est.ftc||0)))),
     cr?F('21','Lines 19 and 20',cr):null,
     F('22','Line 18 less line 21',r2v(Math.max(0,tax16+(est.amt||0)-cr))),
     F('23','Other taxes from Schedule 2 ('+(est.seTax?'Schedule SE, ':'')+'Forms 8959, 8960)',nz(sch2)),
@@ -16917,12 +17030,14 @@ function taxFilePackWorked(year){
     owe>=0?F('37','Amount you owe',owe):F('34','Overpaid — your refund',-owe)].filter(Boolean)}];
   
 
-  if(inp.schD&&inp.schD.b){ const D=inp.schD;
+  if(inp.schD&&(inp.schD.b||inp.schD.carryInSt||inp.schD.carryInLt)){ const D=inp.schD;
     forms.push({form:'Schedule D · Capital gains and losses',note:'Your 1099-B’s totals go on lines 1a and 8a as its summary page sorts them '
       +'(on Form 8949 instead where it says basis was not reported, or shows wash sales). Then:'
       +(D.carry?' The rest of the loss, '+money(D.carry,0)+', carries to next year (the Capital Loss Carryover Worksheet).':''),lines:[
+      D.carryInSt?F('6','Short-term loss carried in from last year (a loss)',-D.carryInSt):null,
       F('7','Net short-term capital gain or (loss)',D.st),
       D.dist?F('13','Capital gain distributions (1099-DIV box 2a)',D.dist):null,
+      D.carryInLt?F('14','Long-term loss carried in from last year (a loss)',-D.carryInLt):null,
       F('15','Net long-term capital gain or (loss)',D.lt),
       F('16','Lines 7 and 15 combined',D.net),
       D.net<0?F('21','The loss you can take this year (at most '+money(D.cap,0)+')',D.line7a):null].filter(Boolean)}); }
@@ -16987,7 +17102,7 @@ function taxFilePackWorked(year){
   if(est.est) notes.push({what:'This year’s federal tables are the indexed estimate',text:true,
     why:'The brackets are projected until the IRS publishes the year’s own; the pack follows the moment they are in.'});
   notes.push({what:'Not worked out here',text:true,
-    why:(est.amtWork?'':'The alternative minimum tax (Form 6251). ')+'Education credits, the foreign tax credit, and a business’s own expenses and depreciation. If any of them apply to you, the return needs them.'});
+    why:(est.amtWork?'':'The alternative minimum tax (Form 6251). ')+'Education credits, the foreign tax credit past what needs no form (Form 1116), and a business’s own expenses and depreciation. If any of them apply to you, the return needs them.'});
   return {year:year,forms:forms,flags:[],notes:notes,worked:true};
 }
 
@@ -18827,7 +18942,7 @@ function taxWorkInputs(year){
     if(w[f]!=null){ out[f]=w[f]; out.src[f]='hand'; }
     else{ out[f]=r2v(sv); out.src[f]=f==='estPaid'?(logged!=null?'log':'none'):(seed.src[f]||'none'); }
   });
-  out.medWages=seed.medWages; out.ctcKids=seed.ctcKids; out.earned=seed.earned; out.invInt=seed.invInt; out.ssWages=seed.ssWages; out.amtAdd=seed.amtAdd; out.busInt=seed.busInt;
+  out.medWages=seed.medWages; out.ctcKids=seed.ctcKids; out.earned=seed.earned; out.invInt=seed.invInt; out.ssWages=seed.ssWages; out.amtAdd=seed.amtAdd; out.busInt=seed.busInt; out.ftc=seed.ftc;
   
   out.ltPref=out.src.ltcg==='hand'?null:seed.ltPref; out.schD=out.src.ltcg==='hand'?null:seed.schD;
   return out;
@@ -19428,7 +19543,8 @@ function _taxPlayList(){
     typeof TAX_PLAYS_FAMILY!=='undefined'?TAX_PLAYS_FAMILY:[],
     typeof TAX_PLAYS_AMT!=='undefined'?TAX_PLAYS_AMT:[],
     typeof TAX_PLAYS_STUBYEAR!=='undefined'?TAX_PLAYS_STUBYEAR:[],
-    typeof TAX_PLAYS_REFUND!=='undefined'?TAX_PLAYS_REFUND:[]);
+    typeof TAX_PLAYS_REFUND!=='undefined'?TAX_PLAYS_REFUND:[],
+    typeof TAX_PLAYS_FTC!=='undefined'?TAX_PLAYS_FTC:[]);
 }
 function taxPlayById(id){
   const all=_taxPlayList();
@@ -43875,6 +43991,16 @@ function _imgLossOk(what){
     return toast(I?money(I.bus>0?I.bus:I.allowed,0)+' deductible in '+b.dataset.y+(I.bus>0?', on Schedule E':'')+(I.carry>0?', '+money(I.carry,0)+' carried forward':'')+' · ⌘Z to undo':'Cleared','ok');
   }
   
+  if(act==='taxcapcarrysave'){
+    const v=id=>{ const e=document.getElementById(id); return e?e.value:''; };
+    snap('capital loss carried in');
+    const r=taxCapCarrySet(b.dataset.y,v('tccSt'),v('tccLt'));
+    if(!r.ok){ snapCancel(); return toast(r.error,'warn'); }
+    save(); render();
+    const C=taxCapCarryIn(typeof taxYearKey==='function'?taxYearKey(b.dataset.y):b.dataset.y);
+    return toast(C.st+C.lt>0?money(C.st+C.lt,0)+' of loss carried into '+b.dataset.y+' · ⌘Z to undo':'Cleared','ok');
+  }
+  
   if(act==='reviewask'){ const py=_taxYear(); if(py) taxReviewAsk(py); return; }
   if(act==='reviewcopy'){
     const py=_taxYear(), t=py&&taxReviewAskText(py);
@@ -50261,7 +50387,7 @@ function renderOnce(name,fn){
     RCP,RCP_PROMPT,mailVouched,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
-    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
+    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
     BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,mailOldScriptWords,MAIL_STMT_NOTICE_RE,mailAssistUnread,_maUnread,MAIL_ASSIST_V22,MAIL_FX_AMT,mailHasFx,mailRbsStmtSettle,mailRbsSelf,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,NY_TUITION_CAP,nyCareCredit,nyTuitionCredit,nyCareFedRate,nyCareRate,nyCareApplicable,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
