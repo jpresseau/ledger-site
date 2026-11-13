@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-9fqMS+rcfCq2kNA904TpATwVeXLnM5N5R4eK4ZoVdgY=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-06dIgszlh24o76TyhK2C6L6q5wKc2B5UYqSWXSHUbAw=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2985,7 +2985,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.34";
+const APP_V="v29.35";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2999,7 +2999,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="94fc510";
+const APP_BUILD="6a669d8";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -15630,6 +15630,20 @@ function taxEduFor(year,agi,filing){
 
 
 
+let _mtcDepth=0;
+function taxMtcCarryIn(year){
+  const y=Number(String(year).slice(0,4)); if(!Number.isFinite(y)||_mtcDepth>=3) return 0;
+  const W=(DB.taxwork&&typeof DB.taxwork==='object'&&DB.taxwork[y-1])||null;
+  if(!W||!(W.iso>0||W.mtcIn>0)) return 0;
+  if(typeof taxWorkInputs!=='function'||typeof taxFedEstimate!=='function') return 0;
+  _mtcDepth++;
+  try{ const E=taxFedEstimate(taxWorkInputs(typeof taxYearKey==='function'?taxYearKey(y-1):String(y-1))); return E&&E.mtcOut>0?E.mtcOut:0; }
+  catch(e){ return 0; }
+  finally{ _mtcDepth--; }
+}
+
+
+
 
 
 
@@ -15758,11 +15772,17 @@ function taxFedEstimate(inp){
   const eduNonref=ED?r2v(Math.min(ED.nonref,Math.max(0,line18-ctc-careUsed-ftc))):0, eduRef=ED?ED.ref:0;
   const EI=inp.eicKids>=1&&typeof taxEic==='function'?taxEic({year:y,filing:f,kids:inp.eicKids,earned:earned,agi:agi,inv:r2v(interest+ordDiv+Math.max(0,ltcg))}):null;
   const eic=EI?EI.credit:0;
-  const tax=r2v(line18-ctc-careUsed-ftc-eduNonref+addlMed+niit+(SE?SE.seTax:0));
+  
+
+  const mtcIn=Math.max(0,inp.mtcIn||0);
+  const mtc=AM&&mtcIn>0?r2v(Math.min(mtcIn,AM.margin,Math.max(0,line18-ctc-careUsed-ftc-eduNonref))):0;
+  const AMx=AM&&AM.amt>0&&AM.iso>0?taxAmt({year:y,filing:f,taxable:taxable,addBack:inp.amtAdd,iso:0,pref:pref,ordTaxable:ordTaxable,regular:beforeCredits}):null;
+  const mtcNew=AM&&AM.amt>0&&AM.iso>0?r2v(AM.amt-(AMx?AMx.amt:0)):0;
+  const tax=r2v(line18-ctc-careUsed-ftc-eduNonref-mtc+addlMed+niit+(SE?SE.seTax:0));
   return {agi,taxable,ordTaxable,pref,ordTax:r2v(ordTax),prefTax:r2v(prefTax),
     se:se,seTax:SE?SE.seTax:0,seHalf:SE?SE.half:0,seBase:SE?SE.base:0,seSs:SE?SE.ss:0,qbi:QB?QB.deduction:0,
     amt:amt,amtWork:AM,busInt:busInt,
-    addlMed,niit,ctc,care:careUsed,ftc:ftc,eduNonref:eduNonref,eduRef:eduRef,eduKind:ED?ED.kind:'',eic:eic,eicWork:EI,actc,tax,est:!!(T.est||G.est),
+    addlMed,niit,ctc,care:careUsed,ftc:ftc,eduNonref:eduNonref,eduRef:eduRef,eduKind:ED?ED.kind:'',eic:eic,eicWork:EI,mtcIn:mtcIn,mtc:mtc,mtcNew:mtcNew,mtcOut:r2v(mtcIn-mtc+mtcNew),actc,tax,est:!!(T.est||G.est),
     held:inp.held!=null?r2v(inp.held):null,
     owed:inp.held!=null?r2v(tax-inp.held-actc-eic-eduRef):null};
 }
@@ -15854,6 +15874,7 @@ function taxEstimateInputs(year){
   const _wk=(DB.taxwork&&typeof DB.taxwork==='object'&&DB.taxwork[y])||{};
   return {year:y,filing:_fil,wages,interest,ordDiv,qualDiv,ltcg,other,se,
     amtAdd:amtAdd,isoTyped:_wk.iso>0?_wk.iso:0,busInt:busInt,
+    mtcIn:typeof taxMtcCarryIn==='function'?taxMtcCarryIn(year):0,
     ftc:(function(){ try{ return typeof taxFtcFor==='function'?taxFtcFor(year).elect:0; }catch(e){ return 0; } })(),
     
     eicKids:(function(){ try{ const P=taxProfile(); return ((P&&P.deps)||[]).filter(function(d){ const b=Number(String(d.born).slice(0,4)); return Number.isFinite(b)&&b<=y&&y-b<19; }).length; }catch(e){ return 0; } })(),
@@ -16758,7 +16779,7 @@ const TAX_PLAYS_AMT=[
   },
   guards:function(F){ const A=F.amtWork; return [
     A.amt>0?'Mortgage interest and gifts to charity still count under the minimum tax; state and local taxes and the standard deduction do not.':null,
-    A.iso>0?'Minimum tax paid because of stock options comes back as a credit in later years (Form 8801). Keep the form.':
+    A.iso>0?'Minimum tax paid because of stock options comes back as a credit in later years (Form 8801): this book carries it into next year’s return, and the pack shows how much.':
       'Exercising incentive stock options and holding the shares adds the spread to this form. Type it on File it → Build before you exercise, and see.',
     'Worked from this book’s estimate of the year. Depreciation, private-activity bond interest and the foreign tax credit are not in it.']; }
 }];
@@ -17064,7 +17085,7 @@ function taxFilePackWorked(year){
   const nz=function(v){ return v?v:null; };
   const nd=!hand&&seed.newDed?seed.newDed.total:0, itemize=!hand&&seed.itemize&&seed.itemized;
   const se=inp.se||0, bus=est.busInt||0, total=r2v(inp.wages+inp.interest+inp.ordDiv+inp.ltcg+inp.other+se-bus);
-  const tax16=r2v(est.ordTax+est.prefTax), cr=r2v(est.ctc+est.care+(est.ftc||0)+(est.eduNonref||0)), sch2=r2v(est.addlMed+est.niit+(est.seTax||0));
+  const tax16=r2v(est.ordTax+est.prefTax), cr=r2v(est.ctc+est.care+(est.ftc||0)+(est.eduNonref||0)+(est.mtc||0)), sch2=r2v(est.addlMed+est.niit+(est.seTax||0));
   const owe=r2v(est.tax-W.paid);
   const forms=[{form:'Form 1040',note:'Worked out here, not read off a filed sheet: the Build tab’s figures, which you can type over there.',lines:[
     F('1a','Wages (W-2 box 1)',inp.wages),
@@ -17086,7 +17107,7 @@ function taxFilePackWorked(year){
     est.amt?F('18','Lines 16 and 17',r2v(tax16+est.amt)):null,
     F('19','Child tax credit or credit for other dependents (Schedule 8812)',nz(est.ctc)),
     F('20','Amount from Schedule 3 line 8 — '+[est.ftc?'the foreign tax credit (line 1, no Form 1116 needed)':'',est.care||!(est.ftc||est.eduNonref)?'the child and dependent care credit':'',
-      est.eduNonref?'the education credit (Form 8863)':''].filter(Boolean).join(', '),nz(r2v(est.care+(est.ftc||0)+(est.eduNonref||0)))),
+      est.eduNonref?'the education credit (Form 8863)':'',est.mtc?'the credit for an earlier year’s minimum tax (Form 8801)':''].filter(Boolean).join(', '),nz(r2v(est.care+(est.ftc||0)+(est.eduNonref||0)+(est.mtc||0)))),
     cr?F('21','Lines 19 and 20',cr):null,
     F('22','Line 18 less line 21',r2v(Math.max(0,tax16+(est.amt||0)-cr))),
     F('23','Other taxes from Schedule 2 ('+(est.seTax?'Schedule SE, ':'')+'Forms 8959, 8960)',nz(sch2)),
@@ -17152,6 +17173,12 @@ function taxFilePackWorked(year){
     F('19','Nonrefundable education credits (to Schedule 3 line 3)',est.eduNonref)].filter(Boolean)});
   if(est.eic>0&&est.eicWork) forms.push({form:'Schedule EIC · Earned income credit',note:'Read off the credit’s table for '+est.eicWork.kids+' qualifying child'+(est.eicWork.kids===1?'':'ren')+': each must have lived with you more than half the year, and Schedule EIC names them.',lines:[
     F('27','Earned income credit (Form 1040 line 27)',est.eic)].filter(Boolean)});
+  
+  if(est.mtcIn>0||est.mtcNew>0) forms.push({form:'Form 8801 · Credit for prior year minimum tax',note:'Minimum tax caused by timing — options exercised and held — comes back against the regular tax of later years, by as much as that tax stands above the year’s minimum one. Nothing of it expires.',lines:[
+    est.mtcIn?F('21','Minimum tax credit carried in',est.mtcIn):null,
+    est.mtcIn?F('25','The credit this year (to Schedule 3 line 6b)',est.mtc):null,
+    est.mtcNew?F('—','Added by this year’s own minimum tax (the part the option spread caused)',est.mtcNew):null,
+    F('26','Carries to next year',est.mtcOut)].filter(Boolean)});
   if(itemize){ const I=seed.itemized;
     forms.push({form:'Schedule A · Itemized deductions',note:'The Ledger itemizes because these come to more than the standard deduction.',lines:[
       F('5d','State and local taxes paid (income and property)',I.saltPaid),
@@ -18992,6 +19019,7 @@ const TAXWORK_FIELDS=[
   ['se','Self-employment profit (Schedule C line 31)','S1·3'],
   ['deduction','Deduction taken','12'],
   ['iso','Stock options exercised and held: the spread (Form 6251 line 2i)','6251'],
+  ['mtcIn','Minimum tax credit carried in from earlier years (Form 8801)','8801'],
   ['ctc','Child tax credit','19'],
   ['care','Child and dependent care credit (Form 2441)','20'],
   ['held','Federal tax withheld','25'],
@@ -50475,7 +50503,7 @@ function renderOnce(name,fn){
     RCP,RCP_PROMPT,mailVouched,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
-    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxEic,taxEduCredit,TAX_EIC,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
+    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxEic,taxEduCredit,TAX_EIC,taxMtcCarryIn,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
     BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,mailOldScriptWords,MAIL_STMT_NOTICE_RE,mailAssistUnread,_maUnread,MAIL_ASSIST_V22,MAIL_FX_AMT,mailHasFx,mailRbsStmtSettle,mailRbsSelf,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,NY_TUITION_CAP,nyCareCredit,nyTuitionCredit,nyCareFedRate,nyCareRate,nyCareApplicable,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
