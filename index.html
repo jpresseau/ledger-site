@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-yBK1Ku8Fvo7t2G4Sf0y7obRiJsI4dilUXx9Ss/YEsi4=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-zSXWh0dJtCRGdc3BPUVkerruZgJXqwD5R+he+UzOTdE=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2998,7 +2998,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.41";
+const APP_V="v29.42";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -3012,7 +3012,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="c80117c";
+const APP_BUILD="97655a1";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -22167,9 +22167,22 @@ function taxTabKey(t){
   if(t==='build') return 'file';
   return TAX_TABS.some(function(p){ return p[0]===t; })?t:'home';
 }
+
+
+const TAX_TAB_GROUPS={advisor:['advisor','stub'],file:['file','return','sheet']};
+function taxTabParent(tab){ return Object.keys(TAX_TAB_GROUPS).find(function(k){ return TAX_TAB_GROUPS[k].indexOf(tab)>=0; })||tab; }
+function taxTabSections(tab,body){
+  const g=TAX_TAB_GROUPS[taxTabParent(tab)]; if(!g) return body;
+  const i=g.indexOf(tab), bar=function(k){ const p=TAX_TABS.find(function(q){ return q[0]===k; });
+    return '<button class="pgsec" data-act="taxtab" data-v="'+k+'"><span class="cv">▸</span><span class="pgn">'+esc(p[1])+' <span class="mut" style="font-weight:400">· '+esc(p[2])+'</span></span></button>'; };
+  return '<div class="pgsecs" data-group="'+taxTabParent(tab)+'">'+g.slice(0,i).map(bar).join('')+'</div>'
+    +'<div class="taxpart" data-tab="'+tab+'">'+body+'</div>'
+    +'<div class="pgsecs after" data-group="'+taxTabParent(tab)+'">'+g.slice(i+1).map(bar).join('')+'</div>';
+}
 function taxSubTabs(tab){
-  return '<div class="tabs">'+TAX_TABS.map(function(p){
-    return '<button class="'+(tab===p[0]?'on':'')+'" data-act="taxtab" data-v="'+p[0]+'" title="'+esc(p[2]+' '+p[3])+'">'+p[1]+'</button>'; }).join('')
+  const par=taxTabParent(tab);
+  return '<div class="tabs">'+TAX_TABS.filter(function(p){ return taxTabParent(p[0])===p[0]; }).map(function(p){
+    return '<button class="'+(par===p[0]?'on':'')+'" data-act="taxtab" data-v="'+p[0]+'" title="'+esc(p[2]+' '+p[3])+'">'+p[1]+'</button>'; }).join('')
    +'</div>';
 }
 function taxYearNav(order,cur,now){
@@ -22215,15 +22228,15 @@ Views.taxes=function(){
 ;
   
 
-  if(tab==='stub') return top+taxStubPanel();
+  if(tab==='stub') return top+taxTabSections(tab,taxStubPanel());
   if(!g){
     
     const yr=cur||String(now.getFullYear());
     if(tab==='home') return top+taxHomeHtml(yr);
-    if(tab==='file'&&typeof taxBuildHtml==='function') return top+taxBuildHtml(yr);
+    if(tab==='file'&&typeof taxBuildHtml==='function') return top+taxTabSections(tab,taxBuildHtml(yr));
     return top+'<div class="card"><div class="muted">No tax sheets yet. '
       +'Import one from Records → Data to read the return line by line. '
-      +'<b>This year</b> and <b>Pay stub</b> above work without one.</div></div>';
+      +'<b>This year</b> and the <b>Pay stub</b> (under Check-up) work without one.</div></div>';
   }
   
 
@@ -22246,7 +22259,7 @@ Views.taxes=function(){
     :tab==='return'?taxReturnHtml(cur)
     :tab==='file'?(typeof taxStepsHtml==='function'?taxStepsHtml(cur):'')+taxBuildHtml(cur)+taxFileHtml()
     :taxBlocks(g).map(taxBlockHtml).join('');
-  return top+(chips?'<div class="plates fitplates">'+chips+'</div>':'')+body;
+  return top+taxTabSections(tab,(chips?'<div class="plates fitplates">'+chips+'</div>':'')+body);
 };
 
 
@@ -50872,7 +50885,7 @@ function renderOnce(name,fn){
     RCP,RCP_PROMPT,mailVouched,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
-    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxEic,taxEduCredit,TAX_EIC,taxMtcCarryIn,taxSchedAI,navEntries,navEntryOf,navTarget,navSections,navForget,navRemember,taxDeprOf,taxDeprFor,taxAssetAdd,taxAssetDel,taxDeprCard,nyPenaltyOf,nyPenaltyFor,nyUnderpayRate,taxEicAgeOk,nycEicRate,taxForm1116,taxFtcSrcSet,taxFtcCard,taxFtcCarryIn,taxAiSet,taxAiFor,taxAiCard,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
+    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxEic,taxEduCredit,TAX_EIC,taxMtcCarryIn,taxSchedAI,navEntries,navEntryOf,navTarget,navSections,navForget,navRemember,taxTabParent,taxTabSections,taxDeprOf,taxDeprFor,taxAssetAdd,taxAssetDel,taxDeprCard,nyPenaltyOf,nyPenaltyFor,nyUnderpayRate,taxEicAgeOk,nycEicRate,taxForm1116,taxFtcSrcSet,taxFtcCard,taxFtcCarryIn,taxAiSet,taxAiFor,taxAiCard,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
     BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,mailOldScriptWords,MAIL_STMT_NOTICE_RE,mailAssistUnread,_maUnread,MAIL_ASSIST_V22,MAIL_FX_AMT,mailHasFx,mailRbsStmtSettle,mailRbsSelf,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,NY_TUITION_CAP,nyCareCredit,nyTuitionCredit,nyCareFedRate,nyCareRate,nyCareApplicable,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
