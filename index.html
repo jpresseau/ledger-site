@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-Nycc9hwADw9wQTvkIh+2nR7mDYFMsIH598lRzDlqtFA=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-6zjHySLeiFNBcBDI6lpb2DIZNuLS+XlP7f/maHJbobQ=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2985,7 +2985,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.38";
+const APP_V="v29.39";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2999,7 +2999,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="70ea223";
+const APP_BUILD="18ab0ad";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -13912,14 +13912,16 @@ function taxUnderpayRate(y,q){
 function _tpDay(iso){ const p=String(iso).split('-').map(Number); return Date.UTC(p[0],p[1]-1,p[2])/86400000; }
 function _tpIso(d){ return new Date(d*86400000).toISOString().slice(0,10); }
 
-function _tpCharge(amt,from,to,tail){
+function _tpCharge(amt,from,to,tail,rateOf){
   let cost=0, est=false, d=from;
   while(d<to){
-    const dt=new Date(d*86400000), y=dt.getUTCFullYear(), q=Math.floor(dt.getUTCMonth()/3);
     
 
-    const inTail=tail!=null&&d>=tail;
-    const end=inTail?to:Math.min(to,Date.UTC(q===3?y+1:y,q===3?0:(q+1)*3,1)/86400000), R=taxUnderpayRate(y,inTail?0:q);
+    const dt=new Date((d+1)*86400000), y=dt.getUTCFullYear(), q=Math.floor(dt.getUTCMonth()/3);
+    
+
+    const inTail=tail!=null&&d+1>=tail;
+    const end=inTail?to:Math.min(to,Date.UTC(q===3?y+1:y,q===3?0:(q+1)*3,1)/86400000-1), R=(rateOf||taxUnderpayRate)(y,inTail?0:q);
     const leap=(y%4===0&&y%100!==0)||y%400===0;
     cost+=amt*R.rate*(end-d)/(leap?366:365); if(R.est) est=true; d=end;
   }
@@ -13947,10 +13949,10 @@ function taxPenalty2210(o){
       if(short==null&&P[i].day>dd) short=left;                       
       if(P[i].day>=endDay) break;
       const take=Math.min(left,P[i].amt);
-      if(P[i].day>dd){ const c=_tpCharge(take,dd,P[i].day,tail); pen+=c.cost; if(c.est) est=true; }
+      if(P[i].day>dd){ const c=_tpCharge(take,dd,P[i].day,tail,o.rateOf); pen+=c.cost; if(c.est) est=true; }
       left-=take; P[i].amt-=take;
     }
-    if(left>0.005){ if(short==null) short=left; const c=_tpCharge(left,dd,endDay,tail); pen+=c.cost; if(c.est) est=true; }
+    if(left>0.005){ if(short==null) short=left; const c=_tpCharge(left,dd,endDay,tail,o.rateOf); pen+=c.cost; if(c.est) est=true; }
     total+=pen;
     return {due:due,required:r2v(req),short:r2v(short||0),penalty:r2v(pen)};
   });
@@ -18154,6 +18156,53 @@ function nyTuitionCredit(tuition,y){
 
 
 
+const NY_UNDERPAY_RATE={2024:[10.5,10.5,10.5,10.5],2025:[9.5,9.5,9.5,9.5],2026:[9.5]};
+function nyUnderpayRate(y,q){
+  const T=NY_UNDERPAY_RATE[y]; if(T&&T[q]!=null) return {rate:T[q]/100,est:false};
+  const ys=Object.keys(NY_UNDERPAY_RATE).map(Number).sort(function(a,b){ return a-b; });
+  if(y<ys[0]) return {rate:NY_UNDERPAY_RATE[ys[0]][0]/100,est:true};
+  const last=NY_UNDERPAY_RATE[Math.min(y,ys[ys.length-1])]||NY_UNDERPAY_RATE[ys[ys.length-1]];
+  return {rate:last[last.length-1]/100,est:true};
+}
+
+function nyPenaltyTax(ret){
+  const L=ret.lines; return r2v(Math.max(0,(L['61']||0)-['63','64','65','68','69','69a','70'].reduce(function(s,k){ return s+(Number(L[k])||0); },0)));
+}
+
+
+function nyPenaltyOf(o){
+  const y=Number(String(o&&o.year).slice(0,4)), tax=Math.max(0,Number(o.tax)||0), held=Math.max(0,Number(o.held)||0);
+  if(!Number.isFinite(y)||tax-held<300) return null;
+  const pct=(Number(o.prevAgi)||0)>150000?1.1:1, prev=o.prevTax!=null&&Number.isFinite(Number(o.prevTax))?Math.max(0,Number(o.prevTax))*pct:null;
+  const need=prev!=null?Math.min(0.9*tax,prev):0.9*tax;
+  const P=typeof taxPenalty2210==='function'?taxPenalty2210({year:y,need:need,withheld:held,pays:o.pays||[],rateOf:nyUnderpayRate}):null;
+  if(!P||!(P.penalty>0)) return null;
+  return {P:P,tax:r2v(tax),held:r2v(held),need:r2v(need),pct:pct,byPrev:prev!=null&&prev<0.9*tax};
+}
+
+let _nyPenBusy=false;
+function nyPenaltyFor(year,ret){
+  if(_nyPenBusy||!ret||!ret.lines) return null;
+  _nyPenBusy=true;
+  try{
+    const y=ret.year, L=ret.lines; let prev=null;
+    try{ const ys=typeof _thYears==='function'?_thYears():[], i=ys.indexOf(year);
+      if(i>0&&(typeof taxIsNY!=='function'||taxIsNY(ys[i-1]))){ const g=nyInputs(ys[i-1]), r=g&&g.inp?nyReturn(g.inp):null; if(r&&r.lines&&r.lines['61']>0) prev=r; } }catch(e){ prev=null; }
+    const pays=(typeof taxEstPays==='function'?taxEstPays(y):[]).filter(function(p){ return p.to==='state'||p.to==='city'; }).map(function(p){ return {date:p.date,amt:p.amt}; });
+    return nyPenaltyOf({year:y,tax:nyPenaltyTax(ret),held:r2v((L['72']||0)+(L['73']||0)),prevTax:prev?nyPenaltyTax(prev):null,prevAgi:prev?prev.lines['33']:0,pays:pays});
+  }catch(e){ return null; }
+  finally{ _nyPenBusy=false; }
+}
+
+function nyPenaltyRow(X){
+  if(!X) return '';
+  return '<tr><td>81</td><td>Estimated tax penalty (IT-2105.9)<div class="mut" style="font-size:11px">'+money(X.held,0)+' was withheld against '+money(X.need,0)+' required ('
+    +(X.byPrev?(X.pct>1?'110% of':'the whole of')+' last year’s tax':'90% of this year’s tax')+'), a quarter due on each of the four dates, at New York’s '
+    +(X.P.est?'last published rate (an estimate)':'own rate')+'. It is on top of what line 80 shows, or off the refund.</div></td><td class="n num">'+money(X.P.penalty)+'</td></tr>';
+}
+
+
+
 const NY_ANSWERS={
   nyc:{kind:'bool',label:'Lived in New York City all year'},
   c529:{kind:'money',label:'Put into New York’s 529 college savings plan'},
@@ -18291,6 +18340,7 @@ function nyLinesShown(L){ return NY_PRINT.filter(function(k){ return L[k]!=null&
 
 function nyOpenList(ret,g){
   const out=(ret.open||[]).slice();
+  out.push({what:'The underpayment penalty by the annualized method',why:'Line 81 is worked the regular way, a quarter due on each date; IT-2105.9 Part 4 can lower it where the income came late in the year.'});
   out.push({what:'A part-year or nonresident return (IT-203)',why:'Worked out here only as a full-year resident.'});
   out.push({what:'Yonkers, and the MCTMT',why:'The Yonkers surcharge, and the commuter tax on self-employment earned in the MTA region over $50,000.'});
   out.push({what:'Other credits',why:'The real property tax credit, New York City’s own child care credit (incomes up to $30,000), and the credits on IT-201-ATT, each on a form of its own.'});
@@ -18347,7 +18397,7 @@ function nyReturnHtml(year){
     +mut('The resident return worked from New York’s own figures for '+y+' (the IT-201 instructions, as PolicyEngine keeps them) and '
       +'from what this book holds. '+(pending?'New York has not published the '+y+' forms yet: these are the figures the law has enacted. ':'')
       +'Line numbers are the 2024–2025 form’s; match the label if one moved.')
-    +'<div class="tblwrap"><table class="tbl tight"><tbody>'+rows+beside+'</tbody></table></div>'
+    +'<div class="tblwrap"><table class="tbl tight"><tbody>'+rows+(typeof nyPenaltyFor==='function'?nyPenaltyRow(nyPenaltyFor(year,ret)):'')+beside+'</tbody></table></div>'
     +'<h4 style="margin:12px 0 4px">What only you can say for '+y+'</h4>'+nyAnswersForm(y,g.answers)
     +'<h4 style="margin:12px 0 4px">Not worked out here</h4><ul class="mut" style="font-size:12px;line-height:1.55">'+open+'</ul></div>';
 }
@@ -50699,7 +50749,7 @@ function renderOnce(name,fn){
     RCP,RCP_PROMPT,mailVouched,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
-    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxEic,taxEduCredit,TAX_EIC,taxMtcCarryIn,taxSchedAI,taxEicAgeOk,nycEicRate,taxForm1116,taxFtcSrcSet,taxFtcCard,taxFtcCarryIn,taxAiSet,taxAiFor,taxAiCard,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
+    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxEic,taxEduCredit,TAX_EIC,taxMtcCarryIn,taxSchedAI,nyPenaltyOf,nyPenaltyFor,nyUnderpayRate,taxEicAgeOk,nycEicRate,taxForm1116,taxFtcSrcSet,taxFtcCard,taxFtcCarryIn,taxAiSet,taxAiFor,taxAiCard,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
     BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,mailOldScriptWords,MAIL_STMT_NOTICE_RE,mailAssistUnread,_maUnread,MAIL_ASSIST_V22,MAIL_FX_AMT,mailHasFx,mailRbsStmtSettle,mailRbsSelf,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,NY_TUITION_CAP,nyCareCredit,nyTuitionCredit,nyCareFedRate,nyCareRate,nyCareApplicable,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
