@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-JFphbrX9JLQ6wcuV8OFPqxTqt3Q3xLHAtpJBu4F4nQ8=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-Mpw+PTA9oLQ1tIeo50l9B8rKKFWVsanQXyFlWgmhcVc=' 'sha256-3o0epcWPadoYh3wyBIh6AvGaW3vvo7C7QvevM4/nPCs=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2985,7 +2985,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.36";
+const APP_V="v29.37";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -2999,7 +2999,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="6f115f0";
+const APP_BUILD="3e0f04f";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -15306,7 +15306,7 @@ function taxAdvisorHtml(year){
     +(typeof taxSecondOpinionHtml==='function'?taxSecondOpinionHtml(year):'')
     +(typeof nyReturnHtml==='function'?nyReturnHtml(year):'')   
     +taxYoYHtml(year)
-    +dedHtml+(typeof taxInvIntCard==='function'?taxInvIntCard(year):'')+(typeof taxCapCarryCard==='function'?taxCapCarryCard(year):'')+(typeof taxAiCard==='function'?taxAiCard(year):'')+(typeof taxNewDedHtml==='function'?taxNewDedHtml(year):'')+cHtml
+    +dedHtml+(typeof taxInvIntCard==='function'?taxInvIntCard(year):'')+(typeof taxCapCarryCard==='function'?taxCapCarryCard(year):'')+(typeof taxFtcCard==='function'?taxFtcCard(year):'')+(typeof taxAiCard==='function'?taxAiCard(year):'')+(typeof taxNewDedHtml==='function'?taxNewDedHtml(year):'')+cHtml
     +(typeof taxDepCareHtml==='function'?taxDepCareHtml(year):'')
     +(typeof taxEnergyHtml==='function'?taxEnergyHtml(year):'')
     +profHtml;
@@ -15614,9 +15614,76 @@ function taxFtcFor(year){
   const limit=taxFtcLimit(typeof taxFilingFor==='function'?taxFilingFor(year).filing:'single');
   return {paid:paid,limit:limit,elect:paid>0&&paid<=limit?paid:0,over:paid>limit?paid:0};
 }
+
+
+function taxForm1116(o){
+  const y=Number(String(o.year).slice(0,4)), T=typeof TAX_FED==='object'?TAX_FED[y]:null, f=typeof taxFilingKey==='function'?taxFilingKey(o.filing):'single';
+  const gross=Math.max(0,Number(o.grossAll)||0), src=Math.min(Math.max(0,Number(o.src)||0),gross), taxable=Math.max(0,Number(o.taxable)||0);
+  if(!T||!T[f]||!(src>0)||!(taxable>0)) return null;
+  const paid=Math.max(0,Number(o.paid)||0), carry=Math.max(0,Number(o.carry)||0), pref=Math.max(0,Number(o.pref)||0), ordTaxable=Math.max(0,Number(o.ordTaxable)||0);
+  const qual=Math.min(src,o.qual!=null?Math.max(0,Number(o.qual)||0):src*Math.max(0,Math.min(1,Number(o.qualShare)||0)));
+  const z=pref>0?Math.max(0,Math.min(taxable,o.bp0)-ordTaxable):0, fif=pref>0?Math.max(0,Math.min(taxable,o.bp15)-ordTaxable-z):0, twenty=Math.max(0,pref-z-fif);
+  const cap24=T[f][3][0], exception=qual<20000&&ordTaxable<=cap24;
+  const kq=exception||!(pref>0)?1:(fif*0.4054+twenty*0.5405)/pref;
+  const srcAdj=r2v(src-qual+qual*kq), l18=exception?taxable:r2v(taxable-z-fif*(1-0.4054)-twenty*(1-0.5405));
+  const dedShare=r2v(Math.max(0,Number(o.ded)||0)*src/gross), l17=r2v(Math.max(0,srcAdj-dedShare));
+  const ratio=l18>0?Math.min(1,l17/l18):0, tax16=Math.max(0,Number(o.tax16)||0), limit=r2v(tax16*ratio), avail=r2v(paid+carry), credit=r2v(Math.min(avail,limit));
+  return {paid:paid,carry:carry,src:src,qual:r2v(qual),adjusted:!exception,srcAdj:srcAdj,dedShare:dedShare,l17:l17,l18:l18,ratio:ratio,tax16:r2v(tax16),limit:limit,credit:credit,out:r2v(avail-credit)};
+}
+
+function taxFtcSrcAnswers(year){
+  const y=String(year).slice(0,4), A=DB.meta&&DB.meta.taxFtcSrc&&DB.meta.taxFtcSrc[y];
+  return A&&Number(A.src)>0?{src:Number(A.src),qual:A.qual!=null&&Number.isFinite(Number(A.qual))?Number(A.qual):null}:null;
+}
+function taxFtcSrcSet(year,src,qual){
+  const y=Number(String(year).slice(0,4)); if(!Number.isFinite(y)) return {error:'no year'};
+  const raw=[src,qual].map(function(v){ return String(v==null?'':v).trim().replace(/[$,\s]/g,''); });
+  DB.meta=DB.meta||{}; const M=DB.meta.taxFtcSrc=Object.assign({},DB.meta.taxFtcSrc);
+  if(raw[0]===''&&raw[1]===''){ delete M[String(y)]; if(!Object.keys(M).length) delete DB.meta.taxFtcSrc; return {ok:true,cleared:true}; }
+  const s=Number(raw[0]), q=raw[1]===''?null:Number(raw[1]);
+  if(raw[0]===''||!Number.isFinite(s)||!(s>0)){ if(!Object.keys(M).length) delete DB.meta.taxFtcSrc; return {error:'Type the foreign-source income as a plain amount: the fund’s year-end statement gives it.'}; }
+  if(q!=null&&(!Number.isFinite(q)||q<0||q>s)){ if(!Object.keys(M).length) delete DB.meta.taxFtcSrc; return {error:'The qualified part is a part of the foreign income: an amount no larger than it.'}; }
+  M[String(y)]={src:r2v(s),qual:q==null?null:r2v(q)}; return {ok:true};
+}
+
+
+let _ftcDepth=0;
+function taxFtcCarryIn(year){
+  const y=Number(String(year).slice(0,4)); if(!Number.isFinite(y)||_ftcDepth>=3||!taxFtcSrcAnswers(y-1)) return 0;
+  if(typeof taxWorkInputs!=='function'||typeof taxFedEstimate!=='function') return 0;
+  _ftcDepth++;
+  try{ const E=taxFedEstimate(taxWorkInputs(typeof taxYearKey==='function'?taxYearKey(y-1):String(y-1))); return E&&E.ftcOut>0?E.ftcOut:0; }
+  catch(e){ return 0; }
+  finally{ _ftcDepth--; }
+}
+
+
+function taxFtc1116Seed(year){
+  let X=null; try{ X=taxFtcFor(year); }catch(e){ X=null; }
+  const A=taxFtcSrcAnswers(year); if(!X||!(X.over>0)||!A) return null;
+  return {paid:X.over,src:A.src,qual:A.qual,carry:taxFtcCarryIn(year)};
+}
+
+function taxFtcCard(year){
+  const y=Number(String(year).slice(0,4)); if(!isFinite(y)) return '';
+  let X=null; try{ X=taxFtcFor(year); }catch(e){ X=null; }
+  const A=taxFtcSrcAnswers(y); if(!A&&!(X&&X.over>0)) return '';
+  let W=null; try{ const E=typeof taxWorkEstimate==='function'?taxWorkEstimate(year):null; W=E&&E.est&&E.est.ftcWork?E.est:null; }catch(e){ W=null; }
+  const inp=function(id,label,val,ph){ return '<label>'+label+'<input id="'+id+'" inputmode="decimal" value="'+esc(val==null?'':String(val))+'" placeholder="'+esc(ph)+'"></label>'; };
+  return '<div class="sheet"><h3>Tax your funds paid abroad <span class="r">'+(W?money(W.ftc,0)+' credit':X&&X.over>0?money(X.over,0)+' waiting':'none')+'</span></h3>'
+    +'<div class="mut" style="font-size:12px;margin-bottom:8px">Your 1099-DIVs show '+money(X?X.paid:0,0)+' of tax paid to other countries (box 7). Over '+money(X?X.limit:0,0)
+    +' the credit takes Form 1116, which allows no more than the US tax on the income that came from abroad. No 1099 box carries that income: the fund’s year-end tax statement does, usually as a percentage of each fund’s dividends.</div>'
+    +(W?'<div class="mut" style="font-size:12px;margin-bottom:8px">Form 1116 allows up to <b>'+money(W.ftcWork.limit,0)+'</b> this year, so <b>'+money(W.ftc,0)+'</b> comes off the tax'
+      +(W.ftcWork.carry>0?' (with '+money(W.ftcWork.carry,0)+' carried in from '+(y-1)+')':'')+(W.ftcOut>0?' and <b>'+money(W.ftcOut,0)+'</b> carries on, for up to ten years':'')+'.'
+      +(W.ftcWork.adjusted?' Your qualified dividends are taxed below the ordinary rates, so the form scales them down on both sides.':'')+'</div>':'')
+    +'<div class="formrow" style="flex-wrap:wrap;gap:8px">'
+    +inp('tfsSrc','Income from foreign sources in '+y+' ($)',A?A.src:'','from the fund’s statement')
+    +inp('tfsQual','Of that, qualified dividends ($)',A&&A.qual!=null?A.qual:'','left empty: the year’s own mix')
+    +'<button class="btn sm" data-act="taxftcsave" data-y="'+y+'">Save</button></div></div>';
+}
 function taxFtcFacts(F,year){
   let X=null; try{ X=taxFtcFor(year); }catch(e){ X=null; }
-  F.ftcOver=X&&X.over>0?X.over:null; F.ftcLimit=X?X.limit:null;
+  F.ftcOver=X&&X.over>0&&!taxFtcSrcAnswers(year)?X.over:null; F.ftcLimit=X?X.limit:null;
 }
 const TAX_PLAYS_FTC=[
 { id:'foreign-tax-1116', family:'credit',
@@ -15632,7 +15699,7 @@ const TAX_PLAYS_FTC=[
     return {what:'Claim the '+money(F.ftcOver,0)+' of foreign tax on Form 1116',
       why:'Your funds paid <b>'+money(F.ftcOver,0)+'</b> of tax to other countries on your behalf (1099-DIV box 7). Up to '+money(F.ftcLimit,0)
         +' it is a credit with no form. Over that it takes Form 1116, which allows no more than the US tax on the foreign income itself — a figure no 1099 box carries, '
-        +'so this return is worked <b>without</b> the credit. It is worth up to the whole '+money(F.ftcOver,0)+', dollar for dollar off the tax.',
+        +'so this return is worked <b>without</b> the credit. It is worth up to the whole '+money(F.ftcOver,0)+', dollar for dollar off the tax. Type the foreign income in the Check-up’s box and the form is worked here.',
       chip:'<code>'+money(F.ftcOver,0)+' paid abroad · '+money(F.ftcLimit,0)+' allowed without the form</code>'};
   },
   guards:function(){ return [
@@ -15834,7 +15901,10 @@ function taxFedEstimate(inp){
   const actc=left<=0?0:y===2021?left
     :r2v(Math.min(left,(TAX_ACTC[y]||0)*Math.max(0,inp.ctcKids||0),Math.max(0,earned-2500)*0.15));
   
-  const ftc=r2v(Math.min(Math.max(0,inp.ftc||0),Math.max(0,line18-ctc-careUsed)));
+  
+  const FT=inp.ftc1116&&inp.ftc1116.src>0&&typeof taxForm1116==='function'?taxForm1116({year:y,filing:f,paid:inp.ftc1116.paid,carry:inp.ftc1116.carry,src:inp.ftc1116.src,qual:inp.ftc1116.qual,
+    qualShare:ordDiv>0?qualDiv/ordDiv:0,grossAll:r2v(wages+interest+ordDiv+Math.max(0,ltcg)+other+se),ded:ded,taxable:taxable,ordTaxable:ordTaxable,pref:pref,bp0:bp0,bp15:bp15,tax16:r2v(ordTax+prefTax)}):null;
+  const ftc=r2v(Math.min(FT?FT.credit:Math.max(0,inp.ftc||0),Math.max(0,line18-ctc-careUsed)));
   
 
   const ED=Array.isArray(inp.tuition)&&inp.tuition.length&&typeof taxEduCredit==='function'?taxEduCredit({year:y,filing:f,magi:agi,tuition:inp.tuition,early:inp.tuitionEarly===true}):null;
@@ -15851,7 +15921,7 @@ function taxFedEstimate(inp){
   return {agi,taxable,ordTaxable,pref,ordTax:r2v(ordTax),prefTax:r2v(prefTax),
     se:se,seTax:SE?SE.seTax:0,seHalf:SE?SE.half:0,seBase:SE?SE.base:0,seSs:SE?SE.ss:0,qbi:QB?QB.deduction:0,
     amt:amt,amtWork:AM,busInt:busInt,
-    addlMed,niit,ctc,care:careUsed,ftc:ftc,eduNonref:eduNonref,eduRef:eduRef,eduKind:ED?ED.kind:'',eic:eic,eicWork:EI,mtcIn:mtcIn,mtc:mtc,mtcNew:mtcNew,mtcOut:r2v(mtcIn-mtc+mtcNew),actc,tax,est:!!(T.est||G.est),
+    addlMed,niit,ctc,care:careUsed,ftc:ftc,ftcWork:FT,ftcOut:FT?r2v(FT.paid+FT.carry-ftc):0,eduNonref:eduNonref,eduRef:eduRef,eduKind:ED?ED.kind:'',eic:eic,eicWork:EI,mtcIn:mtcIn,mtc:mtc,mtcNew:mtcNew,mtcOut:r2v(mtcIn-mtc+mtcNew),actc,tax,est:!!(T.est||G.est),
     held:inp.held!=null?r2v(inp.held):null,
     owed:inp.held!=null?r2v(tax-inp.held-actc-eic-eduRef):null};
 }
@@ -15945,6 +16015,7 @@ function taxEstimateInputs(year){
     amtAdd:amtAdd,isoTyped:_wk.iso>0?_wk.iso:0,busInt:busInt,
     mtcIn:typeof taxMtcCarryIn==='function'?taxMtcCarryIn(year):0,
     ftc:(function(){ try{ return typeof taxFtcFor==='function'?taxFtcFor(year).elect:0; }catch(e){ return 0; } })(),
+    ftc1116:(function(){ try{ return typeof taxFtc1116Seed==='function'?taxFtc1116Seed(year):null; }catch(e){ return null; } })(),
     
     eicKids:(function(){ try{ const P=taxProfile(); return ((P&&P.deps)||[]).filter(function(d){ const b=Number(String(d.born).slice(0,4)); return Number.isFinite(b)&&b<=y&&y-b<19; }).length; }catch(e){ return 0; } })(),
     tuition:(function(){ try{ const a=typeof nyAnswers==='function'?nyAnswers(y):{}; return Array.isArray(a.tuition)&&a.tuition.length?a.tuition:null; }catch(e){ return null; } })(),
@@ -17175,7 +17246,7 @@ function taxFilePackWorked(year){
     est.amt?F('17','Amount from Schedule 2 line 3 — the alternative minimum tax (Form 6251)',est.amt):null,
     est.amt?F('18','Lines 16 and 17',r2v(tax16+est.amt)):null,
     F('19','Child tax credit or credit for other dependents (Schedule 8812)',nz(est.ctc)),
-    F('20','Amount from Schedule 3 line 8 — '+[est.ftc?'the foreign tax credit (line 1, no Form 1116 needed)':'',est.care||!(est.ftc||est.eduNonref)?'the child and dependent care credit':'',
+    F('20','Amount from Schedule 3 line 8 — '+[est.ftc?(est.ftcWork?'the foreign tax credit (line 1, from Form 1116)':'the foreign tax credit (line 1, no Form 1116 needed)'):'',est.care||!(est.ftc||est.eduNonref)?'the child and dependent care credit':'',
       est.eduNonref?'the education credit (Form 8863)':'',est.mtc?'the credit for an earlier year’s minimum tax (Form 8801)':''].filter(Boolean).join(', '),nz(r2v(est.care+(est.ftc||0)+(est.eduNonref||0)+(est.mtc||0)))),
     cr?F('21','Lines 19 and 20',cr):null,
     F('22','Line 18 less line 21',r2v(Math.max(0,tax16+(est.amt||0)-cr))),
@@ -17215,6 +17286,20 @@ function taxFilePackWorked(year){
   if(bus>0) forms.push({form:'Schedule E · Supplemental income and loss (Part II)',note:'Beside the K-1’s own income, which this pack does not hold: add it on the same form.',lines:[
     F('28(i)','Business interest on the loan that bought your stake — a nonpassive loss, on its own line',bus),
     F('41','Its share of Schedule 1 line 5 (a loss)',-bus)].filter(Boolean)});
+  
+  if(est.ftcWork){ const X=est.ftcWork;
+    forms.push({form:'Form 1116 · Foreign tax credit (passive category income)',note:'From the foreign-source income you typed. '+(X.adjusted?'Qualified dividends are scaled down on lines 1a and 18, as the form’s worksheets have it. ':'The adjustment exception is taken: nothing is scaled for qualified dividends. ')
+      +'Not in it: a carryback to last year, and the separate Form 1116 the minimum tax asks for.',lines:[
+      F('1a','Gross income from foreign sources'+(X.adjusted?', qualified dividends scaled down':''),X.srcAdj),
+      F('3g','The deduction’s share ('+money(X.src,0)+' of foreign income over all gross income)',X.dedShare),
+      F('8','Foreign taxes paid (1099-DIV box 7)',X.paid),
+      X.carry?F('10','Carried in from earlier years',X.carry):null,
+      F('17','Foreign-source taxable income',X.l17),
+      F('18','Taxable income'+(X.adjusted?', scaled the same way':' (Form 1040 line 15)'),X.l18),
+      F('20','The tax (Form 1040 line 16)',X.tax16),
+      F('21','The most that can be credited: line 20 × line 17 ÷ line 18',X.limit),
+      F('35','The credit, to Schedule 3 line 1',est.ftc),
+      est.ftcOut>0?F('—','Unused, carried to next year (up to ten years)',est.ftcOut):null].filter(Boolean)}); }
   
   if(est.amt>0&&est.amtWork){ const A=est.amtWork;
     forms.push({form:'Form 6251 · Alternative minimum tax',note:'Owed where the minimum tax comes to more than the regular one. Not in it: depreciation, private-activity bond interest, the foreign tax credit.',lines:[
@@ -17275,7 +17360,7 @@ function taxFilePackWorked(year){
   if(est.est) notes.push({what:'This year’s federal tables are the indexed estimate',text:true,
     why:'The brackets are projected until the IRS publishes the year’s own; the pack follows the moment they are in.'});
   notes.push({what:'Not worked out here',text:true,
-    why:(est.amtWork?'':'The alternative minimum tax (Form 6251). ')+'The foreign tax credit past what needs no form (Form 1116), the earned income credit with no child on the return, and a business’s own expenses and depreciation. If any of them apply to you, the return needs them.'});
+    why:(est.amtWork?'':'The alternative minimum tax (Form 6251). ')+'The earned income credit with no child on the return, and a business’s own expenses and depreciation. If any of them apply to you, the return needs them.'});
   return {year:year,forms:forms,flags:[],notes:notes,worked:true};
 }
 
@@ -19127,7 +19212,7 @@ function taxWorkInputs(year){
     if(w[f]!=null){ out[f]=w[f]; out.src[f]='hand'; }
     else{ out[f]=r2v(sv); out.src[f]=f==='estPaid'?(logged!=null?'log':'none'):(seed.src[f]||'none'); }
   });
-  out.medWages=seed.medWages; out.ctcKids=seed.ctcKids; out.earned=seed.earned; out.invInt=seed.invInt; out.ssWages=seed.ssWages; out.amtAdd=seed.amtAdd; out.busInt=seed.busInt; out.ftc=seed.ftc; out.eicKids=seed.eicKids; out.tuition=seed.tuition; out.tuitionEarly=seed.tuitionEarly;
+  out.medWages=seed.medWages; out.ctcKids=seed.ctcKids; out.earned=seed.earned; out.invInt=seed.invInt; out.ssWages=seed.ssWages; out.amtAdd=seed.amtAdd; out.busInt=seed.busInt; out.ftc=seed.ftc; out.ftc1116=seed.ftc1116; out.eicKids=seed.eicKids; out.tuition=seed.tuition; out.tuitionEarly=seed.tuitionEarly;
   
   out.ltPref=out.src.ltcg==='hand'?null:seed.ltPref; out.schD=out.src.ltcg==='hand'?null:seed.schD;
   return out;
@@ -44185,6 +44270,15 @@ function _imgLossOk(what){
     return toast(r.cleared?'Cleared':'Saved · ⌘Z to undo','ok');
   }
   
+  if(act==='taxftcsave'){
+    const v=id=>{ const e=document.getElementById(id); return e?e.value:''; };
+    snap('foreign-source income');
+    const r=taxFtcSrcSet(b.dataset.y,v('tfsSrc'),v('tfsQual'));
+    if(!r.ok){ snapCancel(); return toast(r.error,'warn'); }
+    save(); render();
+    return toast(r.cleared?'Cleared':'Form 1116 worked for '+b.dataset.y+' · ⌘Z to undo','ok');
+  }
+  
   if(act==='taxcapcarrysave'){
     const v=id=>{ const e=document.getElementById(id); return e?e.value:''; };
     snap('capital loss carried in');
@@ -50581,7 +50675,7 @@ function renderOnce(name,fn){
     RCP,RCP_PROMPT,mailVouched,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
-    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxEic,taxEduCredit,TAX_EIC,taxMtcCarryIn,taxSchedAI,taxAiSet,taxAiFor,taxAiCard,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
+    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxEic,taxEduCredit,TAX_EIC,taxMtcCarryIn,taxSchedAI,taxForm1116,taxFtcSrcSet,taxFtcCard,taxFtcCarryIn,taxAiSet,taxAiFor,taxAiCard,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
     BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,mailOldScriptWords,MAIL_STMT_NOTICE_RE,mailAssistUnread,_maUnread,MAIL_ASSIST_V22,MAIL_FX_AMT,mailHasFx,mailRbsStmtSettle,mailRbsSelf,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,NY_TUITION_CAP,nyCareCredit,nyTuitionCredit,nyCareFedRate,nyCareRate,nyCareApplicable,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
