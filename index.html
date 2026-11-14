@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-3LWyNqbJHqOFO3gtMH7C7kimh50WnCQQ7w6TSMBrCQw=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-DzEkzTy2AP2Xa0sLOIhcpRreUYb5M/F9XxG5Z6lzdR0=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -1114,7 +1114,7 @@ body.dark{--dp-typ:color-mix(in srgb,var(--ink) 36%,var(--card))}
   color:var(--sub);background-color:var(--shelf);border:1px solid transparent;max-width:150px}
 .taxyrs:hover{color:var(--ink)}
 
-.taxwhy{font-size:12.5px;line-height:1.55;color:var(--sub);margin:-4px 2px 12px;max-width:88ch}
+.taxwhy{font-size:12.5px;line-height:1.55;color:var(--sub);margin:-4px 2px 12px}
 .taxwhy b{color:var(--ink)}
 .tdo .w .tgo{font-size:11px;margin-left:4px;white-space:nowrap}
 
@@ -2727,8 +2727,9 @@ main.gridview{padding-top:8px;padding-bottom:calc(12px + var(--sab))}
 
 #qbExpand{display:none}
 #qbExpand.show{display:inline-flex}
+
 @media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:0s!important;transition-delay:0s!important}
 }
 @media(prefers-reduced-motion:no-preference){
   main>.pagewrap{animation:pagein .26s cubic-bezier(.16,1,.3,1)}
@@ -2998,7 +2999,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.45";
+const APP_V="v29.46";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -3012,7 +3013,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="69d6715";
+const APP_BUILD="d0a37b0";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -7914,6 +7915,9 @@ function _render(){
   let body; try{ body=v(); }catch(e){ const r=errNote(e,'draw '+(shut?'locked':S.view)); body=errCardHtml(r,shut); }
   if(!shut&&typeof navSections==='function') body=navSections(S.view,body);   
   document.getElementById('page').innerHTML=(typeof ledgerMovedHtml==='function'?ledgerMovedHtml():'')+body;
+  
+
+  try{
   _chartBand=chartBand();
   tilesWire(shut);
   labelsWire();
@@ -7923,7 +7927,7 @@ function _render(){
   plateFit();  
   gridFit();
   gridRestore(keep);
-  scrollersWire();
+  }finally{ scrollersWire(); }
   tileMenusWire();
   if(typeof seriesCountUp==='function') seriesCountUp(document.getElementById('page'));
   if(S.view==='receipts'){ rcpWireDrop(); rcpWireDraw(); }
@@ -8221,6 +8225,12 @@ function scrollersWire(){
 function _scrollEdge(w){ w.classList.toggle('moreR',w.scrollWidth-w.clientWidth-w.scrollLeft>2); w.classList.toggle('moreL',w.scrollLeft>2); }
 let _scrollersT=0;
 window.addEventListener('resize',function(){ clearTimeout(_scrollersT); _scrollersT=setTimeout(scrollersWire,200); });
+
+
+let _pageW=-1, _proseT=0;
+(function(){ const pg=document.getElementById('page');
+  if(pg&&typeof ResizeObserver==='function') new ResizeObserver(function(es){ const w=Math.round(es[0].contentRect.width);
+    if(w===_pageW) return; _pageW=w; clearTimeout(_proseT); _proseT=setTimeout(function(){ if(typeof proseFit==='function') proseFit(); },200); }).observe(pg); })();
 
 
 const TILE_SEL='#page .plate, #page .hmo, #page tr.rwask, #page tr.rwoffer, #page .taxhero, #page .dl';
