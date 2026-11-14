@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-O/BsiPYzx0dLDNjjqa0qNZZwdiTG8T40DMcqCfewJME=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-3LWyNqbJHqOFO3gtMH7C7kimh50WnCQQ7w6TSMBrCQw=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2998,7 +2998,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.44";
+const APP_V="v29.45";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -3012,7 +3012,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="922bffa";
+const APP_BUILD="69d6715";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -15900,9 +15900,136 @@ const TAX_BT_WHY={
   held:'A W-2 or 1099 with tax withheld that is not in, or an estimated payment counted as withholding on the return.',
   owed:'It follows the tax and the withholding, with any estimated payments and refundable credits.',
   nyAgi:'A New York addition or subtraction not told to the New York page (other states’ bond interest, a 529 gift, a pension exclusion).',
-  nyTaxable:'New York’s own deduction or its dependent exemptions: its itemized rules differ from the federal ones.',
+  nyDeduction:'An itemized amount the book does not hold, or New York’s own rules for itemizing: it leaves out state and local income taxes, has no cap on property tax, and cuts the total for high incomes.',
+  nyTaxable:'It follows the two lines above, with New York’s $1,000 for each dependent.',
   nyTax:'A New York credit or tax this app does not work (IT-201-ATT, Yonkers, the MCTMT), or New York City residence set the other way.',
   nyOwed:'It follows New York’s tax and withholding, with any estimated payments and refundable credits.'};
+
+
+const TAX_BT_FILED=[
+  ['agi','Adjusted gross income','1040 line 11'],['deduction','Deduction, standard or itemized','1040 line 12'],['taxable','Taxable income','1040 line 15'],
+  ['tax','Total tax','1040 line 24'],['held','Federal tax withheld, all of it','1040 line 25d'],['owed','Owed, or a refund as a minus','1040 line 37, or 34'],
+  ['nyAgi','New York adjusted gross income','IT-201 line 33'],['nyDeduction','New York deduction','IT-201 line 34'],['nyTaxable','New York taxable income','IT-201 line 37'],
+  ['nyTax','New York State tax','IT-201 line 39'],['nyOwed','New York owed, or overpaid as a minus','IT-201 line 80, or 77, before lines 81 and 82']];
+
+
+function _btBook(){ return !!(DB.taxbt&&typeof DB.taxbt==='object'&&!Array.isArray(DB.taxbt)); }
+
+
+const BT_FORM_LINES={2018:{agi:'7',deduction:'8',taxable:'10',tax:'15',held:'16',owed:['22','19','23']},
+  2019:{agi:'8b',deduction:'9',taxable:'11b',tax:'16',held:'17',owed:['23','20','24']},
+  2020:{agi:'11',deduction:'12',taxable:'15',tax:'24',held:'25d',owed:['37','34','38']},
+  2021:{deduction:'12a'},2025:{agi:'11a',deduction:'12e'}};
+function _btWhere(f,y){
+  if(!Object.prototype.hasOwnProperty.call(BT_FORM_LINES[2020],f[0])) return f[2];
+  const n=Number(y), L=n<=2018?BT_FORM_LINES[2018]:n===2019?BT_FORM_LINES[2019]:n===2021?BT_FORM_LINES[2021]:n>=2025?BT_FORM_LINES[2025]:{};
+  const v=L[f[0]]!=null?L[f[0]]:BT_FORM_LINES[2020][f[0]];
+  return f[0]==='owed'?'1040 line '+v[0]+', or '+v[1]+', before line '+v[2]+'’s penalty':'1040 line '+v;
+}
+function taxBackTestFiled(year){
+  const y=String(Number(String(year).slice(0,4))), x=_btBook()?DB.taxbt[y]:null;
+  return x&&typeof x==='object'&&!Array.isArray(x)?x:{};
+}
+
+
+function _btAmount(raw){
+  const m=/^\(?\s*([-−])?\s*\$?\s*([-−])?\s*((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|\.\d+)\s*([-−])?\s*\)?$/.exec(raw);
+  if(!m) return null;
+  const par=/^\(/.test(raw), close=/\)$/.test(raw), signs=(m[1]?1:0)+(m[2]?1:0)+(m[4]?1:0)+(par?1:0);
+  if(par!==close||signs>1) return null;
+  const n=Number(m[3].replace(/,/g,''));
+  return Number.isFinite(n)?(signs?-n:n):null;
+}
+
+
+function taxBackTestSet(year,vals){
+  const y=Number(String(year).slice(0,4)); if(!Number.isFinite(y)) return {error:'That year has no record to write to.'};
+  const next={};
+  for(const f of TAX_BT_FILED){ const raw=String(vals&&vals[f[0]]!=null?vals[f[0]]:'').trim(); if(raw==='') continue;
+    const n=_btAmount(raw);
+    if(n==null) return {error:'“'+raw.slice(0,20)+'” is not an amount: type '+f[1].toLowerCase()+' as it is on the return.'};
+    next[f[0]]=r2v(n); }
+  const k=String(y);
+  if(!Object.keys(next).length){ if(_btBook()&&DB.taxbt[k]){ delete DB.taxbt[k]; if(!Object.keys(DB.taxbt).length) delete DB.taxbt; } return {ok:true,cleared:true}; }
+  if(!_btBook()) DB.taxbt={};
+  DB.taxbt[k]=next; return {ok:true,n:Object.keys(next).length};
+}
+
+
+function _btEst(year){
+  let fed=0, ny=0;
+  try{ const WI=typeof taxWorkInputs==='function'?taxWorkInputs(year):null; fed=WI&&WI.estPaid?WI.estPaid:0; }catch(e){ fed=0; }
+  try{ const E=typeof taxEstPaySummary==='function'?taxEstPaySummary(Number(String(year).slice(0,4))):null; ny=E?r2v((E.state||0)+(E.city||0)):0; }catch(e){ ny=0; }
+  return {fed:fed,ny:ny};
+}
+
+function _btNets(tax,held,owed,paid){ return paid>0&&tax!=null&&held!=null&&owed!=null&&Math.abs(owed-(tax-held-paid))<=1; }
+
+
+function taxSheetChecks(year){
+  const out=[]; let so=null; try{ so=taxSecondOpinion(year); }catch(e){ so=null; }
+  const y=Number(String(year).slice(0,4)), near=function(a,b){ return a!=null&&b!=null&&Math.abs(a-b)<=1; };
+  if(so&&so.sheet!=null&&so.est){
+    const own16=r2v(so.est.ordTax+so.est.prefTax), sur=r2v((so.est.addlMed||0)+(so.est.niit||0));
+    let other=null;
+    if(!near(so.sheet,own16)&&!near(so.sheet,so.est.tax)) Object.keys(typeof TAX_FED==='object'?TAX_FED:{}).map(Number).filter(function(k){ return k!==y&&Math.abs(k-y)<=3; }).sort(function(a,b){ return Math.abs(a-y)-Math.abs(b-y); }).some(function(k){
+      let E=null; try{ E=taxFedEstimate(Object.assign({},so.inp,{year:k})); }catch(e){ E=null; }
+      if(E&&(near(so.sheet,r2v(E.ordTax+E.prefTax))||near(so.sheet,E.tax))){ other={y:k,line16:near(so.sheet,r2v(E.ordTax+E.prefTax)),d:r2v(so.sheet-(near(so.sheet,E.tax)?so.est.tax:own16))}; return true; }
+      return false; });
+    if(other) out.push({id:'brackets',amt:other.d,what:'Your sheet’s federal tax is '+other.y+'’s tax brackets on '+y+'’s taxable income: '+money(Math.abs(other.d),0)+(other.d>0?' more':' less')+' than '+y+'’s own.'});
+    
+    const RR=taxReturn(year), own2=RR?r2v((RR.L('8959','18')!=null?RR.L('8959','18'):(RR.L('8959','07')||0))+(RR.L('8960','17')||0)):0, kept=own2>0&&Math.abs(own2-sur)<=1;
+    if(sur>=1&&(near(so.sheet,own16)||(other&&other.line16))) out.push({id:'line16',amt:-sur,what:'Your sheet’s federal tax is the tax before Schedule 2 (Form 1040 line 16): '
+      +(kept?'its own Forms 8959 and 8960 work out '+money(sur,0)+' of the 0.9% Medicare tax and the 3.8% tax on investment income, but its total leaves that out':'it leaves out '+money(sur,0)+' of the 0.9% Medicare tax and the 3.8% tax on investment income')
+      +(so.inp&&so.inp.medHeld>0?', and so also the '+money(so.inp.medHeld,0)+' of the 0.9% payroll withheld (line 25c), which offsets it':'')+'.'});
+  }
+  
+
+  const RS=taxReturn(year), SS=RS&&RS.sum?RS.sum:null;
+  if(SS){ const E=_btEst(year), bal=function(id,who,tax,held,owed,paid){
+      if(tax==null||held==null||owed==null) return; const gap=r2v(owed-(tax-held));
+      if(Math.abs(gap)<=1||_btNets(tax,held,owed,paid)) return;
+      out.push({id:id,amt:gap,what:'Your sheet’s '+who+' balance ('+money(owed,0)+') is not its own tax less its withholding ('+money(tax,0)+' less '+money(held,0)+' is '+money(r2v(tax-held),0)+'): '
+        +money(Math.abs(gap),0)+(gap<0?' less':' more')+' — an estimated payment or a credit the book does not hold, or a slip on the sheet.'}); };
+    bal('fedBalance','federal',SS.fedTax,SS.fedHeld,SS.fedOwed,E.fed); bal('nyBalance','New York',SS.nyTax,SS.nyHeld,SS.nyOwed,E.ny); }
+  let ny=null; try{ ny=(typeof taxIsNY!=='function'||taxIsNY(year))&&typeof nySecondOpinion==='function'?nySecondOpinion(year):null; }catch(e){ ny=null; }
+  if(ny&&ny.ret&&ny.ret.lines&&ny.sheet&&ny.sheet.ti!=null){
+    
+
+    const R=taxReturn(year), due=ny.sheet.due, fy=ny.ret.year, ff=ny.ret.filing, agiNY=_btNyAgi(R,ny,true), ownAgi=_btNyAgi(R,ny,false), ti=ny.sheet.ti;
+    
+
+    const schedOf=function(k){ try{ return r2v(nyMainTax(ti,k,ff)); }catch(e){ return null; } }, own=schedOf(fy);
+    let full=null, minAgi=null; try{ full=agiNY!=null?r2v(nyStateTax(ti,agiNY,fy,ff)):null; minAgi=nyP('states/ny/tax/income/supplemental/min_agi',fy); }catch(e){ full=null; }
+    let hit=null; if(due!=null) [fy,fy-1,fy+1].some(function(k){ const v=schedOf(k); if(v!=null&&near(due,v)){ hit=k; return true; } return false; });
+    if(hit!=null&&hit!==fy&&own!=null&&Math.abs(own-due)>1) out.push({id:'nySchedule',amt:r2v(due-own),what:'Your sheet’s New York tax (“NYS Due”, '+money(due,0)+') is New York’s '+hit+' rate schedule on '+fy+'’s income: '
+      +money(Math.abs(own-due),0)+(due>own?' more':' less')+' than '+fy+'’s own schedule ('+money(own,0)+').'});
+    if(hit!=null&&own!=null&&full!=null&&minAgi!=null&&full-own>1) out.push({id:'nyRecapture',amt:r2v(own-full),what:(hit===fy?'Your sheet’s New York tax (“NYS Due”, '+money(due,0)+') is New York’s rate schedule alone. Above ':'It leaves out New York’s recapture too: above ')
+      +money(minAgi,0)+' of New York income New York takes back the lower brackets’ benefit — '+money(full-own,0)+' more here, '+money(full,0)+' in all.'});
+    
+
+    const sDed=ownAgi!=null?r2v(ownAgi-ti-(ny.ret.lines['36']||0)):null, wDed=ny.ret.lines['34'], P=ny.ret.parts||{}, IT=P.itemized;
+    if(sDed!=null&&wDed!=null&&sDed-wDed>1&&IT&&IT.max>0&&IT.total<IT.max-1){
+      const uncut=near(sDed,IT.max), half=!uncut&&IT.phaseOut>0&&near(sDed,r2v(IT.max-IT.phaseOut));
+      if(uncut||half) out.push({id:'nyDeduction',amt:r2v(wDed-sDed),what:'Your sheet’s New York deduction ('+money(sDed,0)+') is the book’s own itemized figures '+(uncut?'before New York’s limits for high incomes':'with New York’s first limit but not its cut for high incomes')
+        +'. '+_btNyCut(fy,ff)+'. That leaves '+money(IT.total,0)+(P.std>IT.total?', less than the '+money(P.std,0)+' standard deduction, which is New York’s deduction here':'')+'.'}); }
+  }
+  return out;
+}
+
+function _btNyCut(fy,ff){
+  try{ const B='states/ny/tax/income/deductions/itemized/reduction/incremental/', th=function(w){ const v=nyP(B+w+'/income_threshold',fy); return typeof v==='object'?v[nyStatus(ff)]:v; };
+    const lo=th('lower'), hi=th('higher'), top=nyP('states/ny/tax/income/deductions/itemized/reduction/charitable_deduction_rate',fy).b[1][0];
+    return 'New York takes a quarter off itemized deductions as its income passes '+money(lo,0)+' (the whole quarter by '+money(lo+nyP(B+'lower/numerator',fy),0)+'), a half by '
+      +money(hi+nyP(B+'higher/numerator',fy),0)+', and above '+money(top,0)+' allows only part of the gifts to charity';
+  }catch(e){ return 'New York cuts itemized deductions for high incomes'; }
+}
+
+
+function _btNyAgi(R,ny,worked){
+  const a=R&&R.L?R.L('IT-201 Tax Computation','01'):null, b=R&&R.L?R.L('IT-201','33'):null;
+  return a!=null?a:b!=null?b:(worked&&ny&&ny.ret&&ny.ret.lines?ny.ret.lines['33']:null);
+}
 function _btState(filed,worked){
   if(filed==null||worked==null) return 'nofiled';
   const d=Math.abs(worked-filed);
@@ -15910,54 +16037,107 @@ function _btState(filed,worked){
 }
 
 function taxBackTest(year){
-  const R=taxReturn(year); if(!R||R.sum.fedTax==null) return null;
+  const y=Number(String(year).slice(0,4)), now=Number(String(typeof todayISO==='function'?todayISO():new Date().toISOString()).slice(0,4));
+  if(!Number.isFinite(y)||!(y<now)) return null;
+  if(typeof taxFiledRead==='function'&&taxFiledRead(year).status==='none') return null;
+  const R=taxReturn(year), T=taxBackTestFiled(year);
+  
+
+  const due=typeof taxDueDate==='function'?taxDueDate(y):null, dueIso=typeof due==='string'&&due?due:(y+1)+'-04-15', today=typeof todayISO==='function'?todayISO():new Date().toISOString().slice(0,10);
+  if(!(today>dueIso)&&!Object.keys(T).length&&!(typeof taxFiledRead==='function'&&taxFiledRead(year).status==='filed')) return null;
+  if(!R||(R.sum.fedTax==null&&T.tax==null)) return null;
   let inp=null, est=null; try{ inp=taxEstimateInputs(year,{own:true}); est=taxFedEstimate(inp); }catch(e){ inp=null; est=null; }
   if(!inp||!est) return null;
-  const rows=[], add=function(id,what,filed,worked){ const st=_btState(filed,worked);
-    rows.push({id:id,what:what,filed:filed,worked:worked,diff:filed!=null&&worked!=null?r2v(worked-filed):null,state:st,why:st==='apart'||st==='close'?TAX_BT_WHY[id]:''}); };
-  const fDed=R.sum.agi!=null&&R.sum.taxable!=null?r2v(R.sum.agi-R.sum.taxable):null;
-  add('agi','Adjusted gross income',R.sum.agi,est.agi);
-  add('deduction','Deduction',fDed,inp.deduction!=null?r2v(inp.deduction+(est.qbi||0)):null);
-  add('taxable','Taxable income',R.sum.taxable,est.taxable);
-  add('tax','Federal tax',R.sum.fedTax,est.tax);
-  add('held','Federal tax withheld',R.sum.fedHeld,inp.held);
-  add('owed','Owed (or refunded, if negative)',R.sum.fedOwed,est.owed);
+  const finds=taxSheetChecks(year), why=function(ids){ const f=finds.filter(function(x){ return ids.indexOf(x.id)>=0; }); return f.length?f.map(function(x){ return x.what; }).join(' '):''; };
   
+
+  const rows=[], add=function(id,what,sheet,worked,typedWorked,sheetWhy,workedWhy){
+    const typed=T[id]!=null, filed=typed?T[id]:sheet, w=typed&&typedWorked!==undefined?typedWorked:worked, st=_btState(filed,w);
+    rows.push({id:id,what:what,from:typed?'filed':(sheet!=null?'sheet':''),filed:filed,worked:w,diff:filed!=null&&w!=null?r2v(w-filed):null,state:st,
+      why:st==='apart'||st==='close'?((!typed&&sheetWhy)||(workedWhy?workedWhy+' '+TAX_BT_WHY[id]:TAX_BT_WHY[id])):''}); };
+  const sDed=R.sum.agi!=null&&R.sum.taxable!=null?r2v(R.sum.agi-R.sum.taxable):null;
+  
+
+  const E=_btEst(year), l26=E.fed, sNets=_btNets(R.sum.fedTax,R.sum.fedHeld,R.sum.fedOwed,l26);
+  const owed=est.owed!=null?r2v(est.owed-(sNets?l26:0)):null, owedRet=est.owed!=null?r2v(est.owed-l26):null, heldAll=r2v((inp.held||0)+(inp.medHeld||0));
+  add('agi','Adjusted gross income',R.sum.agi,est.agi);
+  
+  add('deduction','Deduction',sDed,inp.deduction!=null?r2v(inp.deduction+(est.qbi||0)):null,inp.deduction!=null?r2v(inp.deduction-(inp.newDed?inp.newDed.total:0)):undefined);
+  add('taxable','Taxable income',R.sum.taxable,est.taxable);
+  add('tax','Federal tax',R.sum.fedTax,est.tax,undefined,why(['brackets','line16']));
+  
+  add('held','Federal tax withheld',R.sum.fedHeld,inp.held,heldAll);
+  add('owed','Owed (or refunded, if negative)',R.sum.fedOwed,owed,owedRet,why(['brackets','line16','fedBalance']));
   let ny=null; try{ ny=(typeof taxIsNY!=='function'||taxIsNY(year))&&typeof nySecondOpinion==='function'?nySecondOpinion(year):null; }catch(e){ ny=null; }
-  if(ny&&ny.ret&&ny.sheet&&(ny.sheet.ti!=null||ny.sheet.tax!=null)){ const L=ny.ret.lines;
-    add('nyAgi','New York adjusted gross income',ny.sheet.agi,L['33']);
-    add('nyTaxable','New York taxable income',ny.sheet.ti,L['37']);
-    add('nyTax','New York State tax',ny.sheet.tax,L['39']);
-    if(ny.sheet.due!=null) add('nyOwed','New York owed (or refunded, if negative)',ny.sheet.due,L['80']!=null?L['80']:(L['77']!=null?-L['77']:0));
+  const nyTyped=['nyAgi','nyDeduction','nyTaxable','nyTax','nyOwed'].some(function(k){ return T[k]!=null; });
+  if(ny&&ny.ret&&ny.ret.lines&&(ny.sheet&&(ny.sheet.ti!=null||ny.sheet.tax!=null)||nyTyped)){ const L=ny.ret.lines, S=ny.sheet||{}, agiNY=_btNyAgi(R,ny,false), P=ny.ret.parts||{}, IT=P.itemized;
+    
+    const dedWhy=IT&&IT.max>0&&IT.total<IT.max-1?'Worked here from the book’s own itemized figures, '+money(IT.max,0)+': '+_btNyCut(ny.ret.year,ny.ret.filing)+', which leaves '+money(IT.total,0)
+      +(P.std>IT.total?', less than the '+money(P.std,0)+' standard deduction':'')+'.':'';
+    
+    const taxIds=S.tax!=null&&S.due!=null&&Math.abs(S.tax-S.due)<=1?['nySchedule','nyRecapture','nyDeduction']:['nyDeduction'];
+    add('nyAgi','New York adjusted gross income',agiNY,L['33']);
+    add('nyDeduction','New York deduction',agiNY!=null&&S.ti!=null?r2v(agiNY-S.ti-(L['36']||0)):null,L['34'],undefined,why(['nyDeduction']),dedWhy);
+    add('nyTaxable','New York taxable income',S.ti,L['37'],undefined,why(['nyDeduction']),dedWhy);
+    add('nyTax','New York State tax',S.tax,L['39'],undefined,why(taxIds));
+    
+    const city=L['58']>0&&R.sum.otherOwed!=null&&R.sum.nyOwed!=null, sOwed=R.sum.nyOwed!=null?r2v(R.sum.nyOwed+(city?R.sum.otherOwed:0)):null;
+    
+    const Lbal=L['80']!=null?L['80']:(L['77']!=null?-L['77']:0), nyBack=E.ny>0&&!_btNets(R.sum.nyTax,R.sum.nyHeld,R.sum.nyOwed,E.ny)?E.ny:0;
+    add('nyOwed','New York owed (or refunded, if negative)',sOwed,r2v(Lbal+nyBack),Lbal,why(['nySchedule','nyRecapture','nyDeduction','nyBalance']));
   }
   
-  const S=inp.src||{}, lab={wages:'Wages',interest:'Interest',ordDiv:'Dividends',ltcg:'Capital gain or loss',other:'Other income',se:'Self-employment profit',held:'Federal tax withheld'};
+  const S=inp.src||{}, lab={wages:'Wages',interest:'Interest',ordDiv:'Dividends',ltcg:'Capital gain or loss',other:'Other income',se:'Self-employment profit',held:'Federal tax withheld',medHeld:'The 0.9% Medicare tax payroll withheld'};
   const inputs=Object.keys(lab).filter(function(k){ return (Number(inp[k])||0)!==0||S[k]==='sheet'; }).map(function(k){ return {id:k,what:lab[k],v:inp[k],src:S[k]||'none'}; });
   const tested=rows.filter(function(r){ return r.state!=='nofiled'; });
-  return {year:year,rows:rows,inputs:inputs,deduction:S.deduction||'',
-    fromDocs:inputs.filter(function(i){ return i.src==='documents'; }).length,fromSheet:inputs.filter(function(i){ return i.src==='sheet'; }).length,
+  return {year:year,rows:rows,inputs:inputs,deduction:S.deduction||'',finds:finds,
+    typed:rows.filter(function(r){ return r.from==='filed'; }).length,fromDocs:inputs.filter(function(i){ return i.src==='documents'; }).length,fromSheet:inputs.filter(function(i){ return i.src==='sheet'; }).length,
     match:tested.filter(function(r){ return r.state==='match'; }).length,close:tested.filter(function(r){ return r.state==='close'; }).length,
     apart:tested.filter(function(r){ return r.state==='apart'; }).length,total:tested.length};
 }
+function taxSheetChecksHtml(finds,lead){
+  if(!finds||!finds.length) return '';
+  return '<h4 style="margin:12px 0 4px">'+lead+'</h4><ul style="font-size:12.5px;line-height:1.55;margin:0 0 4px">'+finds.map(function(f){ return '<li>'+esc(f.what)+'</li>'; }).join('')+'</ul>';
+}
+
+
+function _btFormHtml(year,lead){
+  const y=String(year).slice(0,4), T=taxBackTestFiled(year), mut=function(t){ return '<div class="mut" style="font-size:12px;margin-bottom:8px">'+t+'</div>'; };
+  const inp=function(f){ return '<label>'+esc(f[1])+' <span class="mut">('+esc(_btWhere(f,Number(y)))+')</span><input id="bt_'+f[0]+'" inputmode="'+(/^(agi|nyAgi|owed|nyOwed)$/.test(f[0])?'text':'decimal')+'" value="'+esc(T[f[0]]!=null?String(T[f[0]]):'')+'" placeholder="as on the return"></label>'; };
+  return mut(lead)+'<div class="formrow" style="flex-wrap:wrap;gap:8px">'+TAX_BT_FILED.map(inp).join('')+'<button class="btn sm" data-act="taxbtsave" data-y="'+y+'">Save</button></div>';
+}
+
+function _btFormOnlyHtml(year){
+  const y=Number(String(year).slice(0,4)), today=typeof todayISO==='function'?todayISO():new Date().toISOString().slice(0,10), now=Number(today.slice(0,4));
+  if(!Number.isFinite(y)||!(y<now)||(typeof taxFiledRead==='function'&&taxFiledRead(year).status==='none')) return '';
+  const due=typeof taxDueDate==='function'?taxDueDate(y):null, early=typeof due==='string'&&due&&!(today>due);
+  return '<div class="sheet" id="taxBackTest"><h3>The back-test</h3>'+_btFormHtml(year,(early?y+'’s return is due '+fDY(due)+'. Once it is filed, type its own figures here, from the PDF your filing service gives you, ':'Type what the '+y+' return itself says, from the PDF your filing service gives you, ')
+    +'and the year is worked again by this app’s own engine and set beside them, line by line.')+'</div>';
+}
 function taxBackTestHtml(year){
   let B=null; try{ B=taxBackTest(year); }catch(e){ B=null; }
-  if(!B) return '';
+  if(!B){ try{ return _btFormOnlyHtml(year); }catch(e){ return ''; } }
   const y=String(year).slice(0,4), mut=function(t){ return '<div class="mut" style="font-size:12px;margin-bottom:8px">'+t+'</div>'; };
   const tag={match:'<span class="ok">matches</span>',close:'<span class="warn">close</span>',apart:'<b class="off">apart</b>',nofiled:'<span class="mut">not on the sheet</span>'};
+  const allTyped=B.rows.every(function(r){ return r.from!=='sheet'; }), noneTyped=!B.typed;
+  const head=allTyped?'Filed':noneTyped?'Your sheet':'Filed or sheet';
   const rows=B.rows.map(function(r){ return '<tr><td>'+esc(r.what)+(r.why?'<div class="mut" style="font-size:11px">'+esc(r.why)+'</div>':'')+'</td>'
-    +'<td class="n num">'+(r.filed!=null?money(r.filed):'—')+'</td><td class="n num">'+(r.worked!=null?money(r.worked):'—')+'</td>'
+    +'<td class="n num">'+(r.filed!=null?money(r.filed):'—')+(!allTyped&&!noneTyped&&r.filed!=null?'<div class="mut" style="font-size:10.5px">'+(r.from==='filed'?'filed':'sheet')+'</div>':'')+'</td><td class="n num">'+(r.worked!=null?money(r.worked):'—')+'</td>'
     +'<td class="n num">'+(r.diff!=null&&Math.abs(r.diff)>1?money(r.diff):'')+'</td><td>'+tag[r.state]+'</td></tr>'; }).join('');
-  const srcLab={documents:'the documents',sheet:'the return itself — this one tests nothing',stub:'the pay stub',none:'nothing found'};
+  const srcLab={documents:'the documents',sheet:'your sheet — this one tests nothing',stub:'the pay stub',none:'nothing found'};
   const ins=B.inputs.map(function(i){ return '<li>'+esc(i.what)+' <b>'+money(i.v,0)+'</b> — from '+srcLab[i.src]+'</li>'; }).join('')
     +'<li>The deduction — worked out here ('+(B.deduction==='itemized'?'itemized from the book’s own figures':'the standard deduction')+'), not read off the return</li>';
   const verdict=B.total&&B.match===B.total?'Every line matches to the dollar.'
     :B.match+' of '+B.total+' lines match to the dollar'+(B.close?', '+B.close+' '+(B.close===1?'is':'are')+' close':'')+(B.apart?', and <b>'+B.apart+' '+(B.apart===1?'is':'are')+' apart</b>':'')+'.';
   return '<div class="sheet" id="taxBackTest"><h3>The back-test <span class="r">'+B.match+' of '+B.total+' lines match</span></h3>'
-    +mut(y+' was filed, so it can be used as a test of this app: the year worked again by its own engine, set beside what was filed. '+verdict
-      +(B.fromSheet?' <b>'+B.fromSheet+' input'+(B.fromSheet===1?' was':'s were')+' read off the return itself</b> because no document is in for '+(B.fromSheet===1?'it':'them')+': add the '+y+' documents and the test stands on its own.':'')
-      +' A line that is apart is something this app does not work, a document that is not in, or a mistake on the return.')
-    +'<div class="tblwrap"><table class="tbl tight"><thead><tr><th>Line</th><th class="n">Filed</th><th class="n">Worked here</th><th class="n">Difference</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'
-    +'<h4 style="margin:12px 0 4px">What it was worked from</h4><ul class="mut" style="font-size:12px;line-height:1.55">'+ins+'</ul></div>';
+    +mut(y+' is over, so it can be used as a test of this app: the year worked again by its own engine, set beside '+(allTyped?'the return as filed':noneTyped?'your tax sheet':'the return as filed where you typed it, and your sheet elsewhere')+'. '+verdict
+      +(noneTyped?' <b>Your sheet may be your own working rather than the return as filed</b> — for the real test, type the return’s own figures below, from the PDF your filing service gives you.':'')
+      +(B.fromSheet?' '+B.fromSheet+' input'+(B.fromSheet===1?' was':'s were')+' read off your sheet because no document is in for '+(B.fromSheet===1?'it':'them')+': add the '+y+' documents and the test stands on its own.':'')
+      +' A line that is apart is something this app does not work, a document that is not in, or a mistake on the '+(noneTyped?'sheet':'return')+'.')
+    +'<div class="tblwrap"><table class="tbl tight"><thead><tr><th>Line</th><th class="n">'+head+'</th><th class="n">Worked here</th><th class="n">Difference</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +taxSheetChecksHtml(B.finds,'What your sheet does differently')
+    +'<h4 style="margin:12px 0 4px">What it was worked from</h4><ul class="mut" style="font-size:12px;line-height:1.55">'+ins+'</ul>'
+    +'<h4 style="margin:12px 0 4px">The return as filed</h4>'+_btFormHtml(year,'Type what the '+y+' return itself says — the federal and New York returns’ own lines — and each line above is set beside it instead of the sheet. Leave a box empty to keep the sheet’s figure there.')+'</div>';
 }
 
 
@@ -16314,7 +16494,10 @@ function taxSecondOpinionHtml(year){
     +(est.medHeld?'<tr><td>Additional Medicare tax payroll withheld (Form 8959 line 24, 1040 line 25c)</td><td class="n num">'+money(-est.medHeld)+'</td></tr>':'')
     +(est.held!=null?'<tr><td>'+(est.owed>0?'Would still owe':'Refund position')+'</td>'
       +'<td class="n num"><b>'+money(Math.abs(est.owed))+'</b></td></tr>':'')
-    +'</tbody></table></div></div>';
+    +'</tbody></table></div>'
+    
+    +(typeof taxSheetChecks==='function'&&typeof taxSheetChecksHtml==='function'?(function(){ try{ return taxSheetChecksHtml(taxSheetChecks(year),'Where the sheet’s answer comes from'); }catch(e){ return ''; } })():'')
+    +'</div>';
 }
 
 
@@ -18545,7 +18728,9 @@ function nyInputs(year){
   const care=a.careExp!=null?{expenses:a.careExp,account:w2.length?sum(w2,'10'):0,persons:ages.filter(function(x){ return x<13; }).length,
     lowerEarned:fil==='mfj'&&typeof taxIntakeRead==='function'&&((taxIntakeRead(y).find(function(q){ return q.id==='spouse'; })||{}).a==='no')?0:null}:null;
   if(care) src.care=w2.length?'your answer, less the W-2s’ box 10':'your answer';
-  const city=nyCityFor(y);
+  
+
+  const city=nyCityFor(year);
   const inp={year:y,filing:fil,resident:true,nyc:city.nyc,fagi:fagi,
     adds:{muniOther:a.muniOther||0,other:a.otherAdds||0},
     subs:{usGovt:usGovt,c529:a.c529||0,other:a.otherSubs||0},
@@ -44598,6 +44783,14 @@ function _imgLossOk(what){
     return toast(r.cleared?'Cleared':'Saved · ⌘Z to undo','ok');
   }
   
+  if(act==='taxbtsave'){
+    const vals={}; TAX_BT_FILED.forEach(f=>{ const e=document.getElementById('bt_'+f[0]); vals[f[0]]=e?e.value:''; });
+    snap('the return as filed');
+    const r=taxBackTestSet(b.dataset.y,vals);
+    if(!r.ok){ snapCancel(); return toast(r.error,'warn'); }
+    save(); render(); return toast(r.cleared?'Cleared: the back-test uses your sheet':'Saved: the back-test uses the return as filed · ⌘Z to undo','ok');
+  }
+  
   if(act==='taxassetadd'){
     const v=id=>{ const e=document.getElementById(id); return e?e.value:''; }, how=v('tasHow');
     snap('equipment added');
@@ -51017,7 +51210,7 @@ function renderOnce(name,fn){
     RCP,RCP_PROMPT,mailVouched,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
-    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxEic,taxEduCredit,TAX_EIC,taxMtcCarryIn,taxSchedAI,taxAddlMedW2,taxAddlMedPayroll,taxAddlMedSheet,taxAddlMedHeld,taxBackTest,taxBackTestHtml,navEntries,navEntryOf,navTarget,navSections,navForget,navRemember,taxTabParent,taxTabSections,taxDeprOf,taxDeprFor,taxAssetAdd,taxAssetDel,taxDeprCard,nyPenaltyOf,nyPenaltyFor,nyUnderpayRate,taxEicAgeOk,nycEicRate,taxForm1116,taxFtcSrcSet,taxFtcCard,taxFtcCarryIn,taxAiSet,taxAiFor,taxAiCard,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
+    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxEic,taxEduCredit,TAX_EIC,taxMtcCarryIn,taxSchedAI,taxBackTestSet,taxBackTestFiled,taxSheetChecks,taxAddlMedW2,taxAddlMedPayroll,taxAddlMedSheet,taxAddlMedHeld,taxBackTest,taxBackTestHtml,navEntries,navEntryOf,navTarget,navSections,navForget,navRemember,taxTabParent,taxTabSections,taxDeprOf,taxDeprFor,taxAssetAdd,taxAssetDel,taxDeprCard,nyPenaltyOf,nyPenaltyFor,nyUnderpayRate,taxEicAgeOk,nycEicRate,taxForm1116,taxFtcSrcSet,taxFtcCard,taxFtcCarryIn,taxAiSet,taxAiFor,taxAiCard,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
     BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,mailOldScriptWords,MAIL_STMT_NOTICE_RE,mailAssistUnread,_maUnread,MAIL_ASSIST_V22,MAIL_FX_AMT,mailHasFx,mailRbsStmtSettle,mailRbsSelf,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,NY_TUITION_CAP,nyCareCredit,nyTuitionCredit,nyCareFedRate,nyCareRate,nyCareApplicable,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
