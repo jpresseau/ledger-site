@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-XRMksnfaE1DtwoIOmCj7Zasq8Gl22/d3Zm7+RqoXfig=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-chRMDfw7vnO0nMmG29Hj5ZQ0RGZiBw9VA0q8a+gauJ8=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2999,7 +2999,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.47";
+const APP_V="v29.48";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -3013,7 +3013,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="4d5131a";
+const APP_BUILD="03b93c3";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -16020,12 +16020,13 @@ function taxSheetChecks(year){
 
     const sDed=ownAgi!=null?r2v(ownAgi-ti-(ny.ret.lines['36']||0)):null, wDed=ny.ret.lines['34'], P=ny.ret.parts||{}, IT=P.itemized;
     if(sDed!=null&&wDed!=null&&sDed-wDed>1&&IT&&IT.max>0&&IT.total<IT.max-1){
-      const uncut=near(sDed,IT.max), half=!uncut&&IT.phaseOut>0&&near(sDed,r2v(IT.max-IT.phaseOut));
+      const uncut=near(sDed,IT.max), half=!uncut&&IT.phaseOut>0&&near(sDed,IT.lines['45']);
       if(uncut||half) out.push({id:'nyDeduction',amt:r2v(wDed-sDed),what:'Your sheet’s New York deduction ('+money(sDed,0)+') is the book’s own itemized figures '+(uncut?'before New York’s limits for high incomes':'with New York’s first limit but not its cut for high incomes')
         +'. '+_btNyCut(fy,ff)+'. That leaves '+money(IT.total,0)+(P.std>IT.total?', less than the '+money(P.std,0)+' standard deduction, which is New York’s deduction here':'')+'.'}); }
   }
   return out;
 }
+
 
 function _btNyCut(fy,ff){
   try{ const B='states/ny/tax/income/deductions/itemized/reduction/incremental/', th=function(w){ const v=nyP(B+w+'/income_threshold',fy); return typeof v==='object'?v[nyStatus(ff)]:v; };
@@ -18439,31 +18440,64 @@ function nyStdDeduction(y,f){ return nyP('states/ny/tax/income/deductions/standa
 
 
 function nyItemized(it,fagi,nyagi,y,f){
-  const P='states/ny/tax/income/deductions/itemized/', s=nyStatus(f), n=function(v){ return Number(v)||0; };
-  const medical=Math.max(0,n(it.medical)-nyP(P+'medical/floor',y)*Math.max(0,fagi));
-  const max=n(it.interest)+n(it.propertyTax)+n(it.charity)+medical+n(it.investmentInterest);
-  const charRate=nySingle(nyP(P+'reduction/charitable_deduction_rate',y),nyagi);
-  if(nyagi>nyP(P+'reduction/charitable_deduction_rate',y).b[1][0])
-    return {max:r2v(max),medical:r2v(medical),phaseOut:0,reduction:0,total:r2v(n(it.charity)*charRate),rule:'charity'};
-  const phaseOut=nyItemizedPhaseOut(max,medical+n(it.investmentInterest),fagi,y,f);
-  const lowT=nyP(P+'reduction/incremental/lower/income_threshold',y)[s];
-  const reduction=nyagi>lowT?nyItemizedStep('lower',max,nyagi,y,f)+nyItemizedStep('higher',max,nyagi,y,f):0;
-  return {max:r2v(max),medical:r2v(medical),phaseOut:r2v(phaseOut),reduction:r2v(reduction),
-    total:r2v(Math.max(0,max-phaseOut-reduction)),rule:reduction>0?'reduced':phaseOut>0?'limited':'full'};
+  const P='states/ny/tax/income/deductions/itemized/', n=function(v){ return r2v(Math.max(0,Number(v)||0)); }, L={};
+  L['1']=n(it.medical); L['2']=n(fagi); L['3']=r2v(L['2']*nyP(P+'medical/floor',y)); L['4']=r2v(Math.max(0,L['1']-L['3']));
+  L['5']=n(it.incomeTax); L['6']=n(it.propertyTax); L['9']=r2v(L['5']+L['6']);
+  L['10']=n(it.interest); L['14']=n(it.investmentInterest); L['15']=r2v(L['10']+L['14']);
+  L['19']=n(it.charity);
+  const w40=nyItemizedLimit(r2v(L['4']+L['9']+L['15']+L['19']),r2v(L['4']+L['14']),L['2'],y,f);
+  L['40']=w40['10'];
+  const w2=nyItemizedSubtract(L['5'],w40);
+  L['41']=w2['11']; L['42']=r2v(L['40']-L['41']); L['45']=L['42'];
+  const cs=nyP(P+'reduction/charitable_deduction_rate',y), over=nyagi>cs.b[1][0];
+  const w46=over?null:nyItemizedCut(L['45'],nyagi,y,f);
+  L['46']=w46?w46.amt:0;
+  
+  L['47']=over?r2v(L['19']*nySingle(cs,nyagi,true)):r2v(Math.max(0,L['45']-L['46']));
+  L['49']=L['47'];
+  const max=r2v(w40['1']-L['5']), phaseOut=r2v(Math.max(0,max-L['45']));
+  return {max:max,medical:L['4'],phaseOut:phaseOut,reduction:L['46'],total:L['49'],
+    rule:over?'charity':L['46']>0?'reduced':phaseOut>0?'limited':'full',lines:L,w40:w40,w2:w2,w46:w46};
 }
 
 
-function nyItemizedPhaseOut(max,notLimited,fagi,y,f){
-  const P='states/ny/tax/income/deductions/itemized/phase_out/', start=nyP(P+'start',y)[nyStatus(f)];
-  if(!(fagi>start)) return 0;
-  return Math.min(Math.max(0,max-notLimited)*nyP(P+'deduction_limited_rate',y),(fagi-start)*nyP(P+'agi_excess_rate',y));
+function nyItemizedLimit(total,notLimited,fagi,y,f){
+  const P='states/ny/tax/income/deductions/itemized/phase_out/', W={'1':r2v(total),'2':r2v(notLimited)};
+  W['5']=r2v(Math.max(0,Number(fagi)||0)); W['6']=nyP(P+'start',y)[nyStatus(f)]; W['9']=0;
+  if(W['2']<W['1']&&W['6']<W['5']){
+    W['3']=r2v(W['1']-W['2']); W['4']=r2v(W['3']*nyP(P+'deduction_limited_rate',y));
+    W['7']=r2v(W['5']-W['6']); W['8']=r2v(W['7']*nyP(P+'agi_excess_rate',y)); W['9']=Math.min(W['4'],W['8']);
+  }
+  W['10']=r2v(W['1']-W['9']);
+  return W;
+}
+
+function nyItemizedPhaseOut(total,notLimited,fagi,y,f){ return nyItemizedLimit(total,notLimited,fagi,y,f)['9']; }
+
+
+function nyItemizedSubtract(l5,w40){
+  if(!(w40['6']<w40['5'])) return {'11':l5};
+  const W={'1':w40['9'],'2':w40['3']||0};
+  W['3']=W['2']>0?Math.round(W['1']/W['2']*10000)/10000:0;
+  W['4']=l5; W['6']=l5; W['7']=r2v(W['6']*W['3']); W['8']=r2v(W['6']-W['7']); W['11']=W['8'];
+  return W;
 }
 
 
-function nyItemizedStep(w,max,nyagi,y,f){
+function nyItemizedStep(w,base,nyagi,y,f){
   const P='states/ny/tax/income/deductions/itemized/reduction/incremental/'+w+'/';
   const thrV=nyP(P+'income_threshold',y), thr=typeof thrV==='object'?thrV[nyStatus(f)]:thrV;
-  return max*nyP(P+'rate',y)*Math.min(nyP(P+'numerator',y),Math.max(0,nyagi-thr))/nyP(P+'denominator',y);
+  const share=Math.round(Math.min(nyP(P+'numerator',y),Math.max(0,nyagi-thr))/nyP(P+'denominator',y)*10000)/10000;
+  return r2v(share*r2v(base*nyP(P+'rate',y)));
+}
+
+
+function nyItemizedCut(l45,nyagi,y,f){
+  const B='states/ny/tax/income/deductions/itemized/reduction/incremental/';
+  const lo=nyItemizedStep('lower',l45,nyagi,y,f), hi=nyItemizedStep('higher',l45,nyagi,y,f);
+  if(nyagi>nyP(B+'higher/income_threshold',y)+nyP(B+'higher/numerator',y))
+    return {amt:r2v(l45*(nyP(B+'lower/rate',y)+nyP(B+'higher/rate',y))),sheet:'half'};
+  return {amt:r2v(lo+hi),lower:lo,higher:hi,sheet:hi>0?'4':lo>0?'3':''};
 }
 
 function nyHouseholdCredit(fagi,f,size,y){
@@ -18544,9 +18578,9 @@ function nyReturn(inp){
   L['40']=r2v(Math.min(L['39'],nyHouseholdCredit(L['19a'],f,size,y)));
   L['43']=L['40']; L['44']=r2v(Math.max(0,L['39']-L['43'])); L['46']=L['44'];
   if(inp.nyc){
-    L['47a']=L['38']; L['47']=nycTax(L['47a'],y,f);
-    L['48']=r2v(Math.min(L['47'],nycHouseholdCredit(L['19a'],f,size,y)));
-    L['49']=r2v(Math.max(0,L['47']-L['48'])); L['52']=L['49']; L['54']=L['52'];
+    L['47']=L['38']; L['47a']=nycTax(L['47'],y,f);
+    L['48']=r2v(Math.min(L['47a'],nycHouseholdCredit(L['19a'],f,size,y)));
+    L['49']=r2v(Math.max(0,L['47a']-L['48'])); L['52']=L['49']; L['54']=L['52'];
   }
   L['58']=inp.nyc?L['54']:0;
   L['59']=r2v(n(inp.salesTax));
@@ -18556,7 +18590,7 @@ function nyReturn(inp){
   if(inp.fedEic!=null) L['65']=r2v(Math.max(0,n(inp.fedEic)*nyP('states/ny/tax/income/credits/eitc/match',y)-L['40']));
   else if(L['19a']<75000) open.push({line:'65',what:'New York’s earned income credit',why:'It is 30% of the federal credit, which this book works out with a child on the return, or with none once it knows a filer is 25 to 64 (the birth years on the Check-up); on an income this size there may be one. Type the federal figure below if you have it.'});
   if(inp.nyc){
-    const sc=nycSchoolCredit(inp.schoolIncome!=null?n(inp.schoolIncome):L['19a'],L['47a'],f,y);
+    const sc=nycSchoolCredit(inp.schoolIncome!=null?n(inp.schoolIncome):L['19a'],L['47'],f,y);
     L['69']=sc.fixed; L['69a']=sc.rateReduction;
     
     if(inp.fedEic!=null) L['70']=Math.round(n(inp.fedEic)*nycEicRate(L['33'],y));
@@ -18586,8 +18620,8 @@ const NY_LINE_LABEL={'19':'Federal adjusted gross income','19a':'Recomputed fede
   '32':'Total subtractions','33':'New York adjusted gross income','34':'Standard or itemized deduction','35':'Line 33 less line 34',
   '36':'Dependent exemptions','37':'Taxable income','38':'Taxable income (line 37)','39':'New York State tax on line 38',
   '40':'New York State household credit','43':'Total credits','44':'Line 39 less line 43','46':'Total New York State taxes',
-  '47a':'New York City taxable income','47':'New York City resident tax','48':'New York City household credit',
-  '49':'Line 47 less line 48','52':'New York City taxes','54':'New York City taxes after credits','58':'Total New York City taxes',
+  '47':'New York City taxable income','47a':'New York City resident tax','48':'New York City household credit',
+  '49':'Line 47a less line 48','52':'New York City taxes','54':'New York City taxes after credits','58':'Total New York City taxes',
   '59':'Sales or use tax','61':'Total taxes','62':'Total taxes (line 61)','63':'Empire State child credit','64':'NYS/NYC child and dependent care credit','68':'College tuition credit',
   '65':'New York State earned income credit','69':'NYC school tax credit (fixed amount)','69a':'NYC school tax credit (rate reduction amount)','70':'NYC earned income credit',
   '72':'New York State tax withheld','73':'New York City tax withheld','75':'Estimated tax payments','76':'Total payments',
@@ -18754,6 +18788,19 @@ function _nyFedEic(year){
   try{ const E=taxFedEstimate(taxEstimateInputs(year)); return E&&E.eicWork?E.eic:null; }catch(e){ return null; }
   finally{ _nyEicBusy=false; }
 }
+
+
+function nyPriorBalance(y){
+  const p=Number(y)-1, T=typeof taxBackTestFiled==='function'?taxBackTestFiled(p):{};
+  if(typeof T.nyOwed==='number'&&isFinite(T.nyOwed)) return {amt:r2v(Math.max(0,T.nyOwed)),src:p+'’s return as filed, typed on its back-test'};
+  const k=typeof taxYearKey==='function'?taxYearKey(p):String(p);
+  let S=null; try{ S=DB.taxes&&DB.taxes[k]?taxReturn(k).sum:null; }catch(e){ S=null; }
+  if(!S||S.nyOwed==null) return {amt:0,src:'none on the book'};
+  const E=typeof taxEstPaySummary==='function'?taxEstPaySummary(p):{state:0,city:0}, paid=r2v((E.state||0)+(E.city||0));
+  const back=paid>0&&!(typeof _btNets==='function'&&_btNets(S.nyTax,S.nyHeld,S.nyOwed,paid))?paid:0;
+  return {amt:r2v(Math.max(0,S.nyOwed+(S.otherOwed!=null?S.otherOwed:0)-back)),
+    src:'the '+p+' sheet'+(back?', less the '+money(back,0)+' the payments log sent toward it':'')};
+}
 function nyInputs(year){
   const y=Number(String(year).slice(0,4)), R=taxReturn(year), a=nyAnswers(y), src={};
   const docs=typeof taxDocsFor==='function'?taxDocsFor(y):[];
@@ -18782,10 +18829,25 @@ function nyInputs(year){
   const P=function(k){ return R.pairs[k]==null?null:R.pairs[k]; };
   
   const SYn=!nyW2.length&&typeof taxStubYear==='function'?taxStubYear(year):null, svn=SYn?taxStubPick(SYn,'state',P('NYS Withheld')):null;
+  const cityLoc=function(d){ return /NYC|NEW YORK CITY|CITY OF N/i.test(String(d.locality||'')); };
   const held={nys:nyW2.length?sum(nyW2,'17'):(svn!=null?svn:(P('NYS Withheld')||0)),
-    nyc:nyW2.length?sum(nyW2.filter(function(d){ return /NYC|NEW YORK CITY|CITY OF N/i.test(String(d.locality||'')); }),'19'):(P('NYC Withheld')||0)};
+    nyc:nyW2.length?sum(nyW2.filter(cityLoc),'19'):(P('NYC Withheld')||0)};
   src.withheld=nyW2.length?'the W-2s':svn!=null?'the pay stub, projected to year end':'the sheet';
   const est=typeof taxEstPaySummary==='function'?taxEstPaySummary(y):{state:0,city:0};
+  
+
+  let line5=null;
+  if(itemized){
+    const other=r2v(w2.reduce(function(s,d){ const b=d.boxes||{}, ny=nyW2.indexOf(d)>=0;
+      return s+(ny?0:(Number(b['17'])||0))+(ny&&cityLoc(d)?0:(Number(b['19'])||0)); },0));
+    const sent=r2v((Array.isArray(DB.taxestpay)?DB.taxestpay:[]).filter(function(p){ return p&&(p.to==='state'||p.to==='city')&&String(p.date||'').slice(0,4)===String(y); })
+      .reduce(function(s,p){ return s+(Number(p.amt)||0); },0));
+    const prior=nyPriorBalance(y), wh=r2v((held.nys||0)+(held.nyc||0)+other);
+    itemized.incomeTax=r2v(wh+sent+prior.amt); line5={amt:itemized.incomeTax,held:wh,other:other,sent:sent,prior:prior};
+    src.incomeTax=[money(wh)+' withheld ('+src.withheld+(other>0?'; '+money(other)+' of it another state’s or locality’s':'')+')',
+      sent>0?money(sent)+' of estimated payments sent in '+y+' (the payments log)':'',
+      prior.amt>0?money(prior.amt)+', '+(y-1)+'’s balance ('+prior.src+')':''].filter(Boolean).join('; ');
+  }
   
 
   const care=a.careExp!=null?{expenses:a.careExp,account:w2.length?sum(w2,'10'):0,persons:ages.filter(function(x){ return x<13; }).length,
@@ -18800,7 +18862,7 @@ function nyInputs(year){
     itemized:itemized,deps:ages,schoolIncome:fagi,fedEic:a.fedEic!=null?a.fedEic:_nyFedEic(year),salesTax:a.salesTax||0,
     care:care,tuition:Array.isArray(a.tuition)?a.tuition:null,
     withheld:held,estimated:r2v((est.state||0)+(est.city||0))};
-  return {inp:inp,src:src,city:city,exempt:exempt,answers:a};
+  return {inp:inp,src:src,city:city,exempt:exempt,answers:a,line5:line5};
 }
 
 
@@ -18821,7 +18883,7 @@ function nySecondOpinion(year){
 
 
 
-const NY_PRINT=['19','20','23','24','25','27','28','29','30','31','32','33','34','36','37','39','40','46','47a','47','48','54',
+const NY_PRINT=['19','20','23','24','25','27','28','29','30','31','32','33','34','36','37','39','40','46','47','47a','48','54',
   '59','61','63','64','65','68','69','69a','70','72','73','75','76','77','80'];
 const NY_ALWAYS={'19':1,'33':1,'34':1,'37':1,'39':1,'46':1,'61':1,'76':1};
 function nyLinesShown(L){ return NY_PRINT.filter(function(k){ return L[k]!=null&&(NY_ALWAYS[k]||Math.abs(L[k])>0.004); }); }
@@ -18860,12 +18922,17 @@ function nyReturnHtml(year){
       :P.itemized.rule==='reduced'?'reduced as New York AGI rises':P.itemized.rule==='limited'?'limited over the federal AGI threshold':'in full')+'), more than the '+money(P.std)+' standard deduction'
     :'The standard deduction'+(P.itemized?', more than the '+money(P.itemized.total)+' New York would allow itemized':' (no mortgage interest, property tax, charity or medical recorded for this year)');
   
+
+  const IT=P.itemized, l5=IT&&IT.lines?IT.lines['5']:0;
+  const l5Note=P.itemize&&l5>0&&IT.w2&&IT.w2['3']>0?'. Its 3% limit (IT-196 line 40) counts the '+money(l5)+' of state and local income taxes paid ('
+    +esc(g.src.incomeTax||'')+'), and line 41 takes back only what the limit left of them':'';
+  
   const flatR=nyP('states/ny/tax/income/main/'+NY_STATUS[ret.filing],y).b.map(function(r){ return r[1]; })
     .find(function(r){ return L['38']>0&&Math.abs(L['38']*r-L['39'])<0.6; });
   const taxNote=P.recapture>0.004?'The schedule, '+money(P.schedule)+', and '+money(P.recapture)+' of the lower brackets’ benefit taken back'
     +(flatR?': '+(flatR*100).toFixed(2)+'% of all of it':''):'';
-  const notes={'19':esc(g.src.fagi),'28':esc(g.src.usGovt),'34':dedNote,'36':g.inp.deps.length+' dependent'+(g.inp.deps.length===1?'':'s'),'39':taxNote,
-    '47':'New York City resident ('+esc(g.city.src)+')','63':P.escc.kids?P.escc.kids+' child'+(P.escc.kids===1?'':'ren')+(P.escc.phaseOut?', less '+money(P.escc.phaseOut)+' for income':''):'',
+  const notes={'19':esc(g.src.fagi),'28':esc(g.src.usGovt),'34':dedNote+l5Note,'36':g.inp.deps.length+' dependent'+(g.inp.deps.length===1?'':'s'),'39':taxNote,
+    '47a':'New York City resident ('+esc(g.city.src)+')','63':P.escc.kids?P.escc.kids+' child'+(P.escc.kids===1?'':'ren')+(P.escc.phaseOut?', less '+money(P.escc.phaseOut)+' for income':''):'',
     '64':P.care?(P.care.persons+' child'+(P.care.persons===1?'':'ren')+' under 13, '+money(P.care.expenses)+' of care'+(P.care.capped<P.care.expenses?', '+money(P.care.capped)+' counted':'')
       +(P.care.decoupled?' at '+(P.care.rate*100).toFixed(2)+'% (New York’s own credit from 2026)':' at '+Math.round(P.care.fedRate*100)+'% × '+(P.care.nyRate*100).toFixed(1)+'%')):'',
     '68':P.tuition?P.tuition.students+' student'+(P.tuition.students===1?'':'s')+' (up to $10,000 of tuition each)':'',
@@ -51284,7 +51351,7 @@ function renderOnce(name,fn){
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
     bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxEic,taxEduCredit,TAX_EIC,taxMtcCarryIn,taxSchedAI,taxBackTestSet,taxBackTestFiled,taxSheetChecks,taxAddlMedW2,taxAddlMedPayroll,taxAddlMedSheet,taxAddlMedHeld,taxAddlMedWagesSheet,taxAddlMedLine,taxMedhiHeader,taxBackTest,taxBackTestHtml,navEntries,navEntryOf,navTarget,navSections,navForget,navRemember,taxTabParent,taxTabSections,taxDeprOf,taxDeprFor,taxAssetAdd,taxAssetDel,taxDeprCard,nyPenaltyOf,nyPenaltyFor,nyUnderpayRate,taxEicAgeOk,nycEicRate,taxForm1116,taxFtcSrcSet,taxFtcCard,taxFtcCarryIn,taxAiSet,taxAiFor,taxAiCard,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
-    BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,mailOldScriptWords,MAIL_STMT_NOTICE_RE,mailAssistUnread,_maUnread,MAIL_ASSIST_V22,MAIL_FX_AMT,mailHasFx,mailRbsStmtSettle,mailRbsSelf,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,NY_TUITION_CAP,nyCareCredit,nyTuitionCredit,nyCareFedRate,nyCareRate,nyCareApplicable,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
+    BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,mailOldScriptWords,MAIL_STMT_NOTICE_RE,mailAssistUnread,_maUnread,MAIL_ASSIST_V22,MAIL_FX_AMT,mailHasFx,mailRbsStmtSettle,mailRbsSelf,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,NY_PRINT,NY_TUITION_CAP,nyCareCredit,nyTuitionCredit,nyCareFedRate,nyCareRate,nyCareApplicable,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,nyItemizedLimit,nyItemizedSubtract,nyItemizedCut,nyPriorBalance,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
     historyForget,
