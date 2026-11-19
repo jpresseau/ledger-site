@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-nOIyVnqxdAJRv9vlzTO2OlglF4glR5ZJeqharUDtQgE=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-Z1PlrEPQmyyYWE20v0ynNzGgmeNuXOPtiiT4fUU4UcY=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2999,7 +2999,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.50";
+const APP_V="v29.51";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -3013,7 +3013,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="85a9218";
+const APP_BUILD="ad9fcb1";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -14085,8 +14085,10 @@ function taxPenaltyOfYear(year,tax,held,today){
   let prev=null;
   try{ const ys=typeof _thYears==='function'?_thYears():Object.keys(DB.taxes||{}).sort(), i=ys.indexOf(year);
     prev=i>0?taxReturn(ys[i-1]):null; }catch(e){ prev=null; }
-  const pt=prev&&prev.sum&&prev.sum.fedTax!=null?prev.sum.fedTax:null;
-  return taxPenaltyFor(year,tax,pt,typeof taxHarborPct==='function'?taxHarborPct(prev):1,held,today);
+  
+
+  const pt=typeof taxHarborPrev==='function'?taxHarborPrev(prev).tax:(prev&&prev.sum&&prev.sum.fedTax!=null?prev.sum.fedTax:null);
+  return taxPenaltyFor(year,tax,pt,typeof taxHarborPct==='function'?taxHarborPct(prev,year):1,held,today);
 }
 
 function taxPenaltySay(X,open){
@@ -14114,6 +14116,131 @@ function taxAiCard(year){
     +'<div class="formrow" style="flex-wrap:wrap;gap:8px">'
     +inp('taiA','Income by 31 March ($)',A?A[0]:'')+inp('taiB','by 31 May ($)',A?A[1]:'')+inp('taiC','by 31 August ($)',A?A[2]:'')
     +'<button class="btn sm" data-act="taxaisave" data-y="'+y+'">Save</button></div></div>';
+}
+
+
+
+
+
+
+function taxHarborYear(year){
+  let R=null; try{ R=taxReturn(year); }catch(e){ R=null; }
+  const s=R&&R.sum?R.sum:{}, out={year:year,src:'sheet',tax:s.fedTax,held:s.fedHeld,med:0,sheetTax:s.fedTax,sheetHeld:s.fedHeld,finds:[]};
+  if(s.fedTax==null||typeof _btSheet!=='function') return out;
+  try{
+    
+    const S=_btSheet(year), so=S&&S.so, F=(S&&S.finds||[]).filter(function(f){ return f.id==='brackets'||f.id==='line16'||f.id==='line22'; });
+    const at=F.find(function(f){ return f.id==='line16'||f.id==='line22'; });
+    if(!so||!at||(at.sur>=1&&!_harborOwnSched2(R))) return out;
+    const W=typeof taxWorkEstimate==='function'?taxWorkEstimate(year,so.inp):null;
+    if(!W||!W.est||W.est.tax==null) return out;
+    return Object.assign(out,{src:'worked',line:at.id,tax:W.est.tax,held:r2v(W.inp.held||0),med:r2v(Math.max(0,W.inp.medHeld||0)),finds:F,W:W,
+      inHeld:r2v(((so.inp&&so.inp.medSeed)||{}).inHeld||0)});
+  }catch(e){ return out; }
+}
+
+
+function _harborLn(year){
+  const y=String(year==null?'':year).slice(0,4), N=typeof _btLn==='function'?_btLn(y):{own:true,med:'line 25c',tax:'line 16',after:'line 22',pre:'Schedule 2',oth:'Schedule 2',total:'line 24'};
+  const h=(typeof _btWhere==='function'?_btWhere(['held'],y):'')||'1040 line 25d';
+  return Object.assign({},N,{held:h.replace(/^1040 /,'')});
+}
+
+function _harborOwnSched2(R){
+  return !!(R&&typeof R.L==='function'&&(R.L('8959','18')!=null||R.L('8959','07')!=null||R.L('8960','17')!=null));
+}
+
+
+function taxHarborPrev(prev){
+  const s=prev&&prev.sum?prev.sum:null;
+  if(!s) return {tax:null,src:'none',sheet:null};
+  const P=prev.year!=null?taxHarborYear(prev.year):null, own=!!P&&P.sheetTax===s.fedTax;
+  const T=own&&typeof taxBackTestFiled==='function'?taxBackTestFiled(prev.year):null;
+  if(T&&typeof T.tax==='number'&&isFinite(T.tax)) return {tax:T.tax,src:'filed',sheet:s.fedTax};
+  if(s.fedTax==null) return {tax:null,src:'none',sheet:null};
+  return own&&P.src==='worked'?{tax:P.tax,src:'worked',sheet:s.fedTax,line:P.line}:{tax:s.fedTax,src:'sheet',sheet:s.fedTax};
+}
+
+
+function taxHarborFed(R,prev,o){
+  o=o||{};
+  const s=R&&R.sum?R.sum:{}, Y=R&&R.year!=null?taxHarborYear(R.year):null;
+  const B=Y&&Y.src==='worked'&&Y.sheetTax===s.fedTax&&Y.sheetHeld===s.fedHeld?Y:null;
+  const a=o.held!=null?o.held:(B?B.held:s.fedHeld);
+  let med=B?B.med:0, medSrc=B?((B.W.inp.src||{}).medHeld||'none'):'none';
+  if(B&&o.stub){ let SY=null; try{ SY=typeof taxStubYear==='function'?taxStubYear(R.year):null; }catch(e){ SY=null; }
+    if(SY&&SY.medWages!=null&&typeof taxAddlMedPayroll==='function'){ med=taxAddlMedPayroll(SY.medWages); medSrc='stub'; } }
+  const P=taxHarborPrev(prev);
+  const out={src:B?'worked':'sheet',tax:B?B.tax:s.fedTax,a:a,med:r2v(med),medSrc:medSrc,held:a==null?null:r2v(a+med),stub:!!o.stub,
+    prevTax:P.tax,prevSrc:P.src,prevSheet:P.sheet,pct:taxHarborPct(prev,R&&R.year),sheetTax:s.fedTax,sheetHeld:s.fedHeld,finds:B?B.finds:[]};
+  const m=function(v){ return money(v,0); };
+  const N=_harborLn(R&&R.year), PN=_harborLn(prev&&prev.year!=null?prev.year:'');
+  const last=P.src==='worked'?' Last year’s tax is its Form 1040 '+PN.total+' as worked here, '+m(P.tax)+': its sheet’s '+m(P.sheet)+' is its '
+      +(P.line==='line22'?PN.after+', before '+PN.oth+'’s other taxes':PN.tax+', before '+PN.pre)+'.'
+    :P.src==='filed'?' Last year’s tax is its return as filed, '+m(P.tax)+' on its Form 1040 '+PN.total+', as typed for the back-test'+(P.sheet!=null&&Math.abs(P.sheet-P.tax)>=0.5?' (its sheet says '+m(P.sheet)+')':'')+'.':'';
+  
+  const heldSay=N.own?' — '+m(a||0)+' withheld as income tax (lines 25a and 25b) and '+m(out.med)+' of the 0.9% Medicare tax payroll withheld ('+N.med+')'+(o.stub?', both projected from your stub':'')
+    :', the tax withheld'+(out.med>0?', and '+m(out.med)+' of the 0.9% Medicare tax payroll withheld (Form 8959 line 24, '+N.med+')'
+      :B&&B.inHeld>0?', which holds the '+m(B.inHeld)+' of the 0.9% Medicare tax payroll withheld (Form 8959 line 24 went '+N.med+')':'');
+  out.say=(B?'Both stand on the year’s whole return as worked here, the figures the pack’s Form 2210 reads: Form 1040 '+N.total+', '+m(out.tax)+', and '+N.held+', '+m(out.held)
+      +heldSay+'. '
+      +out.finds.map(function(f){ return esc(f.what); }).join(' ')
+    :'The tax is your sheet’s own, and '+(o.stub?'the withholding is what payroll is on course for':'so is the withholding')+'.')+last;
+  return out;
+}
+
+
+function nyHarborYear(year){
+  let R=null; try{ R=taxReturn(year); }catch(e){ R=null; }
+  const s=R&&R.sum?R.sum:{}, out={year:year,src:'sheet',tax:s.nyTax,held:s.nyHeld,sheetTax:s.nyTax,sheetHeld:s.nyHeld,finds:[]};
+  if(s.nyTax==null||typeof _btSheet!=='function'||typeof nyPenaltyInputs!=='function') return out;
+  try{
+    if(typeof taxIsNY==='function'&&!taxIsNY(year)) return out;
+    
+    const S=_btSheet(year), ny=S&&S.ny;
+    if(!ny||!ny.ret||!ny.ret.lines||!ny.sheet||ny.sheet.due==null||Math.abs(ny.sheet.due-s.nyTax)>0.005) return out;
+    const F=(S.finds||[]).filter(function(f){ return f.id==='nySchedule'||f.id==='nyRecapture'||f.id==='nyDeduction'; });
+    if(!F.some(function(f){ return f.id==='nyRecapture'; })) return out;
+    const I=nyPenaltyInputs(year,ny.ret); if(!I) return out;
+    const L=ny.ret.lines, NP=ny.ret.parts||{}, ownAgi=typeof _btNyAgi==='function'?_btNyAgi(R,ny,false):null, sTi=ny.sheet.ti;
+    return Object.assign(out,{src:'worked',tax:I.tax,held:I.held,state:r2v(L['72']||0),city:r2v(L['73']||0),prevTax:I.prevTax,pct:(Number(I.prevAgi)||0)>(I.filing==='mfs'?75000:150000)?1.1:1,finds:F,
+      ti:L['37'],sheetTi:sTi,agi:L['33'],sheetAgi:ownAgi,ded:L['34'],itemize:!!NP.itemize,filing:ny.ret.filing,
+      
+      sheetDed:ownAgi!=null&&sTi!=null?r2v(ownAgi-sTi-(L['36']||0)):null});
+  }catch(e){ return out; }
+}
+
+
+function nyHarborFor(R,prev,o){
+  o=o||{};
+  const s=R&&R.sum?R.sum:{}, Y=R&&R.year!=null?nyHarborYear(R.year):null, m=function(v){ return money(v,0); };
+  const B=Y&&Y.src==='worked'&&Y.sheetTax===s.nyTax&&Y.sheetHeld===s.nyHeld?Y:null;
+  if(!B) return {src:'sheet',tax:s.nyTax,held:o.held!=null?o.held:s.nyHeld,prevTax:typeof _taxPrevFor==='function'?_taxPrevFor(prev,o.name):null,pct:taxHarborPct(prev,R&&R.year),stub:!!o.stub,
+    say:'The tax is your sheet’s own, and '+(o.stub?'the withholding is what payroll is on course for':'so is the withholding')+'.'};
+  const st=o.held!=null?o.held:B.state, held=r2v(st+(B.city||0));
+  return {src:'worked',tax:B.tax,held:held,state:st,city:B.city,prevTax:B.prevTax,pct:B.pct,stub:!!o.stub,finds:B.finds,
+    say:'Both stand on New York’s return as worked here, the figures its own line 81 (IT-2105.9) reads: IT-201 line 61 less its refundable credits, '+m(B.tax)
+      +', and lines 72 and 73, '+m(held)+(o.stub?', line 72 projected from your stub':'')+'. '+B.finds.map(function(f){ return esc(f.what); }).join(' ')+_nyHarborApart(B)
+      +(B.prevTax!=null?' Last year’s is worked the same way, '+m(B.prevTax)+', and its New York income decides whether all of it or 110% is asked.':'')};
+}
+
+
+function _nyHarborApart(B){
+  const m=function(v){ return money(v,0); }, d=B&&B.ti!=null&&B.sheetTi!=null?r2v(B.ti-B.sheetTi):0, why=[];
+  if(Math.abs(d)<0.5) return '';
+  if(B.sheetAgi!=null&&Math.abs(B.agi-B.sheetAgi)>=0.5) why.push('its New York adjusted gross income (line 33) is '+m(B.agi)+', where the sheet’s is '+m(B.sheetAgi));
+  if(B.sheetDed!=null&&Math.abs(B.ded-B.sheetDed)>=0.5) why.push('its deduction (line 34) is '+m(B.ded)+', '
+    +(B.itemize?'the book’s itemized deductions as New York allows them (Form IT-196)':'New York’s standard deduction for '+(typeof taxFilingLabel==='function'?taxFilingLabel(B.filing):B.filing))
+    +', where the sheet’s is '+m(B.sheetDed));
+  return ' The findings’ figures are worked on the sheet’s own New York taxable income, '+m(B.sheetTi)+'; line 61 is on the return’s, '+m(B.ti)+' (line 37), '
+    +m(Math.abs(d))+(d>0?' more':' less')+(why.length?': '+why.join(', and ')+'.':'.');
+}
+
+function taxHarborDerive(B,need,held,tag){
+  return '<div class="mut" style="font-size:11.5px;margin-top:4px"><code>target '+money(need,0)+' = '
+    +(B.prevTax!=null?'lesser of 90% of '+money(B.tax,0)+' and '+Math.round(B.pct*100)+'% of last year’s '+money(B.prevTax,0):'90% of '+money(B.tax,0))
+    +' · withheld '+money(held,0)+(tag?' '+tag:'')+'</code></div>'
+    +(B.say?'<div class="mut" style="font-size:11.5px;line-height:1.5;margin-top:3px">'+B.say+'</div>':'');
 }
 
 
@@ -14221,7 +14348,10 @@ function _jurKey(name){ return /city/i.test(String(name||''))?'NYC':'NYS'; }
 
 
 
-function taxHarborPct(prev){ return prev&&(prev.sum.agi||0)>150000?1.1:1.0; }
+function taxHarborPct(prev,year){
+  const lim=year!=null&&typeof taxFilingFor==='function'&&taxFilingFor(year).filing==='mfs'?75000:150000;
+  return prev&&(prev.sum.agi||0)>lim?1.1:1.0;
+}
 function _taxPrevFor(prev,name){
   if(!prev) return null;
   const want=_jurKey(name);
@@ -14245,19 +14375,18 @@ function taxAdvice(R,prev,open){
   
 
   let saidHarborRule=false;
-  const harbor=(tax,held,prevTax,floor,who,src)=>{
+  
+  const harbor=(B,floor,who,src)=>{
+    const tax=B.tax, held=B.held, prevTax=B.prevTax;
     if(tax==null||held==null) return;
     if(tax-held<floor){ add('ok',who+' is already clear of the '+money(floor,0)+' penalty line',
       'What you still owe after withholding lands under '+money(floor,0)+', which is where penalties '
       +'start. Leave it alone.'); return; }
-    const pct=taxHarborPct(prev);
+    const pct=B.pct;
     const need=prevTax!=null?Math.min(0.9*tax,pct*prevTax):0.9*tax;
     
 
-    const derive='<div class="mut" style="font-size:11.5px;margin-top:4px"><code>target '+money(need,0)+' = '
-      +(prevTax!=null?'lesser of 90% of '+money(tax,0)+' and '+Math.round(pct*100)+'% of last year’s '+money(prevTax,0)
-        :'90% of '+money(tax,0))
-      +' · withheld '+money(held,0)+(src?' '+src.tag:'')+'</code></div>'
+    const derive=taxHarborDerive(B,need,held,src?src.tag:'')
       
 
       +(src?'<div class="mut" style="font-size:11.5px;line-height:1.5;margin-top:3px">'
@@ -14296,10 +14425,12 @@ function taxAdvice(R,prev,open){
     :{tag:'(projected from your '+fD(_pj.asOf)+' stub)',ytd:ytd,asOf:_pj.asOf,n:_pj.n};
   const _fedSrc=_pj?_src(_pj.fedProj,_pj.fedYtd):null;
   const _nySrc=_pj?_src(_pj.stateProj,_pj.stateYtd):null;
-  harbor(R.sum.fedTax,_fedSrc?_pj.fedProj:R.sum.fedHeld,prev?prev.sum.fedTax:null,1000,
-    'Federal',_fedSrc);
   
-  if(taxNyRules(R)) harbor(R.sum.nyTax,_nySrc?_pj.stateProj:R.sum.nyHeld,_taxPrevFor(prev,M.stateName),300,
+
+  harbor(taxHarborFed(R,prev,{held:_fedSrc?_pj.fedProj:null,stub:!!_fedSrc}),1000,'Federal',_fedSrc);
+  
+
+  if(taxNyRules(R)) harbor(nyHarborFor(R,prev,{held:_nySrc?_pj.stateProj:null,stub:!!_nySrc,name:M.stateName}),300,
     M.stateName==='New York'?'New York':M.stateName,
     
 
@@ -14521,16 +14652,33 @@ function _taxYear(){
   const y=S.tax.year;
   return y&&DB.taxes[y]&&taxFormLines(y).length?y:_planYear();
 }
-function taxPlanMeterHtml(C,R,prev){
+
+
+let _planBasisLast=null;
+function _planBasis(R,prev){
+  let FB=null, NB=null; try{ FB=taxHarborFed(R,prev); NB=taxNyRules(R)?nyHarborFor(R,prev,{name:R.brackets.stateName}):null; }catch(e){ FB=null; NB=null; }
+  return {FB:FB,NB:NB};
+}
+function _planHarbors(C,R,prev,basis){
+  const B=basis||_planBasis(R,prev), FB=B.FB, NB=C.st.ny?B.NB:null;
+  const out={prevTax:FB?FB.prevTax:(prev?prev.sum.fedTax:null),fed:null,ny:null}, f=FB&&FB.src==='worked', n=NB&&NB.src==='worked';
+  const p0=f||n?taxPlanSeed(R):null, C0=p0?taxPlanCompute(p0,R):null, p=S.tax.plan;
+  if(!C0||!p) return out;
+  if(f) out.fed={tax:r2v(FB.tax+C.fed.total+C.med+C.niit-C0.fed.total-C0.med-C0.niit),held:r2v(FB.held+p.fedHeld-p0.fedHeld),prevTax:FB.prevTax,pct:FB.pct};
+  if(n) out.ny={tax:r2v(NB.tax+C.ny.total-C0.ny.total),held:r2v(NB.held+p.nyHeld-p0.nyHeld),prevTax:NB.prevTax,pct:NB.pct};
+  return out;
+}
+function taxPlanMeterHtml(C,R,prev,basis){
   const refund=C.owed<0;
   
 
-  const harbor=(tax,held,prevTax,floor,who)=>{
+  const harbor=(tax,held,prevTax,floor,who,pct)=>{
     if(tax-held<floor) return '<span class="pos">✓ '+who+' clears the penalty threshold</span>';
-    const need=prevTax!=null?Math.min(0.9*tax,taxHarborPct(prev)*prevTax):0.9*tax;
+    const need=prevTax!=null?Math.min(0.9*tax,(pct!=null?pct:taxHarborPct(prev,R.year))*prevTax):0.9*tax;
     return held>=need?'<span class="pos">✓ '+who+' withholding reaches its safe harbor</span>'
       :'<span class="neg">✗ '+who+' withholding '+money(need-held,0)+' short of its safe harbor</span>';
   };
+  const wk=_planHarbors(C,R,prev,basis);
   return '<div><div class="cap">'+(refund?'Refund in April':'Owed in April')+'</div>'
    +'<div class="big '+(refund?'pos':'neg')+'">'+money(Math.abs(C.owed),0)+'</div>'
    +'<div class="sub">'+money(C.tax,0)+' of tax against '+money(C.held,0)+' withheld · '
@@ -14543,13 +14691,15 @@ function taxPlanMeterHtml(C,R,prev){
      +'</div><div class="v">'+money(x[1],0)+'</div></div>').join('')
    +'</div>'
    +'<div style="flex-basis:100%;font-size:12px;display:flex;gap:18px;flex-wrap:wrap">'
-   +harbor(C.fed.total,S.tax.plan.fedHeld,prev?prev.sum.fedTax:null,1000,'Federal')
+   +(wk.fed?harbor(wk.fed.tax,wk.fed.held,wk.fed.prevTax,1000,'Federal',wk.fed.pct):harbor(C.fed.total,S.tax.plan.fedHeld,wk.prevTax,1000,'Federal'))
    
-   +(C.st.ny&&(C.st.mode==='table'||C.st.mode==='fixed')?harbor(C.ny.total,S.tax.plan.nyHeld,_taxPrevFor(prev,R.brackets.stateName),300,C.st.name)
+   +(C.st.ny&&(C.st.mode==='table'||C.st.mode==='fixed')?(wk.ny?harbor(wk.ny.tax,wk.ny.held,wk.ny.prevTax,300,C.st.name,wk.ny.pct)
+       :harbor(C.ny.total,S.tax.plan.nyHeld,_taxPrevFor(prev,R.brackets.stateName),300,C.st.name))
      :'<span class="mut">'+esc(C.st.mode==='none'?C.st.name+' has no income tax on wages'
        :C.st.mode==='unknown'?'Federal only — '+(C.st.name!=='State'?C.st.name+'’s':'the state’s')+' tax is not on this sheet'
        :C.st.name+'’s own safe harbor is not worked out here')+'</span>')
-   +(C.otherName?harbor(C.other,S.tax.plan.otherHeld||0,_taxPrevFor(prev,C.otherName),300,C.otherName):'')
+   
+   +(C.otherName&&!(wk.ny&&_jurKey(C.otherName)==='NYC')?harbor(C.other,S.tax.plan.otherHeld||0,_taxPrevFor(prev,C.otherName),300,C.otherName):'')
    +'</div>';
 }
 function taxPlanOutHtml(C,R){
@@ -14603,11 +14753,12 @@ function taxPlanHtml(){
   const ys=Object.keys(DB.taxes).filter(y=>/^\d{4}/.test(y)&&taxFormLines(y).length).sort();
   const pi=ys.indexOf(py), prev=pi>0?taxReturn(ys[pi-1]):null;
   const C=taxPlanCompute(p,R);
+  _planBasisLast={py:py,B:_planBasis(R,prev)};
   const F=(k,l)=>'<div class="fld" style="max-width:170px"><label>'+l+'</label>'
     +'<input type="text" inputmode="decimal" data-plan="'+k+'" value="'+(Math.round(p[k]*100)/100)+'" autocomplete="off"></div>';
   const chip=(k,d,l)=>'<button class="chip" data-act="planchip" data-k="'+k+'" data-d="'+d+'">'+l+'</button>';
   return '<div class="taxviz">'
-   +'<div class="taxhero" id="planMeter">'+taxPlanMeterHtml(C,R,prev)+'</div>'
+   +'<div class="taxhero" id="planMeter">'+taxPlanMeterHtml(C,R,prev,_planBasisLast.B)+'</div>'
    +'<div class="sheet"><h3>Change a figure and watch it land <span class="r">'+esc(py.slice(0,4))+' tables</span></h3>'
    +'<div class="mut" style="font-size:12px;line-height:1.55;margin-bottom:11px">'
    +'Built on '+esc(py.slice(0,4))+'’s own bracket tables, read off the sheet — at the sheet’s figures this '
@@ -14644,7 +14795,7 @@ function taxPlanPaint(){
   const pi=ys.indexOf(py), prev=pi>0?taxReturn(ys[pi-1]):null;
   const C=taxPlanCompute(S.tax.plan,R);
   const m=document.getElementById('planMeter'), o=document.getElementById('planOut');
-  if(m) m.innerHTML=taxPlanMeterHtml(C,R,prev);
+  if(m) m.innerHTML=taxPlanMeterHtml(C,R,prev,_planBasisLast&&_planBasisLast.py===py?_planBasisLast.B:null);
   if(o) o.innerHTML=taxPlanOutHtml(C,R);
 }
 
@@ -15090,13 +15241,10 @@ function taxDeductScan(year){
 
 
 
-function taxQuarterly(R,prev,today,heldOverride){
+function taxQuarterly(R,prev,today,heldOverride,heldIsStub){
   if(!R||R.sum.fedTax==null) return null;
   const y=Number(String(R.year).slice(0,4));
-  const pct=taxHarborPct(prev);
   const E=(typeof taxEstPaySummary==='function')?taxEstPaySummary(y):null;
-  const need=prev&&prev.sum.fedTax!=null
-    ?Math.min(0.9*R.sum.fedTax,pct*prev.sum.fedTax):0.9*R.sum.fedTax;
   const dates=[[y,4,15,0.25],[y,6,15,0.50],[y,9,15,0.75],[y+1,1,15,1.00]];
   const t=today||new Date();
   
@@ -15107,7 +15255,11 @@ function taxQuarterly(R,prev,today,heldOverride){
     let w=null; try{ w=taxWithheldPace(String(y)); }catch(e){ w=null; }
     if(w&&w.fedProj!=null&&w.n!=null){ held=w.fedProj; proj=w; }
   }
-  if(held==null) held=(R.sum.fedHeld||0);
+  
+
+  const B=taxHarborFed(R,prev,{held:held,stub:!!proj||heldIsStub===true});
+  held=B.held!=null?B.held:0;
+  const pct=B.pct, need=B.prevTax!=null?Math.min(0.9*B.tax,pct*B.prevTax):0.9*B.tax;
   const rows=dates.map(([yy,mm,dd,frac])=>{
     const due=new Date(yy,mm-1,dd);
     
@@ -15118,8 +15270,8 @@ function taxQuarterly(R,prev,today,heldOverride){
   });
   const paid=E?E.irs:0;
   const short=r2v(Math.max(0,need-held-paid));
-  return {need:r2v(need),held:r2v(held),paid:paid,short,rows,proj:proj,
-    basis:prev&&prev.sum.fedTax!=null&&pct*prev.sum.fedTax<0.9*R.sum.fedTax
+  return {need:r2v(need),held:r2v(held),paid:paid,short,rows,proj:proj,harbor:B,
+    basis:B.prevTax!=null&&pct*B.prevTax<0.9*B.tax
       ?Math.round(pct*100)+'% of '+(y-1)+'’s tax':'90% of this year’s'};
 }
 
@@ -15318,6 +15470,7 @@ function taxAdvisorHtml(year){
         +'<td class="n num">'+money(r.target)+'</td><td class="n num">'+money(r.covered)+'</td>'
         +'<td class="n num">'+(r.gap>0?'<b>'+money(r.gap)+'</b>':'—')+'</td></tr>').join('')
       +'</tbody></table></div>'
+      +taxHarborDerive(q.harbor,q.need,q.held,q.proj?'(projected from your '+fD(q.proj.asOf)+' stub)':'')
       +(q.short>0?'<div class="mut" style="font-size:12px;margin-top:6px">Raising withholding beats vouchers '
         +'even late in the year, because it back-dates itself. A voucher only cures the dates still ahead.</div>':''));
   }
@@ -16039,7 +16192,7 @@ function _btSheet(year){
 
     const tot=r2v(so.sheet-so.est.tax), sumUp=parts.length<2?'':' — '+money(Math.abs(gap),0)+(gap>0?' more':' less')
       +(other?' in all; with '+other.y+'’s brackets, '+money(Math.abs(tot),0)+(tot>0?' more':' less'):'')+' than the '+money(so.est.tax,0)+' worked here ('+N.total+')';
-    if(parts.length) out.push({id:at==='l16'?'line16':'line22',amt:gap,what:'Your sheet’s federal tax is the tax '+(at==='l16'?'before '+(own.cr>=1?'the credits and ':'')+N.pre+' (Form 1040 '+N.tax+')':'after the credits but before '+N.oth+'’s other taxes (Form 1040 '+N.after+')')+': '
+    if(parts.length) out.push({id:at==='l16'?'line16':'line22',amt:gap,sur:sur>=1?sur:0,what:'Your sheet’s federal tax is the tax '+(at==='l16'?'before '+(own.cr>=1?'the credits and ':'')+N.pre+' (Form 1040 '+N.tax+')':'after the credits but before '+N.oth+'’s other taxes (Form 1040 '+N.after+')')+': '
       +parts.join('; ')+sumUp+'.'});
   }
   const isNY=typeof taxIsNY!=='function'||taxIsNY(year);
@@ -16091,7 +16244,7 @@ function _btSheet(year){
       if(uncut||half) out.push({id:'nyDeduction',amt:r2v(wDed-sDed),what:'Your sheet’s New York deduction ('+money(sDed,0)+') is the book’s own itemized figures '+(uncut?'before New York’s limits for high incomes':'with New York’s first limit but not its cut for high incomes')
         +'. '+_btNyCut(fy,ff)+'. That leaves '+money(IT.total,0)+(P.std>IT.total?', less than the '+money(P.std,0)+' standard deduction, which is New York’s deduction here':'')+'.'}); }
   }
-  return {finds:out,nets:nets,ny:ny};
+  return {finds:out,nets:nets,ny:ny,so:so};
 }
 
 
@@ -19008,7 +19161,7 @@ function nyPenaltyTax(ret){
 function nyPenaltyOf(o){
   const y=Number(String(o&&o.year).slice(0,4)), tax=Math.max(0,Number(o.tax)||0), held=Math.max(0,Number(o.held)||0);
   if(!Number.isFinite(y)||tax-held<300) return null;
-  const pct=(Number(o.prevAgi)||0)>150000?1.1:1, prev=o.prevTax!=null&&Number.isFinite(Number(o.prevTax))?Math.max(0,Number(o.prevTax))*pct:null;
+  const pct=(Number(o.prevAgi)||0)>(o.filing==='mfs'?75000:150000)?1.1:1, prev=o.prevTax!=null&&Number.isFinite(Number(o.prevTax))?Math.max(0,Number(o.prevTax))*pct:null;
   const need=prev!=null?Math.min(0.9*tax,prev):0.9*tax;
   const P=typeof taxPenalty2210==='function'?taxPenalty2210({year:y,need:need,withheld:held,pays:o.pays||[],rateOf:nyUnderpayRate}):null;
   if(!P||!(P.penalty>0)) return null;
@@ -19016,7 +19169,8 @@ function nyPenaltyOf(o){
 }
 
 let _nyPenBusy=false;
-function nyPenaltyFor(year,ret){
+
+function nyPenaltyInputs(year,ret){
   if(_nyPenBusy||!ret||!ret.lines) return null;
   _nyPenBusy=true;
   try{
@@ -19024,9 +19178,13 @@ function nyPenaltyFor(year,ret){
     try{ const ys=typeof _thYears==='function'?_thYears():[], i=ys.indexOf(year);
       if(i>0&&(typeof taxIsNY!=='function'||taxIsNY(ys[i-1]))){ const g=nyInputs(ys[i-1]), r=g&&g.inp?nyReturn(g.inp):null; if(r&&r.lines&&r.lines['61']>0) prev=r; } }catch(e){ prev=null; }
     const pays=(typeof taxEstPays==='function'?taxEstPays(y):[]).filter(function(p){ return p.to==='state'||p.to==='city'; }).map(function(p){ return {date:p.date,amt:p.amt}; });
-    return nyPenaltyOf({year:y,tax:nyPenaltyTax(ret),held:r2v((L['72']||0)+(L['73']||0)),prevTax:prev?nyPenaltyTax(prev):null,prevAgi:prev?prev.lines['33']:0,pays:pays});
+    return {year:y,tax:nyPenaltyTax(ret),held:r2v((L['72']||0)+(L['73']||0)),prevTax:prev?nyPenaltyTax(prev):null,prevAgi:prev?prev.lines['33']:0,filing:ret.filing,pays:pays};
   }catch(e){ return null; }
   finally{ _nyPenBusy=false; }
+}
+function nyPenaltyFor(year,ret){
+  const I=nyPenaltyInputs(year,ret);
+  try{ return I?nyPenaltyOf(I):null; }catch(e){ return null; }
 }
 
 function nyPenaltyRow(X){
@@ -20140,6 +20298,12 @@ function taxWork(year){
   DB.taxwork=DB.taxwork||{};
   return DB.taxwork[y]=DB.taxwork[y]||{};
 }
+
+
+function _taxWorkRead(year){
+  const n=Number(String(year).slice(0,4)), W=DB.taxwork, k=String(n);
+  return Number.isFinite(n)&&W&&typeof W==='object'&&W[k]&&typeof W[k]==='object'?W[k]:{};
+}
 function taxWorkSet(year,field,raw){
   if(!TAXWORK_FIELDS.some(f=>f[0]===field)) return {ok:false,why:'No such line.'};
   const w=taxWork(year);
@@ -20152,9 +20316,10 @@ function taxWorkSet(year,field,raw){
 }
 
 
-function taxWorkInputs(year){
-  const seed=taxEstimateInputs(year);
-  const w=taxWork(year);
+
+function taxWorkInputs(year,given){
+  const seed=given||taxEstimateInputs(year);
+  const w=_taxWorkRead(year);
   const out={year:seed.year,filing:seed.filing,src:{},seed:{}};
   TAXWORK_FIELDS.forEach(([f])=>{
     
@@ -20171,8 +20336,8 @@ function taxWorkInputs(year){
   out.ltPref=out.src.ltcg==='hand'?null:seed.ltPref; out.schD=out.src.ltcg==='hand'?null:seed.schD;
   return out;
 }
-function taxWorkEstimate(year){
-  const inp=taxWorkInputs(year);
+function taxWorkEstimate(year,given){
+  const inp=taxWorkInputs(year,given);
   const est=taxFedEstimate(inp);
   if(!est) return null;
   
@@ -20619,7 +20784,8 @@ function _stubVerdict(yr){
     const i=ys.indexOf(key);
     const R=key?taxReturn(key):null;
     const prev=i>0?taxReturn(ys[i-1]):null;
-    const q=R?taxQuarterly(R,prev,null,w.fedProj):null;
+    
+    const q=R?taxQuarterly(R,prev,null,w.fedProj,true):null;
     if(q) say=q.short>0
       ? '<div class="stubsay bad"><span class="mk">⚠</span><span>Still short by <b>'
         +money(q.short,0)+'</b> of the '+esc(q.basis)+' safe harbour, even at this rate.</span></div>'
@@ -51704,7 +51870,9 @@ function themeFollow(){
 const ONCE_NAMES=['cfTransfers','cardPays','cfSeries','cfSeriesAll','cfProject','cfProjectAll','cfReconSummary',
   'cfBalancePoints','storeLines','taxReturn','taxFacts','catSums','reconciledRefs',
   
-  '_btSheet'];
+  '_btSheet',
+  
+  'taxHarborYear','nyHarborYear'];
 const _onceIds=new WeakMap(); let _onceN=0;
 const ONCE_HITS={};
 function _onceId(a){ if(!_onceIds.has(a)) _onceIds.set(a,++_onceN); return _onceIds.get(a); }
