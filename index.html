@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-KVJQ2Q6In0AQvi8mc84M0EY66vqIFP7qi0NdBwghBPI=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-nOIyVnqxdAJRv9vlzTO2OlglF4glR5ZJeqharUDtQgE=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2999,7 +2999,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.49";
+const APP_V="v29.50";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -3013,7 +3013,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="ba77256";
+const APP_BUILD="85a9218";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -15932,11 +15932,15 @@ const BT_FORM_LINES={2018:{agi:'7',deduction:'8',taxable:'10',tax:'15',held:'16'
   2020:{agi:'11',deduction:'12',taxable:'15',tax:'24',held:'25d',owed:['37','34','38']},
   2021:{deduction:'12a'},2025:{agi:'11a',deduction:'12e'}};
 
+function _btFormLines(y){
+  const n=Number(y), L=n<=2018?BT_FORM_LINES[2018]:n===2019?BT_FORM_LINES[2019]:n===2021?BT_FORM_LINES[2021]:n>=2025?BT_FORM_LINES[2025]:{};
+  return Object.assign({},BT_FORM_LINES[2020],L);
+}
+
 function _btWhere(f,y){
   if(!Object.prototype.hasOwnProperty.call(BT_FORM_LINES[2020],f[0])) return f[2];
   const n=Number(y); if(!(n>=2018)) return '';
-  const L=n===2018?BT_FORM_LINES[2018]:n===2019?BT_FORM_LINES[2019]:n===2021?BT_FORM_LINES[2021]:n>=2025?BT_FORM_LINES[2025]:{};
-  const v=L[f[0]]!=null?L[f[0]]:BT_FORM_LINES[2020][f[0]];
+  const v=_btFormLines(y)[f[0]];
   return f[0]==='owed'?'1040 line '+v[0]+', or '+v[1]+', before line '+v[2]+'’s penalty':'1040 line '+v;
 }
 
@@ -16189,8 +16193,10 @@ function taxSheetChecksHtml(finds,lead){
 
 function _btFormHtml(year,lead){
   const y=String(year).slice(0,4), T=taxBackTestFiled(year), mut=function(t){ return '<div class="mut" style="font-size:12px;margin-bottom:8px">'+t+'</div>'; };
-  const inp=function(f){ return '<label>'+esc(f[1])+' <span class="mut">('+esc(_btWhere(f,Number(y)))+')</span><input id="bt_'+f[0]+'" inputmode="'+(/^(agi|nyAgi|owed|nyOwed)$/.test(f[0])?'text':'decimal')+'" value="'+esc(T[f[0]]!=null?String(T[f[0]]):'')+'" placeholder="as on the return"></label>'; };
-  return mut(lead)+'<div class="formrow" style="flex-wrap:wrap;gap:8px">'+TAX_BT_FILED.map(inp).join('')+'<button class="btn sm" data-act="taxbtsave" data-y="'+y+'">Save</button></div>';
+  
+  const P=typeof btPdfBox==='function', inp=function(f){ const v=P?btPdfBox(y,f[0],T[f[0]]):T[f[0]];
+    return '<label>'+esc(f[1])+' <span class="mut">('+esc(_btWhere(f,Number(y)))+')</span>'+(P?btPdfMark(y,f[0]):'')+'<input id="bt_'+f[0]+'" data-bt="'+f[0]+'" data-y="'+y+'" inputmode="'+(/^(agi|nyAgi|owed|nyOwed)$/.test(f[0])?'text':'decimal')+'" value="'+esc(v!=null?String(v):'')+'" placeholder="as on the return"></label>'; };
+  return mut(lead)+'<div class="formrow" style="flex-wrap:wrap;gap:8px">'+TAX_BT_FILED.map(inp).join('')+'<button class="btn sm" data-act="taxbtsave" data-y="'+y+'">Save</button>'+(P?btPdfButton(y):'')+'</div>'+(P?btPdfReportHtml(y):'');
 }
 
 function _btFormOnlyHtml(year){
@@ -16200,7 +16206,7 @@ function _btFormOnlyHtml(year){
   if(typeof TAX_FED!=='object'||!TAX_FED[y]) return '';
   
   const due=typeof taxDueDate==='function'?taxDueDate(y):null, filed=typeof taxFiledRead==='function'&&taxFiledRead(year).status==='filed', early=!filed&&typeof due==='string'&&due&&!(today>due);
-  return '<div class="sheet" id="taxBackTest"><h3>The back-test</h3>'+_btFormHtml(year,(early?y+'’s return is due '+fDY(due)+'. Once it is filed, type its own figures here, from the PDF your filing service gives you, ':'Type what the '+y+' return itself says, from the PDF your filing service gives you, ')
+  return '<div class="sheet" id="taxBackTest"><h3>The back-test</h3>'+_btFormHtml(year,(early?y+'’s return is due '+fDY(due)+'. Once it is filed, type its own figures here, or read them from the PDF your filing service gives you, ':'Type what the '+y+' return itself says, or read it from the PDF your filing service gives you (Read the return’s PDF, below), ')
     +'and the year is worked again by this app’s own engine and set beside them, line by line.')+'</div>';
 }
 function taxBackTestHtml(year){
@@ -16226,9 +16232,241 @@ function taxBackTestHtml(year){
     +'<div class="tblwrap"><table class="tbl tight"><thead><tr><th>Line</th><th class="n">'+head+'</th><th class="n">Worked here</th><th class="n">Difference</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'
     +taxSheetChecksHtml(B.finds,'What your sheet does differently')
     +'<h4 style="margin:12px 0 4px">What it was worked from</h4><ul class="mut" style="font-size:12px;line-height:1.55">'+ins+'</ul>'
-    +'<h4 style="margin:12px 0 4px">The return as filed</h4>'+_btFormHtml(year,'Type what the '+y+' return itself says — the federal and New York returns’ own lines — and each line above is set beside it instead of the sheet. Leave a box empty to keep the sheet’s figure there.')+'</div>';
+    +'<h4 style="margin:12px 0 4px">The return as filed</h4>'+_btFormHtml(year,'Type what the '+y+' return itself says — the federal and New York returns’ own lines — or read them from its PDF, and each line above is set beside it instead of the sheet. Leave a box empty to keep the sheet’s figure there.')+'</div>';
 }
 
+
+
+const RP_ROW_TOL=3.5, RP_LEAD='…', RP_NO=/^\d{1,2}[a-z]?$/, RP_NOTBOX=/^(lines?|and|through|to|from|form|forms|schedule|of|on|by|than)$/i;
+
+const RP_NY={nyAgi:'33',nyDeduction:'34',nyTaxable:'37',nyTax:'39',nyOwed:['80','77','81','82']};
+
+
+const RP_SIGNS={agi:['adjusted gross income'],deduction:['standard deduction','itemized deductions'],taxable:['taxable income'],tax:['total tax'],
+  held:['25a through 25c','tax withheld'],owe:['amount you owe'],over:['amount overpaid'],pen:['estimated tax penalty'],other:['other penalties interest'],
+  nyAgi:['york adjusted gross income'],nyDeduction:['standard deduction','itemized deduction'],nyTaxable:['taxable income'],nyTax:['tax line 38 amount']};
+
+
+function returnPdfRows(runs){
+  const by={}, snapped=[];
+  (runs||[]).forEach(function(r){ if(r&&r.t) (by[r.page]=by[r.page]||[]).push(r); });
+  Object.keys(by).forEach(function(p){ let row=null;
+    const close=function(){ if(row) row.rs.forEach(function(r){ snapped.push(Object.assign({},r,{y:row.y0})); }); };
+    by[p].slice().sort(function(a,b){ return b.y-a.y; }).forEach(function(r){
+      if(row&&Math.abs(row.sum/row.rs.length-r.y)<=RP_ROW_TOL){ row.rs.push(r); row.sum+=r.y; return; }
+      close(); row={y0:r.y,sum:r.y,rs:[r]}; });
+    close(); });
+  return pdfLines(snapped).map(function(l){ return {page:l.page,text:l.text}; });
+}
+
+function _rpTokens(text){
+  const out=[], push=function(t){ if(t===RP_LEAD&&out[out.length-1]===RP_LEAD) return; out.push(t); };
+  String(text||'').replace(/\$\s+(?=[\d(])/g,'$').split(/\s+/).forEach(function(w){
+    if(!w) return; const m=/^([.·…]{2,})?(.*?)([.·…]{2,})?$/.exec(w);
+    
+    const g=/^(.*[a-z]{2}[.:;,)]?)(\d{1,2}[a-z]?)$/i.exec(m[2]||'');
+    if(m[1]) push(RP_LEAD); if(g){ push(g[1]); push(g[2]); } else if(m[2]) push(/^[.·…]+$/.test(m[2])?RP_LEAD:m[2]); if(m[3]) push(RP_LEAD); });
+  return out;
+}
+
+
+function _rpAmt(t){
+  const m=/^(\()?([-−])?\$?(\d{1,3}(?:,\d{3})+|\d+)(\.\d{0,2})?(\))?([-−])?$/.exec(String(t==null?'':t));
+  if(!m||!!m[1]!==!!m[5]) return null;
+  const signs=(m[1]?1:0)+(m[2]?1:0)+(m[6]?1:0), n=Number(m[3].replace(/,/g,'')+(m[4]&&m[4].length>1?m[4]:''));
+  return signs>1||!Number.isFinite(n)?null:signs?-n:n;
+}
+
+function _rpFormOf(text){
+  const t=String(text||'').replace(/\s+/g,' ');
+  const fed=/\bForm ?1040(?:-SR)? ?\( ?(20\d\d) ?\)/.exec(t), ny=/\bIT-201 ?\( ?(20\d\d) ?\)/.exec(t)
+    ||(/\bIT-201(?![-\w])/.test(t)&&/\bResident Income Tax Return\b/.test(t)&&!/\bNonresident\b/i.test(t)?/\bfull year January 1, (20\d\d)\b/.exec(t):null);
+  if(fed&&ny) return {form:null,year:null};
+  return fed?{form:'1040',year:Number(fed[1])}:ny?{form:'IT-201',year:Number(ny[1])}:{form:null,year:null};
+}
+
+function _rpFig(n){ const a=Math.abs(n), t=(Math.round(a*100)%100?a.toFixed(2):String(Math.round(a))).replace(/\B(?=(\d{3})+(?!\d))/g,','); return (n<0?'-':'')+t; }
+function _rpWords(s){ const o={}; String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').split(' ').forEach(function(w){ if(w) o[w]=1; }); return o; }
+function _rpSays(win,sign){ return (sign||[]).some(function(p){ return p.split(' ').every(function(w){ return win[w]; }); }); }
+
+
+function _rpStart(tk){
+  for(let j=0;j<tk.length&&j<12;j++){ const t=tk[j], nx=tk[j+1]||'';
+    if(t===RP_LEAD) return null;
+    if(RP_NO.test(t)&&/^[A-Z(]/.test(nx)&&!(j&&RP_NOTBOX.test(tk[j-1]))) return {j:j,no:t};
+    if(/^[a-z]$/.test(t)&&/^[A-Z]/.test(nx)) return {j:j,sub:t,in:tk.slice(0,j).filter(function(x){ return /^\d{1,2}$/.test(x); }).pop()}; }
+  return null;
+}
+
+
+function _rpRowFigs(tk){
+  const out=[];
+  for(let k=1;k<tk.length;k++){
+    let v=_rpAmt(tk[k]); const prev=tk[k-1];
+    if(v==null&&tk[k]==='-0-'&&RP_NO.test(prev)) v=0;
+    if(v==null||/^\.?00$/.test(tk[k])) continue;
+    let e=k+1; while(/^\.?00$/.test(tk[e]||'')) e++;
+    const nx=tk[e], last=e>=tk.length, bad=nx!=null&&_rpAmt(nx)!=null;
+    if(RP_NO.test(prev)&&!(k>1&&RP_NOTBOX.test(tk[k-2]))&&(last||bad||nx===RP_LEAD||nx==='▶'||/^[a-z]$/.test(nx)||RP_NO.test(nx))){ out.push({k:k,v:v,box:prev.toLowerCase(),bad:bad}); k=e-1; }
+    else if(last&&!/^\d{1,2}$/.test(tk[k])&&(prev===RP_LEAD||(/[a-z)]$/i.test(prev)&&!RP_NOTBOX.test(prev)&&_rpAmt(prev)==null))) out.push({k:k,v:v,end:true,lead:prev===RP_LEAD});
+  }
+  return out;
+}
+
+
+function _rpScan(texts,page){
+  const T=(texts||[]).map(_rpTokens), st=[], F=T.map(_rpRowFigs), figs=[], ments=[];
+  T.forEach(function(tk,i){ const s=_rpStart(tk); if(s&&s.sub){
+      let up=s.in; for(let u=i-1;up==null&&u>=0&&u>=i-6;u--) if(st[u]) up=String(st[u].no).replace(/[a-z]$/,'');
+      s.no=up!=null?up+s.sub:null; }
+    st.push(s&&s.no?s:null); });
+  T.forEach(function(tk,i){
+    let s=i; if(!st[i]){ if(i>0&&!F[i-1].length&&st[i-1]) s=i-1; else if(i>1&&!F[i-1].length&&!F[i-2].length&&st[i-2]) s=i-2; }
+    const win=_rpWords(T.slice(s,i+1).map(function(x){ return x.join(' '); }).join(' ')), own=st[s]?st[s].no:null;
+    
+    F[i].forEach(function(f){ const no=f.box||(f.end&&(s===i||f.lead)?own:null); if(no) figs.push({no:no,v:f.v,bad:!!f.bad,win:win,page:page}); });
+    if(st[i]) ments.push({no:st[i].no,win:win,page:page});
+    tk.forEach(function(t,k){ if(k&&RP_NO.test(t)&&(tk[k-1]===RP_LEAD||tk[k-1]==='▶')) ments.push({no:t.toLowerCase(),win:win,page:page}); });
+  });
+  return {figs:figs,ments:ments};
+}
+
+
+function _rpLine(scans,no,sign){
+  const L=String(no).toLowerCase(), hit=[], seen={}; let bad=false, bare=null;
+  scans.forEach(function(S){
+    S.figs.forEach(function(f){ if(f.no!==L||!_rpSays(f.win,sign)) return; if(f.bad){ bad=true; return; }
+      if(!seen[f.v]){ seen[f.v]=1; hit.push({v:f.v,page:f.page}); } });
+    S.ments.forEach(function(m){ if(bare==null&&m.no===L&&_rpSays(m.win,sign)) bare=m.page; });
+  });
+  if(bad) return {state:'unclear',line:no,alts:hit,page:bare};
+  if(hit.length>1) return {state:'two',line:no,alts:hit};
+  if(hit.length) return {state:'found',line:no,v:hit[0].v,page:hit[0].page};
+  return {state:bare!=null?'bare':'none',line:no,page:bare};
+}
+
+
+function _rpBalance(scans,nos,signs,off){
+  const owe=_rpLine(scans,nos[0],signs[0]), over=_rpLine(scans,nos[1],signs[1]), pens=nos.slice(2).map(function(n,i){ return _rpLine(scans,n,signs[2+i]); });
+  const all=[owe,over].concat(pens), parts={owe:owe,over:over,pens:pens};
+  const odd=all.filter(function(x){ return x.state==='two'||x.state==='unclear'; });
+  if(odd.length) return {state:odd[0].state,line:nos[0],parts:parts,alts:odd[0].alts,of:odd[0].line};
+  const sum=function(xs){ return r2v(xs.reduce(function(a,x){ return a+(x.state==='found'?x.v:0); },0)); };
+  const o=owe.state==='found'?owe.v:null, p=over.state==='found'?over.v:null, q=sum(pens), qo=sum(pens.slice(0,off||0));
+  if(o>0&&p>0) return {state:'both',line:nos[0],parts:parts,alts:[{v:o,page:owe.page},{v:p,page:over.page}]};
+  const by=o>0?owe:p>0?over:o===0?owe:p===0?over:null;
+  if(!by) return {state:owe.state==='bare'||over.state==='bare'?'bare':'none',line:nos[0],page:owe.page!=null?owe.page:over.page,parts:parts};
+  return by===owe?{state:'found',line:nos[0],v:r2v(o-q),page:owe.page,parts:parts,net:q}:{state:'found',line:nos[1],v:r2v(0-p-qo),page:over.page,parts:parts,net:qo,over:true};
+}
+
+
+function returnPdfFind(rows,year){
+  const y=Number(String(year).slice(0,4)), by={}, order=[];
+  (rows||[]).forEach(function(r){ if(!by[r.page]){ by[r.page]=[]; order.push(r.page); } by[r.page].push(r.text); });
+  const pages=order.map(function(p){ const f=_rpFormOf(by[p].join('\n')); return {page:p,form:f.form,year:f.year}; });
+  const scans={'1040':[],'IT-201':[]};
+  pages.forEach(function(P){ if(P.form&&P.year===y) scans[P.form].push(_rpScan(by[P.page],P.page)); });
+  if(!scans['1040'].length&&!scans['IT-201'].length){
+    const ys=pages.filter(function(P){ return P.form; }).map(function(P){ return P.year; }).filter(function(v,i,a){ return a.indexOf(v)===i; });
+    return {ok:false,year:y,pages:pages,why:ys.length?'year':'forms',years:ys};
+  }
+  const F=_btFormLines(y), lines=[], vals={}, S=RP_SIGNS;
+  
+
+  const longForm=y<Math.min.apply(null,Object.keys(BT_FORM_LINES).map(Number));
+  TAX_BT_FILED.forEach(function(f){
+    const id=f[0], ny=/^ny/.test(id), form=ny?'IT-201':'1040', sc=scans[form];
+    let R;
+    if(!sc.length) R={state:'noform'};
+    else if(!ny&&longForm) R={state:'layout'};
+    else if(id==='owed') R=_rpBalance(sc,F.owed,[S.owe,S.over,S.pen],0);
+    else if(id==='nyOwed') R=_rpBalance(sc,RP_NY.nyOwed,[S.owe,S.over,S.pen,S.other],1);
+    else { const no=ny?RP_NY[id]:F[id]; R=no&&S[id]?_rpLine(sc,no,S[id]):{state:'none'}; }
+    lines.push(Object.assign({id:id,form:form},R));
+    if(R.state==='found') vals[id]=R.v;
+  });
+  return {ok:true,year:y,pages:pages,lines:lines,vals:vals};
+}
+
+
+const RP_PDF_MAX=40*1048576;
+function _btPdfKey(y){ return String(Number(String(y).slice(0,4))); }
+function _btPdf(y){ const k=_btPdfKey(y); return S.btPdf&&S.btPdf[k]?S.btPdf[k]:null; }
+
+function btPdfBox(y,k,saved){ const R=_btPdf(y); return R&&Object.prototype.hasOwnProperty.call(R.vals,k)?R.vals[k]:saved; }
+function btPdfMark(y,k){ const R=_btPdf(y); return R&&R.got&&R.got[k]&&R.vals[k]===R.got[k]?' <span class="mut" style="font-size:11px">· from the PDF</span>':''; }
+function btPdfTyped(el){ const R=_btPdf(el.dataset.y); if(R&&el.dataset.bt) R.vals[el.dataset.bt]=el.value; }
+function btPdfButton(y){
+  return '<label class="btn ghost sm" style="cursor:pointer">Read the return’s PDF<input type="file" accept="application/pdf,.pdf" data-act="btpdf" data-y="'+_btPdfKey(y)+'" style="display:none"></label>';
+}
+async function btPdfRead(file,year){
+  const y=_btPdfKey(year); if(!file||!(Number(y)>1900)) return;
+  S.btPdf=S.btPdf||{}; const R=S.btPdf[y]=S.btPdf[y]||{vals:{},got:{},reads:[]}, name=String(file.name||'the PDF').slice(0,80);
+  R.busy=name; render();
+  let read=null;
+  try{ read=await _btPdfReadFile(file,y); }catch(e){ read={ok:false,err:'Could not read that PDF: '+String(e&&e.message||e).slice(0,160)}; }
+  finally{ R.busy=''; }
+  read.name=name;
+  if(read.ok) Object.keys(read.vals).forEach(function(k){ R.vals[k]=R.got[k]=_rpFig(read.vals[k]); });
+  R.reads=[read].concat(R.reads).slice(0,3);
+  render();
+}
+async function _btPdfReadFile(file,y){
+  if(file.size>RP_PDF_MAX) return {ok:false,err:'That PDF is over '+Math.round(RP_PDF_MAX/1048576)+' MB — save just the Form 1040 and IT-201 pages as a PDF and choose that.'};
+  const buf=await file.arrayBuffer(), all=_latin(new Uint8Array(buf));
+  if(all.slice(0,5)!=='%PDF-') return {ok:false,err:'That file is not a PDF inside, whatever its name says.'};
+  if(/\/Encrypt\b/.test(all)) return {ok:false,err:'That PDF is locked with a password, and its words cannot be read until it is opened: open it, save or print an unlocked copy as a PDF, and choose that.'};
+  let runs=null;
+  try{ runs=await pdfRuns(buf); }
+  catch(e){ return /no readable text/i.test(String(e&&e.message||''))
+      ?{ok:false,scan:true,err:'That PDF has no text in it to read — it is a scan or a photograph of the return, not the file a filing service makes. Nothing was filled: type the figures from it instead.'}
+      :{ok:false,err:'Could not read that PDF: '+String(e&&e.message||e).slice(0,160)}; }
+  return returnPdfFind(returnPdfRows(runs),y);
+}
+
+function _btPdfSpans(ps){
+  const out=[]; ps.forEach(function(p){ const L=out[out.length-1]; if(L&&p===L[1]+1) L[1]=p; else out.push([p,p]); });
+  return out.map(function(s){ return s[0]===s[1]?String(s[0]):s[0]+'–'+s[1]; }).join(', ');
+}
+function _btPdfPagesSay(r){
+  const by={}, other=[], order=[];
+  r.pages.forEach(function(P){ const k=P.form?(P.form==='1040'?'Form 1040':'IT-201')+' ('+P.year+')':''; if(!k){ other.push(P.page); return; }
+    if(!by[k]){ by[k]=[]; order.push(k); } by[k].push(P.page); });
+  const n=r.pages.length, one=function(k){ return k+(String(r.year)===k.slice(-5,-1)?'':', another year’s')+' on page'+(by[k].length>1?'s ':' ')+_btPdfSpans(by[k]); };
+  return 'Read '+n+' page'+(n===1?'':'s')+(order.length?': '+order.map(one).join('; '):'')+(other.length?(order.length?'; ':': ')+'passed over page'+(other.length>1?'s ':' ')+_btPdfSpans(other)+', '+(other.length>1?'other forms':'another form'):'')+'.';
+}
+function _btPdfWhy(L,y){
+  const pg=function(p){ return p!=null?' on page '+p:''; };
+  if(L.state==='noform') return 'no '+(L.form==='1040'?'Form 1040':'IT-201')+' ('+y+') page in this PDF';
+  if(L.state==='layout') return 'the '+y+' Form 1040 numbers its lines another way, which this does not read: type it';
+  if(L.state==='bare') return 'the line is there'+pg(L.page)+', with no figure beside it';
+  if(L.state==='two') return 'two figures, '+L.alts.map(function(a){ return money(a.v,0)+pg(a.page); }).join(' and ')+(L.of&&L.of!==L.line?' (line '+L.of+')':'')+' — left for you';
+  if(L.state==='unclear') return 'a figure it could not read cleanly'+(L.of?' on line '+L.of:'')+' — left for you';
+  if(L.state==='both') return 'both an amount owed ('+money(L.alts[0].v,0)+') and an overpayment ('+money(L.alts[1].v,0)+') are filled in — left for you';
+  return 'not on its pages';
+}
+function _btPdfReadHtml(r,y){
+  const lab={}; TAX_BT_FILED.forEach(function(f){ lab[f[0]]=f; });
+  if(!r.ok){ const e=r.err||(r.why==='year'?'That PDF is the '+r.years.join(' and ')+' return (its pages say so), and this back-test is for '+y+': nothing was filled. Choose '+r.years[0]+' above to read it there.'
+      :'No page of it is a Form 1040 or an IT-201 for '+y+' with its words in it, so nothing was filled. '+(r.pages&&r.pages.length?_btPdfPagesSay(r)+' ':'')+'If the forms are pictures (a scan), there is nothing to read: type the figures instead.');
+    return '<p style="margin:6px 0"><b class="off">'+esc(r.name)+'</b>: '+esc(e)+'</p>'; }
+  const got=r.lines.filter(function(L){ return L.state==='found'; }), miss=r.lines.filter(function(L){ return L.state!=='found'; });
+  const where=function(L){ return (L.form==='1040'?'1040':'IT-201')+' line '+L.line+(!(L.net>0)?'':L.over?' and the '+money(L.net,0)+' of penalties taken off it':' less '+money(L.net,0)+' of penalties'); };
+  return '<p style="margin:6px 0"><b>'+esc(r.name)+'</b>: '+esc(_btPdfPagesSay(r))+'</p>'
+    +(got.length?'<p style="margin:4px 0 0">Filled '+got.length+' box'+(got.length===1?'':'es')+':</p><ul style="margin:2px 0 6px;padding-left:18px">'
+      +got.map(function(L){ return '<li>'+esc(lab[L.id][1])+' <b>'+money(L.v,0)+'</b> <span class="mut">— '+esc(where(L))+', page '+L.page+'</span></li>'; }).join('')+'</ul>':'')
+    +(miss.length?'<p style="margin:4px 0">Not filled: '+miss.map(function(L){ const w=_btWhere(lab[L.id],Number(y)); return esc(lab[L.id][1])+(w?' <span class="mut">('+esc(w)+')</span>':'')+' — '+esc(_btPdfWhy(L,y)); }).join('; ')+'.</p>':'')
+    
+    +(!got.length&&miss.some(function(L){ return L.state==='bare'; })?'<p style="margin:4px 0">The forms’ own words are there but none of their figures, which is how a PDF reads whose figures sit in fill-in fields rather than on the page. Opening it and saving or printing it as a new PDF usually puts them on the page; read that, or type them.</p>':'');
+}
+function btPdfReportHtml(y){
+  const R=_btPdf(y); if(!R) return '';
+  if(R.busy) return '<div class="mut" role="status" style="font-size:12px;margin-top:8px">Reading '+esc(R.busy)+' — on this device, nothing sent…</div>';
+  const n=Object.keys(R.got).length;
+  return '<div id="btPdfRead" role="status" style="font-size:12.5px;line-height:1.55;margin-top:8px">'+R.reads.map(function(r){ return _btPdfReadHtml(r,_btPdfKey(y)); }).join('')
+    +'<p style="margin:6px 0">'+(n?'<b>Nothing is saved yet.</b> Check each box against the return, then press Save. ':'')
+    +'<button class="btn ghost sm" data-act="btpdfdrop" data-y="'+_btPdfKey(y)+'">'+(n?'Put the boxes back':'Clear this')+'</button></p></div>';
+}
 
 
 const TAX_MED_RATE=0.0145, TAX_ADDL_RATE=0.009, TAX_ADDL_FLOOR=200000;
@@ -30392,6 +30630,7 @@ async function guardLockNow(why){
     Object.keys(_imgCache).forEach(function(k){ delete _imgCache[k]; });
     if(typeof RCP==='object'){ RCP.queue.forEach(function(it){ if(it&&it.rawUrl) try{ URL.revokeObjectURL(it.rawUrl); }catch(e){} }); RCP.queue=[]; }
     S.cfimp=null; S.stub=null; S.syncFp=null; S.servicer=null;    S.advice=null;    S.betsy=null;    S.ivstmt=null; S.ivtax=null; S.plaid=null; S.rcp.sel=null; S.rcp.pasteText='';
+    S.btPdf=null;   
     
     Object.assign(S.bills,{paste:false,text:'',parsed:null,nm:'',date:'',mailId:'',mailToken:'',mailDay:''}); S.cfal=null; S.subRec=null;
     if(typeof _mailQueued==='object') Object.keys(_mailQueued).forEach(function(k){ delete _mailQueued[k]; });
@@ -38723,9 +38962,9 @@ function reconHeldPanel(){
 
 
 
-const INFLATE_CAP=48*1048576, INFLATE_DOC=160*1048576;
-let _inflateLeft=INFLATE_DOC;
-function inflateBudget(){ _inflateLeft=INFLATE_DOC; }
+const INFLATE_CAP=48*1048576, INFLATE_DOC=160*1048576, CMAP_RANGES=65536, CMAP_CODES=1048576;
+let _inflateLeft=INFLATE_DOC, _cmapRanges=CMAP_RANGES, _cmapCodes=CMAP_CODES;
+function inflateBudget(){ _inflateLeft=INFLATE_DOC; _cmapRanges=CMAP_RANGES; _cmapCodes=CMAP_CODES; }
 async function _inflate(bytes){
   for(const fmt of ['deflate','deflate-raw']){
     try{
@@ -38798,8 +39037,11 @@ async function _pdfFilters(raw,dict){
 }
 function _latin(bytes){ let s=''; for(let i=0;i<bytes.length;i+=0x8000)
   s+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000)); return s; }
+
+
 function _pdfUnesc(s){
-  return s.replace(/\\(\d{1,3}|.)/g,(m,c)=>{
+  return s.replace(/\\(\r\n|\r|\n|\d{1,3}|.)/g,(m,c)=>{
+    if(c==='\r\n'||c==='\r'||c==='\n') return '';
     if(/^\d+$/.test(c)) return String.fromCharCode(parseInt(c,8));
     return c==='n'?'\n':c==='r'?'\r':c==='t'?'\t':c;
   });
@@ -38807,14 +39049,27 @@ function _pdfUnesc(s){
 
 
 function _pdfIndex(hay){
-  const at={}; const re=/(?:^|[^0-9])(\d+)\s+0\s+obj\b/g; let m;
-  while((m=re.exec(hay))) at[m[1]]=m.index+m[0].length;
+  const at={}, heads=[]; const re=/(?:^|[^0-9])(\d+)\s+0\s+obj\b/g; let m;
+  while((m=re.exec(hay))){ at[m[1]]=m.index+m[0].length; heads.push(m.index); }
+  _pdfEnds.set(at,{len:hay.length,heads:heads,ends:null});
   return at;
 }
+
+
+const _pdfEnds=new WeakMap(), PDF_WORK={chars:0,codes:0,kids:0,back:0};   
+function _pdfEndsOf(hay,at){
+  let E=_pdfEnds.get(at);
+  if(!E||E.len!==hay.length){ E={len:hay.length,heads:[],ends:null}; const re=/(?:^|[^0-9])(\d+)\s+0\s+obj\b/g; let m;
+    while((m=re.exec(hay))) E.heads.push(m.index); _pdfEnds.set(at,E); }
+  if(!E.ends){ E.ends=[]; for(let i=hay.indexOf('endobj');i>=0;i=hay.indexOf('endobj',i+6)) E.ends.push(i); }
+  return E;
+}
+function _pdfNext(list,s){ let lo=0,hi=list.length; while(lo<hi){ const k=(lo+hi)>>>1; if(list[k]<s) lo=k+1; else hi=k; } return lo<list.length?list[lo]:Infinity; }
 function _pdfBody(hay,at,n){
   const s=at[n]; if(s==null) return '';
-  const e=hay.indexOf('endobj',s);
-  return hay.slice(s,e<0?hay.length:e);
+  const E=_pdfEndsOf(hay,at), e=Math.min(_pdfNext(E.ends,s),_pdfNext(E.heads,s),hay.length);
+  PDF_WORK.chars+=e-s;
+  return hay.slice(s,e);
 }
 
 
@@ -38835,37 +39090,12 @@ async function _pdfStream(bytes,hay,at,n){
   let p=s+si+6;
   if(hay[p]==='\r') p++;
   if(hay[p]==='\n') p++;
-  const e=hay.indexOf('endstream',p); if(e<0) return null;
-  const raw=bytes.subarray(p,_pdfStreamEnd(hay,p,e,body.slice(0,si)));
+  
+
+  const eb=body.indexOf('endstream',p-s); if(eb<0) return null;
+  const e=s+eb, raw=bytes.subarray(p,_pdfStreamEnd(hay,p,e,body.slice(0,si)));
+  PDF_WORK.chars+=raw.length;
   return await _pdfFilters(raw,body.slice(0,si));
-}
-
-
-async function _pdfCMap(bytes,hay,at,fontNum){
-  const tu=/\/ToUnicode\s+(\d+)\s+0\s+R/.exec(_pdfBody(hay,at,fontNum));
-  if(!tu) return null;
-  const d=await _pdfStream(bytes,hay,at,tu[1]);
-  if(!d) return null;
-  const s=_latin(d), map=new Map(); let m,q;
-  const blocks=/beginbfchar([\s\S]*?)endbfchar/g;
-  while((m=blocks.exec(s))){
-    const pr=/<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>/g;
-    while((q=pr.exec(m[1]))){
-      let t=''; for(let i=0;i<q[2].length;i+=4) t+=String.fromCharCode(parseInt(q[2].substr(i,4),16));
-      map.set(parseInt(q[1],16),t);
-    }
-  }
-  const ranges=/beginbfrange([\s\S]*?)endbfrange/g;
-  while((m=ranges.exec(s))){
-    const pr=/<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>/g;
-    while((q=pr.exec(m[1]))){
-      const a=parseInt(q[1],16), z=Math.min(parseInt(q[2],16),a+0xffff), c=parseInt(q[3],16);
-      for(let k=a;k<=z;k++) map.set(k,String.fromCharCode(c+k-a));
-    }
-  }
-  if(!map.size) return null;
-  const cs=/begincodespacerange\s*<([0-9A-Fa-f]+)>/.exec(s);
-  return {map,w:cs?cs[1].length:4};
 }
 
 
@@ -38914,7 +39144,9 @@ function _pdfScan(txt,fonts,page,runs){
 
   
 
-  const re=/\bBT\b|\/([^\s\/<>\[\]{}()%]+)\s+(-?[\d.]+)\s+Tf|\[((?:[^\[\]\\]|\\.)*)\]\s*TJ|(\((?:[^()\\]|\\.)*\)|<[0-9A-Fa-f\s]*>)\s*Tj|(-?[\d.]+)\s+(-?[\d.]+)\s+T[dD]\b|(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+Tm\b|(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+cm\b|(?:^|\s)(q|Q)(?=\s|$)|(-?[\d.]+)\s+TL\b|(?:^|\s)(T\*)(?=\s|$)|(\((?:[^()\\]|\\.)*\)|<[0-9A-Fa-f\s]*>)\s*'|(-?[\d.]+)\s+(-?[\d.]+)\s+(\((?:[^()\\]|\\.)*\)|<[0-9A-Fa-f\s]*>)\s*"/gm;
+  
+
+  const re=/\bBT\b|\/([^\s\/<>\[\]{}()%]+)\s+(-?[\d.]{1,32})\s+Tf|\[((?:[^\[\]\\]|\\[\s\S])*)\]\s*TJ|(\((?:[^()\\]|\\[\s\S])*\)|<[0-9A-Fa-f\s]*>)\s*Tj|(-?[\d.]{1,32})\s+(-?[\d.]{1,32})\s+T[dD]\b|(-?[\d.]{1,32})\s+(-?[\d.]{1,32})\s+(-?[\d.]{1,32})\s+(-?[\d.]{1,32})\s+(-?[\d.]{1,32})\s+(-?[\d.]{1,32})\s+Tm\b|(-?[\d.]{1,32})\s+(-?[\d.]{1,32})\s+(-?[\d.]{1,32})\s+(-?[\d.]{1,32})\s+(-?[\d.]{1,32})\s+(-?[\d.]{1,32})\s+cm\b|(?:^|\s)(q|Q)(?=\s|$)|(-?[\d.]{1,32})\s+TL\b|(?:^|\s)(T\*)(?=\s|$)|(\((?:[^()\\]|\\[\s\S])*\)|<[0-9A-Fa-f\s]*>)\s*'|(-?[\d.]{1,32})\s+(-?[\d.]{1,32})\s+(\((?:[^()\\]|\\[\s\S])*\)|<[0-9A-Fa-f\s]*>)\s*"/gm;
   let m;
   while((m=re.exec(txt))){
     
@@ -38952,7 +39184,7 @@ function _pdfScan(txt,fonts,page,runs){
     
 
     else {
-      const inner=/\((?:[^()\\]|\\.)*\)|<[0-9A-Fa-f\s]*>|-?[\d.]+/g; let q,gap=0,prev='';
+      const inner=/\((?:[^()\\]|\\[\s\S])*\)|<[0-9A-Fa-f\s]*>|-?[\d.]+/g; let q,gap=0,prev='';
       while((q=inner.exec(m[3]))){
         const tk=q[0];
         if(tk[0]!=='('&&tk[0]!=='<'){ const v=parseFloat(tk); if(v<=-200) gap=-v/1000; continue; }
@@ -38970,10 +39202,23 @@ function _pdfScan(txt,fonts,page,runs){
 }
 
 
+function _pdfOldKids(hay){
+  const P=/\/Type\s*\/Pages/g, K=/\/Kids\s*\[/g; let k=null;
+  while(P.exec(hay)){
+    if(!k||k.index<P.lastIndex){ K.lastIndex=P.lastIndex; k=K.exec(hay); if(!k) return null; }
+    if(k.index-P.lastIndex>600) continue;
+    const z=hay.indexOf(']',K.lastIndex);
+    PDF_WORK.kids+=(z<0?hay.length:z)-K.lastIndex;
+    return z<0?null:hay.slice(K.lastIndex,z);   
+  }
+  return null;
+}
+
+
 async function _pdfWalk(bytes,hay,at,runs){
-  let nums=[];
-  const kids=/\/Type\s*\/Pages[\s\S]{0,600}?\/Kids\s*\[([\s\S]*?)\]/.exec(hay);
-  if(kids) nums=(kids[1].match(/(\d+)\s+0\s+R/g)||[]).map(s=>s.split(/\s+/)[0]);
+  let nums=typeof _pdfPageTree==='function'?_pdfPageTree(hay,at):[];   
+  const kids=nums.length?null:_pdfOldKids(hay);
+  if(kids!=null) nums=(kids.match(/(\d{1,10})\s+0\s+R/g)||[]).map(s=>s.split(/\s+/)[0]);   
   nums=nums.filter(n=>/\/Type\s*\/Page[^s]/.test(_pdfBody(hay,at,n).slice(0,1500)));
   if(!nums.length)
     nums=Object.keys(at).filter(n=>/\/Type\s*\/Page[^s]/.test(_pdfBody(hay,at,n).slice(0,1500)))
@@ -38988,9 +39233,9 @@ async function _pdfWalk(bytes,hay,at,runs){
 
     if(fm){ const fr=/\/([^\s\/<>\[\]{}()%]+)\s+(\d+)\s+0\s+R/g; let q;
       while((q=fr.exec(fm[1]))) fonts[q[1]]=await _pdfCMap(bytes,hay,at,q[2]); }
-    const cn=/\/Contents\s+(?:(\d+)\s+0\s+R|\[([\s\S]*?)\])/.exec(bd);
+    const cn=/\/Contents\s*(?:(\d+)\s+0\s+R|\[([\s\S]*?)\])/.exec(bd);
     if(!cn) continue;
-    const ids=cn[1]?[cn[1]]:(cn[2].match(/(\d+)\s+0\s+R/g)||[]).map(s=>s.split(/\s+/)[0]);
+    const ids=cn[1]?[cn[1]]:(cn[2].match(/(\d{1,10})\s+0\s+R/g)||[]).map(s=>s.split(/\s+/)[0]);
     let txt='';
     for(const id of ids){ const d=await _pdfStream(bytes,hay,at,id); if(d) txt+=_latin(d)+'\n'; }
     if(!txt) continue;
@@ -38999,13 +39244,21 @@ async function _pdfWalk(bytes,hay,at,runs){
   }
 }
 
+
+function _pdfDictBefore(hay,from,s){
+  PDF_WORK.back+=s-from;
+  const d=hay.slice(from,s).lastIndexOf('<<');
+  return d<0?'':hay.slice(from+d,s);
+}
+
 async function pdfRuns(buf){
   inflateBudget();
   const bytes=new Uint8Array(buf);
   const hay=_latin(bytes);
   if(hay.slice(0,5)!=='%PDF-') throw new Error('That does not look like a PDF.');
   const runs=[];
-  try{ await _pdfWalk(bytes,hay,_pdfIndex(hay),runs); }catch(e){ runs.length=0; }
+  try{ const full=hay+(typeof _pdfObjStms==='function'?await _pdfObjStms(bytes,hay):'');   
+    await _pdfWalk(bytes,full,_pdfIndex(full),runs); }catch(e){ if(e&&e.pdfCap) throw e; runs.length=0; }   
   
 
   if(!runs.length){
@@ -39018,10 +39271,10 @@ async function pdfRuns(buf){
       if(hay[p]==='\n') p++;
       const e=hay.indexOf('endstream',p);
       if(e<0) break;
-      i=e+9;
+      const from=i; i=e+9;
       
 
-      const ds=hay.lastIndexOf('<<',s), dict=ds<0?'':hay.slice(ds,s);
+      const dict=_pdfDictBefore(hay,from,s);
       const inf=await _pdfFilters(bytes.subarray(p,_pdfStreamEnd(hay,p,e,dict)),dict);
       if(!inf) continue;
       const txt=_latin(inf);
@@ -39055,6 +39308,82 @@ function pdfLines(runs){
   }).sort((a,b)=>a.page-b.page||b.y-a.y);
 }
 
+
+
+async function _pdfObjStms(bytes,hay){
+  const top=_pdfIndex(hay), got={}; let out='';
+  for(const n of Object.keys(top)){
+    const body=_pdfBody(hay,top,n), si=body.indexOf('stream');
+    if(si<0||!/\/Type\s*\/ObjStm\b/.test(body.slice(0,si))) continue;
+    const N=/\/N\s+(\d+)/.exec(body.slice(0,si)), F=/\/First\s+(\d+)/.exec(body.slice(0,si));
+    if(!N||!F) continue;
+    let d=null; try{ d=await _pdfStream(bytes,hay,top,n); }catch(e){ d=null; }
+    if(!d) continue;
+    const x=_latin(d), first=Number(F[1]), head=x.slice(0,first).trim().split(/\s+/).map(Number);
+    
+
+    let past=first;
+    for(let i=0;i<Number(N[1])&&2*i+1<head.length;i++){
+      const num=head[2*i], at=first+head[2*i+1], nx=2*i+3<head.length?first+head[2*i+3]:x.length, end=Math.min(x.length,nx>at?nx:at);
+      if(!Number.isFinite(num)||!(at>=past)||top[num]!=null||got[num]) continue;
+      got[num]=1; past=end; out+='\n'+num+' 0 obj\n'+x.slice(at,end)+'\nendobj\n';
+    }
+  }
+  return out;
+}
+
+
+function _pdfPageTree(hay,at){
+  const objOf=function(n){ return _pdfBody(hay,at,n).slice(0,4000); };
+  let root=null;
+  for(const n of Object.keys(at)){ const b=objOf(n);
+    if(/\/Type\s*\/Catalog\b/.test(b)){ const p=/\/Pages\s+(\d+)\s+0\s+R/.exec(b); if(p){ root=p[1]; break; } } }
+  if(root==null) root=Object.keys(at).find(function(n){ const b=objOf(n); return /\/Type\s*\/Pages\b/.test(b)&&!/\/Parent\s+\d+\s+0\s+R/.test(b); });
+  const out=[], seen={};
+  const walk=function(n,depth){
+    if(n==null||seen[n]||depth>32||out.length>5000) return; seen[n]=1;
+    const b=objOf(n);
+    if(/\/Type\s*\/Pages\b/.test(b)){ const k=/\/Kids\s*\[([^\]]*)\]/.exec(b);
+      
+      if(k) (k[1].match(/(\d{1,10})\s+0\s+R/g)||[]).forEach(function(s){ walk(s.split(/\s+/)[0],depth+1); }); }
+    else if(/\/Type\s*\/Page\b/.test(b)) out.push(String(n));
+  };
+  walk(root,0);
+  return out;
+}
+
+
+async function _pdfCMap(bytes,hay,at,fontNum){
+  const tu=/\/ToUnicode\s+(\d+)\s+0\s+R/.exec(_pdfBody(hay,at,fontNum));
+  if(!tu) return null;
+  const d=await _pdfStream(bytes,hay,at,tu[1]);
+  if(!d) return null;
+  return _pdfCMapParse(_latin(d));
+}
+
+
+function _cmapTooBig(){
+  const e=new Error('That PDF’s font tables map more characters than any document needs (over '+CMAP_CODES.toLocaleString('en-US')+', or '+CMAP_RANGES.toLocaleString('en-US')+' ranges), so it was not read.');
+  e.pdfCap=true; return e;
+}
+function _pdfCMapParse(s){
+  const map=new Map();
+  const each=function(open,close,re,fn){ let q; for(let i=0;;){ const a=s.indexOf(open,i); if(a<0) return; const z=s.indexOf(close,a+open.length); if(z<0) return;
+    const b=s.slice(a+open.length,z); re.lastIndex=0; while((q=re.exec(b))) fn(q); i=z+close.length; } };
+  each('beginbfchar','endbfchar',/<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>/g,function(q){
+    if(--_cmapCodes<0) throw _cmapTooBig(); PDF_WORK.codes++;
+    let t=''; for(let i=0;i<q[2].length;i+=4) t+=String.fromCharCode(parseInt(q[2].substr(i,4),16));
+    map.set(parseInt(q[1],16),t); });
+  each('beginbfrange','endbfrange',/<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>/g,function(q){
+    const a=parseInt(q[1],16), z=Math.min(parseInt(q[2],16),a+0xffff), c=parseInt(q[3],16), n=Math.max(0,z-a+1);
+    if(!(z<=0xFFFFFFFF)) return;
+    if(--_cmapRanges<0||(_cmapCodes-=n)<0) throw _cmapTooBig();
+    PDF_WORK.codes+=n;
+    for(let k=a;k<=z;k++) map.set(k,String.fromCharCode(c+k-a)); });
+  if(!map.size) return null;
+  const cs=/begincodespacerange\s*<([0-9A-Fa-f]+)>/.exec(s);
+  return {map,w:cs?cs[1].length:4};
+}
 const PDF_MONEY=/^\$?-?[\d,]+\.\d{2}$/;
 function _pdfNum(s){ const v=parseFloat(String(s||'').replace(/[$,]/g,'')); return isNaN(v)?null:v; }
 
@@ -45005,8 +45334,10 @@ function _imgLossOk(what){
     snap('the return as filed');
     const r=taxBackTestSet(b.dataset.y,vals);
     if(!r.ok){ snapCancel(); return toast(r.error,'warn'); }
+    if(S.btPdf) delete S.btPdf[String(Number(String(b.dataset.y).slice(0,4)))];   
     save(); render(); return toast(r.cleared?'Cleared: the back-test uses your sheet':'Saved: the back-test uses the return as filed · ⌘Z to undo','ok');
   }
+  if(act==='btpdfdrop'){ if(S.btPdf) delete S.btPdf[String(Number(String(b.dataset.y).slice(0,4)))]; render(); return; }
   
   if(act==='taxassetadd'){
     const v=id=>{ const e=document.getElementById(id); return e?e.value:''; }, how=v('tasHow');
@@ -46588,6 +46919,8 @@ document.addEventListener('change',ev=>{
       render();
     });
   }
+  
+  else if(el.dataset.act==='btpdf'){ const file=el.files&&el.files[0], y=el.dataset.y; el.value=''; if(file) btPdfRead(file,y); }
   else if(el.dataset.act==='cfimpfile'){ const file=el.files&&el.files[0]; el.value=''; if(!file) return;
     
     if(cfAllOn()){ const to=document.getElementById('cfAllImp'); cfBankGo(to&&cfBankGet(to.value)?to.value:'main'); }
@@ -46754,6 +47087,7 @@ document.addEventListener('input',ev=>{
   }
   const el=ev.target;
   if(el.id==='palIn'){ PAL.q=el.value; PAL.idx=0; palRender(); return; }
+  if(el.dataset.bt&&typeof btPdfTyped==='function'){ btPdfTyped(el); return; }   
   if(el.dataset.rf!==undefined||el.dataset.rl!==undefined){ rcpField(el,true); return; }
   if(el.dataset.act==='chkq'){ S.chk.q=el.value; S.chk.page=0; rerenderKeepFocus(el,'chkq'); }
   else if(el.dataset.act==='amq'){ S.amort.q=el.value; rerenderKeepFocus(el,'amq'); }
@@ -47991,6 +48325,7 @@ function restoreBook(inc){
 
 function bookReset(){
   const wasLocked=lockOn(); S.servicer=null; S.advice=null; S.betsy=null; S.ivstmt=null; S.ivtax=null;   
+  S.btPdf=null;   
   const server=typeof srvOn==='function'&&srvOn();
   setBook(healFromSeed(JSON.parse(JSON.stringify(SEED))));
   try{
@@ -51438,6 +51773,7 @@ function renderOnce(name,fn){
     pfDerive,syncFingerprint,pfEncrypt,pfDecrypt,bookEmpty,syncFetch,syncDeleteDoc,syncTornWhy,syncSecure,syncPushDoc,syncPullDoc,_syncPartId,syncSnapList,syncSnapKeep,syncSnapRows,syncSnapFail,_snapPlan,PF_SNAP_MIN,get _syncLastWrite(){return _syncLastWrite;},PF_SNAP_TIERS,PF_SNAP_N,
     taxRuns,TAX_LIMITS,taxFacts,taxPlays,taxPlaysHtml,taxPlaysRowHtml,taxPlayById,_taxPlayList,TAX_PLAYS_DEDUCT,TAX_PLAYS_INCOME,taxFilingFor,TAX_FILINGS,taxFilingKey,taxFilingLabel,taxSurtaxThreshold,taxCtcThreshold,taxSaltCap,taxStage,taxAmendBy,taxDueDate,taxFiled,taxFiledRead,taxFiledSet,TAX_INTAKE,TAX_INTAKE_GROUPS,taxIntakeRead,taxGifts,taxGiftLong,taxGiftValue,taxGiftSummary,taxGiftAdd,taxGiftDel,taxGiftAck,taxGiftsHtml,taxGiftDraftRead,taxGiftsShown,taxGiftsSheetHtml,taxGiftCandidates,taxGiftAdopt,taxGiftLetters,taxGiftLetterLink,taxGiftLetterSet,taxGiftLetterFlags,TAXDOC_LETTER,taxLogShown,taxBookCandidates,GIFT_CARRY_YEARS,taxGiftLimit,taxGiftCarry,taxGiftCarryFlags,_giftRows,_giftCats,MED_FLOOR,taxMedical,taxMedValue,taxMedSummary,taxMedAdd,taxMedDel,taxMedCandidates,taxMedAdopt,taxMedShown,taxMedicalSheetHtml,taxMedicalHtml,taxMedDraftRead,ESTPAY_TO,taxEstPays,taxEstPaySummary,taxEstPayFed,taxEstPayAdd,taxEstPayDel,taxEstPayExplains,taxEstPayShown,taxEstPaySheetHtml,taxEstPayHtml,taxEstPayDraftRead,taxIntakeSet,taxIntakeSummary,taxIntakeKey,taxDoneRead,taxDoneIs,taxDoneSet,taxPlaysSplit,taxPlaysGroups,taxAmendByFor,taxNyAmendBy,_taxRollFwd,taxPublished,taxDedWorth,taxDeferWorth,_bunchAnnual,_bunchDoubled,_bunchNp,_bunchGain,taxMedDeductible,TAX_SUPP,taxSupRate,taxSupHeld,taxSupWages,taxQualDivWorth,TAX_PLAYS_INVEST,TAX_PLAYS_BANDS,TAX_PLAYS_ACCOUNTS,TAX_PLAYS_BROKERAGE,taxDueLater,taxPlaysText,taxDeferStack,taxDeferPlan,taxDeferHtml,taxDeferYears,taxCapGains,taxPairsAll,_taxHeldFor,_taxPrevFor,_jurKey,taxBlocks,taxBlockHtml,fmtTax,taxFormLines,taxPairs,taxBrackets,taxReturn,taxChecks,taxReturnHtml,TAX_FORMS,taxBracketBar,taxSplitBar,_rateLab,taxYearLine,taxHero,taxWhyFor,taxMarginal,taxAdvice,taxAdviceHtml,taxPlanBands,_planOpenBand,taxPlanFill,taxPlanSeed,taxPlanCompute,taxPlanForget,taxPlanHtml,taxPlanPaint,taxFilePack,taxFilePackText,taxFileHtml,taxConst,TAX_CONST,taxProfile,taxProfileParse,taxProfileSave,taxDeductScan,taxQuarterly,taxHarborPct,taxCreditScan,taxAdvisorHtml,taxDocs,taxDocsFor,taxDocAdd,taxDocParse,taxDocRead,taxDocCheck,taxDocExpected,taxDocsHtml,TAXDOC_PROMPT,TAX_FED,TAX_LTCG,taxFedBrackets,taxFedEstimate,taxEstimateInputs,taxSecondOpinion,taxSecondOpinionHtml,TAX_ENERGY,taxEnergyRows,taxEnergyCredit,taxEnergyHtml,taxYoY,taxYoYHtml,taxW4,taxW4Html,taxDepCare,taxDepCareHtml,weekDoneShown,weekLeft,weekResetPrev,weekResetNext,weekLeftWords,weekBadgePaint,taxVerify,taxVerifyRows,taxVerifyHtml,taxEvidence,taxEvidenceHtml,TAX_SETTLES,taxReviewFlags,taxReviewSummary,taxReviewRank,taxSurtaxFlags,taxStaleFlags,taxStaleCells,taxNyDeductionFrozen,taxNyDeductionFlag,taxNyClock,taxCellFrozenSince,taxCellVintage,TAX_SHEET_CONSTANTS,taxMedhiBase,taxNiitBase,_taxNonWage,taxReviewHtml,TAXWORK_FIELDS,taxWork,taxWorkSet,taxWorkInputs,taxWorkEstimate,taxBuildHtml,
     stmtParse,stmtPhotoLines,_stmtIsSummary,_stmtDateParts,_stmtYearFrom,_stmtIso,_stmtDate,stmtPhotoMerge,stmtPhotoRead,STMT_PHOTO_PROMPT,_stmtLineKey,reconMatch,reconCandidates,reconScore,stmtNameScore,cardMatches,stmtCat,gridParse,gridDiff,
+    returnPdfRows,returnPdfFind,_rpTokens,_rpAmt,_rpFormOf,_rpRowFigs,_rpScan,_rpLine,_rpBalance,_rpFig,RP_NY,RP_SIGNS,RP_ROW_TOL,_btFormLines,TAX_BT_FILED,BT_FORM_LINES,_btAmount,btPdfRead,btPdfBox,btPdfReportHtml,_btPdfReadFile,_pdfObjStms,_pdfPageTree,_pdfUnesc,PDF_WORK,CMAP_RANGES,CMAP_CODES,_pdfCMapParse,
     pdfRuns,pdfLines,_a85,_ahx,_stmtStripDates,stmtCycle,parseHomeDepot,pdfToReceipt,rcpAddPdf,reconImport,RECON_ISSUERS,reconIssuerOfName,reconIssuerOfText,reconGuard,reconGuardHold,reconHeldImport,reconHeldPanel,reconRun,reconDecide,reconGet,reconKey,reconOrphans,
     SRV,srvUrl,srvSetUrl,srvOn,srvHealth,srvLoadBook,srvSaveBook,srvFlush,srvReadReceipt,srvFileReceipt,srvConnect,srvAuthPrompt,srvAdopt};
   
