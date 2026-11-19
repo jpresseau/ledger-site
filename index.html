@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-DzEkzTy2AP2Xa0sLOIhcpRreUYb5M/F9XxG5Z6lzdR0=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-XRMksnfaE1DtwoIOmCj7Zasq8Gl22/d3Zm7+RqoXfig=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2999,7 +2999,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.46";
+const APP_V="v29.47";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -3013,7 +3013,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="d0a37b0";
+const APP_BUILD="4d5131a";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -16098,7 +16098,8 @@ function taxBackTest(year){
   }
   
   const S=inp.src||{}, lab={wages:'Wages',interest:'Interest',ordDiv:'Dividends',ltcg:'Capital gain or loss',other:'Other income',se:'Self-employment profit',held:'Federal tax withheld',medHeld:'The 0.9% Medicare tax payroll withheld'};
-  const inputs=Object.keys(lab).filter(function(k){ return (Number(inp[k])||0)!==0||S[k]==='sheet'; }).map(function(k){ return {id:k,what:lab[k],v:inp[k],src:S[k]||'none'}; });
+  
+  const inputs=Object.keys(lab).filter(function(k){ return (Number(inp[k])||0)!==0||S[k]==='sheet'||S[k]==='typed'; }).map(function(k){ return {id:k,what:lab[k],v:inp[k],src:S[k]||'none'}; });
   const tested=rows.filter(function(r){ return r.state!=='nofiled'; });
   return {year:year,rows:rows,inputs:inputs,deduction:S.deduction||'',finds:finds,
     typed:rows.filter(function(r){ return r.from==='filed'; }).length,fromDocs:inputs.filter(function(i){ return i.src==='documents'; }).length,fromSheet:inputs.filter(function(i){ return i.src==='sheet'; }).length,
@@ -16134,7 +16135,7 @@ function taxBackTestHtml(year){
   const rows=B.rows.map(function(r){ return '<tr><td>'+esc(r.what)+(r.why?'<div class="mut" style="font-size:11px">'+esc(r.why)+'</div>':'')+'</td>'
     +'<td class="n num">'+(r.filed!=null?money(r.filed):'—')+(!allTyped&&!noneTyped&&r.filed!=null?'<div class="mut" style="font-size:10.5px">'+(r.from==='filed'?'filed':'sheet')+'</div>':'')+'</td><td class="n num">'+(r.worked!=null?money(r.worked):'—')+'</td>'
     +'<td class="n num">'+(r.diff!=null&&Math.abs(r.diff)>1?money(r.diff):'')+'</td><td>'+tag[r.state]+'</td></tr>'; }).join('');
-  const srcLab={documents:'the documents',sheet:'your sheet — this one tests nothing',stub:'the pay stub',none:'nothing found'};
+  const srcLab={documents:'the documents',sheet:'your sheet — this one tests nothing',stub:'the pay stub',none:'nothing found',typed:'what you typed on the Build tab (line 25c)'};
   const ins=B.inputs.map(function(i){ return '<li>'+esc(i.what)+' <b>'+money(i.v,0)+'</b> — from '+srcLab[i.src]+'</li>'; }).join('')
     +'<li>The deduction — worked out here ('+(B.deduction==='itemized'?'itemized from the book’s own figures':'the standard deduction')+'), not read off the return</li>';
   const verdict=B.total&&B.match===B.total?'Every line matches to the dollar.'
@@ -16153,6 +16154,8 @@ function taxBackTestHtml(year){
 
 
 const TAX_MED_RATE=0.0145, TAX_ADDL_RATE=0.009, TAX_ADDL_FLOOR=200000;
+
+const TAX_ADDL_OWN_LINE=2020;
 
 function taxAddlMedW2(w2){
   const has=(w2||[]).filter(function(d){ const b=d&&d.boxes; return b&&Number(b['5'])>0&&b['6']!=null&&Number.isFinite(Number(b['6'])); });
@@ -16175,13 +16178,34 @@ function taxAddlMedSheet(L){
   return null;
 }
 
+function taxAddlMedLine(year){
+  const y=Number(String(year).slice(0,4));
+  return !Number.isFinite(y)||y>=TAX_ADDL_OWN_LINE?'1040 line 25c':y===2019?'inside 1040 line 17':y===2018?'inside 1040 line 16':'inside the 1040’s withholding line';
+}
+
+
+function taxAddlMedWagesSheet(R){
+  if(!R||typeof R.L!=='function') return null;
+  const hdr=function(v){ return v!=null&&typeof taxMedhiHeader==='function'?taxMedhiHeader(R,v):null; };
+  const l1=R.L('8959','01'), l20=R.L('8959','20');
+  if(l1!=null&&!hdr(l1)) return {amt:l1,from:'line1'};
+  if(l20!=null&&!hdr(l20)) return {amt:l20,from:'line20'};
+  const H=hdr(l1!=null?l1:l20);
+  return H?{amt:r2v(Math.max(0,H.total-H.sum)),from:'header',line:l1!=null?'1':'20',header:H.header,nonWage:H.sum,parts:H.parts}:null;
+}
+
 
 function taxAddlMedHeld(o){
+  const t=o&&o.typed!=null&&String(o.typed).trim()!==''?Number(o.typed):NaN, S=_taxAddlMedSeed(o);
+  return Number.isFinite(t)?{amt:r2v(t),src:'typed',w2:null,seed:S}:S;
+}
+function _taxAddlMedSeed(o){
   const W=o&&o.w2&&o.w2.length?taxAddlMedW2(o.w2):null;
   if(W) return {amt:W.l22,src:'documents',w2:W};
   if(o&&o.w2&&o.w2.length) return {amt:0,src:'none',w2:null};
   if(o&&o.wagesSrc==='stub'&&o.stubMed!=null) return {amt:taxAddlMedPayroll(o.stubMed),src:'stub',w2:null};
-  const S=o&&o.wagesSrc==='sheet'?taxAddlMedSheet(o.L):null;
+  const S=o&&o.wagesSrc==='sheet'?taxAddlMedSheet(o.L):null, y=o&&o.year!=null?Number(String(o.year).slice(0,4)):NaN;
+  if(S!=null&&y<TAX_ADDL_OWN_LINE) return S>0?{amt:0,src:'inheld',w2:null,inHeld:S}:{amt:0,src:'none',w2:null};
   if(S!=null) return {amt:S,src:'sheet',w2:null};
   return {amt:0,src:'none',w2:null};
 }
@@ -16295,7 +16319,9 @@ function taxFedEstimate(inp){
 
   const thr=taxSurtaxThreshold(f);
   const medWages=inp.medWages!=null?inp.medWages:wages;
-  const addlMed=r2v(Math.max(0,medWages+(SE?SE.base:0)-thr)*0.009);
+  
+
+  const addlMed=r2v(Math.max(0,medWages+(SE&&SE.seTax>0?SE.base:0)-thr)*0.009);
   const netInv=r2v(Math.max(0,interest+ordDiv+Math.max(0,ltcg)-Math.max(0,inp.invInt||0)));
   const niit=r2v(Math.min(netInv,Math.max(0,agi-thr))*0.038);
   const beforeCredits=r2v(ordTax+prefTax);
@@ -16409,14 +16435,20 @@ function taxEstimateInputs(year,opt){
   let DC=null; try{ DC=typeof taxDepCare==='function'?taxDepCare(year,_R,prof):null; }catch(e){ DC=null; }
   const care=DC&&DC.fromAnswer&&!DC.noSecond?DC.credit:0;
   src.care=care?'answer':'none';
+  
+
+  const held1099=sum(docs.filter(d=>/^1099/.test(d.kind)),'4');
   const held=pick3('held',
     docs.some(d=>d.boxes&&(d.boxes['2']!=null||d.boxes['4']!=null))
-      ?r2v(sum(w2,'2')+sum(docs.filter(d=>/^1099/.test(d.kind)),'4')):null,
+      ?r2v(sum(w2,'2')+held1099):null,
     'fed',R.sum.fedHeld);
   
 
-  const _med=typeof taxAddlMedHeld==='function'?taxAddlMedHeld({w2:w2,wagesSrc:src.wages,stubMed:SY?SY.medWages:null,L:R.L}):{amt:0,src:'none'};
+  const _wk=(DB.taxwork&&typeof DB.taxwork==='object'&&DB.taxwork[y])||{};
+  const _med=typeof taxAddlMedHeld==='function'?taxAddlMedHeld({w2:w2,wagesSrc:src.wages,stubMed:SY?SY.medWages:null,L:R.L,year:y,typed:_wk.medHeld}):{amt:0,src:'none'};
   src.medHeld=_med.src;
+  
+  const _mw=!w2.length&&src.wages==='sheet'&&typeof taxAddlMedWagesSheet==='function'?taxAddlMedWagesSheet(R):null;
   
 
   let amtAdd=null;
@@ -16424,7 +16456,6 @@ function taxEstimateInputs(year,opt){
   else if(C&&Math.abs(ded-C.std[_fil])<=1) amtAdd=C.std[_fil];
   else if(C){ let F2=null; try{ F2=taxFacts(year); }catch(e){ F2=null; }
     amtAdd=F2&&F2.mort!=null?r2v(Math.max(0,Math.min(ded-F2.mort,F2.saltInAmt!=null?F2.saltInAmt:Infinity))):null; }
-  const _wk=(DB.taxwork&&typeof DB.taxwork==='object'&&DB.taxwork[y])||{};
   return {year:y,filing:_fil,wages,interest,ordDiv,qualDiv,ltcg,other,se,
     amtAdd:amtAdd,isoTyped:_wk.iso>0?_wk.iso:0,busInt:busInt,
     mtcIn:typeof taxMtcCarryIn==='function'?taxMtcCarryIn(year):0,
@@ -16441,13 +16472,14 @@ function taxEstimateInputs(year,opt){
     ltPref:SD&&src.ltcg==='documents'?SD.pref:null,schD:SD,
     
 
-    medWages:w2.length?(sum(w2,'5')||null):(src.wages==='stub'?SY.medWages:(src.wages==='sheet'?(R.L('8959','01')!=null?R.L('8959','01'):R.L('8959','20')):null)),
-    medHeld:_med.amt,medW2:_med.w2||null,
+    medWages:w2.length?(sum(w2,'5')||null):(src.wages==='stub'?SY.medWages:(_mw?_mw.amt:null)),medHdr:_mw&&_mw.from==='header'?_mw:null,
+    
+    medHeld:_med.amt,medSeed:_med.seed||_med,medW2:(_med.seed||_med).w2||null,
     deduction,newDed:ND&&ND.total>0?ND:null,itemized:ded==null?IT:null,itemize:itemize,
     
     invInt:(function(){ let I=null; try{ I=typeof taxInvInt==='function'?taxInvInt(year):null; }catch(e){ I=null; }
       return I&&(ded==null?itemize:(C&&ded>C.std[_fil]+1))?I.allowed:0; })(),
-    ctc:cs?cs.amount:0,ctcKids:cs&&cs.kids?cs.kids.length:0,care:care,earned:r2v(wages+other),held,src};
+    ctc:cs?cs.amount:0,ctcKids:cs&&cs.kids?cs.kids.length:0,care:care,earned:r2v(wages+other),held,held1099:src.held==='documents'?held1099:0,src};
 }
 function taxSecondOpinion(year){
   const inp=taxEstimateInputs(year);
@@ -16483,7 +16515,8 @@ function taxSecondOpinionHtml(year){
     ['Ordinary tax (IRS '+inp.year+' table'+(est.est?', indexed estimate':'')+')',est.ordTax],
     est.prefTax?['Qualified/LTCG stack (0/15/20)',est.prefTax]:null,
     est.amt?['Alternative minimum tax (6251)',est.amt]:null,
-    est.addlMed?['Additional Medicare (8959)',est.addlMed]:null,
+    est.addlMed?['Additional Medicare (8959)'+(inp.medHdr?'<div class="mut" style="font-size:11px">on '+money(inp.medHdr.amt,0)+' of pay: the sheet’s Form 8959 line '+inp.medHdr.line+' is its “'
+      +esc(inp.medHdr.header)+'”, and the '+money(inp.medHdr.nonWage,0)+' of '+inp.medHdr.parts.map(function(p){ return p[0]; }).join(' and ')+' in it '+(inp.medHdr.parts.length>1?'are':'is')+' not wages</div>':''),est.addlMed]:null,
     est.niit?['Net investment tax (8960)',est.niit]:null,
     est.ctc?['Child Tax Credit',-est.ctc]:null,
     est.care?['Child and dependent care credit (2441)',-est.care]:null,
@@ -16501,7 +16534,12 @@ function taxSecondOpinionHtml(year){
       +'<tr><td>'+(so.agree?'<span class="ok">Agree</span>':'<b class="off">Apart by</b>')+'</td>'
       +'<td class="n num">'+(so.agree?'within tolerance':'<b class="off">'+money(Math.abs(so.diff))+'</b>')+'</td></tr>':'')
     +(est.actc?'<tr><td>Additional child tax credit (refundable, line 28)</td><td class="n num">'+money(est.actc)+'</td></tr>':'')
-    +(est.medHeld?'<tr><td>Additional Medicare tax payroll withheld (Form 8959 line 24, 1040 line 25c)</td><td class="n num">'+money(-est.medHeld)+'</td></tr>':'')
+    
+
+    +(est.medHeld||/^(typed|inheld)$/.test(inp.src.medHeld||'')?'<tr><td>Additional Medicare tax payroll withheld (Form 8959 line 24, '+taxAddlMedLine(inp.year)+')</td><td class="n num">'
+      +money(est.medHeld?-est.medHeld:0)+'</td><td class="mut" style="font-size:11px">'+({typed:'typed on the Build tab',documents:'from the W-2s: box 6 less 1.45% of box 5',
+        stub:'from the pay stub: 0.9% of its Medicare wages over $200,000, projected to year end',sheet:'from the sheet’s own Form 8959 lines',
+        inheld:'none added: the sheet’s withholding already holds its '+money((inp.medSeed&&inp.medSeed.inHeld)||0)+', as '+inp.year+'’s Form 1040 had no line of its own for it'}[inp.src.medHeld]||'')+'</td></tr>':'')
     +(est.held!=null?'<tr><td>'+(est.owed>0?'Would still owe':'Refund position')+'</td>'
       +'<td class="n num"><b>'+money(Math.abs(est.owed))+'</b></td></tr>':'')
     +'</tbody></table></div>'
@@ -17650,6 +17688,9 @@ function taxFilePackWorked(year){
   const se=est.se!=null?est.se:(inp.se||0), bus=est.busInt||0, total=r2v(inp.wages+inp.interest+inp.ordDiv+inp.ltcg+inp.other+se-bus);
   const tax16=r2v(est.ordTax+est.prefTax), cr=r2v(est.ctc+est.care+(est.ftc||0)+(est.eduNonref||0)+(est.mtc||0)), sch2=r2v(est.addlMed+est.niit+(est.seTax||0));
   const owe=r2v(est.tax-W.paid);
+  
+
+  const held=inp.held||0, heldHand=inp.src.held==='hand', h25b=r2v(Math.min(Math.max(0,seed.held1099||0),Math.max(0,held))), h25a=r2v(held-h25b), parts=h25b>0||inp.medHeld>0;
   const forms=[{form:'Form 1040',note:'Worked out here, not read off a filed sheet: the Build tab’s figures, which you can type over there.',lines:[
     F('1a','Wages (W-2 box 1)',inp.wages),
     F('2b','Taxable interest',nz(inp.interest)),
@@ -17675,9 +17716,10 @@ function taxFilePackWorked(year){
     F('22','Line 18 less line 21',r2v(Math.max(0,tax16+(est.amt||0)-cr))),
     F('23','Other taxes from Schedule 2 ('+(est.seTax?'Schedule SE, ':'')+'Forms 8959, 8960)',nz(sch2)),
     F('24','Total tax',est.tax),
-    inp.medHeld?F('25a','Federal income tax withheld: W-2s and 1099s',inp.held||0):null,
+    parts?F('25a','Federal income tax withheld: Form(s) W-2, box 2'+(heldHand?' (line 25a+b as typed on the Build tab'+(h25b?', less line 25b':'')+')':''),h25a):null,
+    h25b?F('25b','Federal income tax withheld: Form(s) 1099, box 4',h25b):null,
     inp.medHeld?F('25c','Additional Medicare tax withheld (Form 8959 line 24)',inp.medHeld):null,
-    F('25d','Federal income tax withheld'+(inp.medHeld?' (lines 25a through 25c)':''),r2v((inp.held||0)+(inp.medHeld||0))),
+    F('25d','Federal income tax withheld'+(parts?' (lines 25a through 25c)':''),r2v(held+(inp.medHeld||0))),
     F('26','Estimated tax payments',nz(inp.estPaid)),
     F('27','Earned income credit (Schedule EIC)',nz(est.eic)),
     F('28','Additional child tax credit (Schedule 8812)',nz(est.actc)),
@@ -17705,13 +17747,24 @@ function taxFilePackWorked(year){
       D.life?F('17','This year’s share of what is spread over its life (5- and 7-year property)',D.life):null,
       F('22','Total, to Schedule C line 13',D.total)].filter(Boolean)}); }
   
-  if(est.addlMed>0||inp.medHeld>0){ const thr=typeof taxSurtaxThreshold==='function'?taxSurtaxThreshold(typeof taxFilingKey==='function'?taxFilingKey(inp.filing):inp.filing):null, mw=inp.medWages!=null?inp.medWages:inp.wages, V=inp.src.medHeld==='documents'?inp.medW2:null;
-    forms.push({form:'Form 8959 · Additional Medicare Tax',note:'Part V gives back what payroll withheld toward it: an employer takes 0.9% of every dollar over $200,000 it pays you, whatever the filing status, and line 24 joins the withholding on 1040 line 25c.'
+
+  if(est.addlMed>0||inp.medHeld>0){ const thr=taxSurtaxThreshold(taxFilingKey(inp.filing)), mw=inp.medWages!=null?inp.medWages:inp.wages, V=inp.src.medHeld==='documents'?inp.medW2:null;
+    const seInc=est.seTax>0?est.seBase:0, l11=Math.max(0,thr-mw), l12=Math.max(0,seInc-l11), thrLab='The threshold for '+taxFilingLabel(inp.filing);
+    forms.push({form:'Form 8959 · Additional Medicare Tax',note:(seInc?'Part II is the 0.9% on self-employment income, past what the wages left of the threshold. ':'')
+      +'Part V gives back what payroll withheld toward it: an employer takes 0.9% of every dollar over $200,000 it pays you, whatever the filing status, and line 24 joins the withholding on 1040 line 25c.'
       +(inp.src.medHeld==='stub'?' Line 24 here is the pay stub’s projection; the W-2 settles it.':inp.src.medHeld==='sheet'?' Line 24 is read off your sheet’s own Form 8959 lines.':''),lines:[
       F('1','Medicare wages (W-2 box 5)',mw),
-      thr!=null?F('5','The threshold for '+taxFilingLabel(inp.filing),thr):null,
-      thr!=null?F('6','Line 1 less line 5, not below zero',r2v(Math.max(0,mw-thr))):null,
-      F('7','Additional Medicare Tax: 0.9% of line 6',est.addlMed),
+      F('4','Lines 1 through 3 (no Form 4137 tips or Form 8919 wages here)',mw),
+      F('5',thrLab,thr),
+      F('6','Line 4 less line 5, not below zero',r2v(Math.max(0,mw-thr))),
+      F('7','Additional Medicare Tax: 0.9% of line 6',r2v(Math.max(0,mw-thr)*0.009)),
+      seInc?F('8','Self-employment income (Schedule SE line 6)',seInc):null,
+      seInc?F('9',thrLab,thr):null,
+      seInc?F('10','Line 4',mw):null,
+      seInc?F('11','Line 9 less line 10, not below zero',l11):null,
+      seInc?F('12','Line 8 less line 11, not below zero',l12):null,
+      seInc?F('13','Additional Medicare Tax on self-employment income: 0.9% of line 12',r2v(l12*0.009)):null,
+      F('18','Total Additional Medicare Tax: lines 7, 13 and 17, to Schedule 2 line 11',est.addlMed),
       V?F('19','Medicare tax withheld (W-2 box 6)',V.l19):null,
       V?F('20','Medicare wages (W-2 box 5)',V.l20):null,
       V?F('21','Line 20 × 1.45%',V.l21):null,
@@ -19421,11 +19474,17 @@ function _taxNonWage(R){
 }
 
 
+
+
+function taxMedhiHeader(R,v){
+  if(v==null) return null;
+  const NW=_taxNonWage(R);
+  return NW!=null&&Math.abs(v-NW.total)<=0.02?NW:null;
+}
 function taxMedhiBase(R){
   const base=R&&R.L?R.L('8959','01'):null;
-  const NW=_taxNonWage(R);
-  if(base==null||NW==null) return null;
-  if(Math.abs(base-NW.total)>0.02) return null;
+  const NW=taxMedhiHeader(R,base);
+  if(NW==null) return null;
   
 
   const thr=R.L('8959','05');
@@ -19685,7 +19744,8 @@ const TAXWORK_FIELDS=[
   ['mtcIn','Minimum tax credit carried in from earlier years (Form 8801)','8801'],
   ['ctc','Child tax credit','19'],
   ['care','Child and dependent care credit (Form 2441)','20'],
-  ['held','Federal tax withheld','25'],
+  
+  ['held','Federal tax withheld (W-2 box 2 and 1099 box 4)','25a+b'],
   ['medHeld','Additional Medicare tax withheld (Form 8959 line 24)','25c'],
   ['estPaid','Estimated payments made','26'],
 ];
@@ -19717,10 +19777,12 @@ function taxWorkInputs(year){
   TAXWORK_FIELDS.forEach(([f])=>{
     
     const logged=f==='estPaid'&&typeof taxEstPayFed==='function'?taxEstPayFed(year):null;
-    const sv=f==='estPaid'?(logged!=null?logged:0):(seed[f]!=null?seed[f]:0);
+    
+    const sd=f==='medHeld'&&seed.medSeed?seed.medSeed:null;
+    const sv=f==='estPaid'?(logged!=null?logged:0):sd?sd.amt:(seed[f]!=null?seed[f]:0);
     out.seed[f]=r2v(sv);
     if(w[f]!=null){ out[f]=w[f]; out.src[f]='hand'; }
-    else{ out[f]=r2v(sv); out.src[f]=f==='estPaid'?(logged!=null?'log':'none'):(seed.src[f]||'none'); }
+    else{ out[f]=r2v(sv); out.src[f]=f==='estPaid'?(logged!=null?'log':'none'):sd?sd.src:(seed.src[f]||'none'); }
   });
   out.medWages=seed.medWages; out.medW2=seed.medW2; out.ctcKids=seed.ctcKids; out.earned=seed.earned; out.invInt=seed.invInt; out.ssWages=seed.ssWages; out.amtAdd=seed.amtAdd; out.busInt=seed.busInt; out.ftc=seed.ftc; out.ftc1116=seed.ftc1116; out.depr=seed.depr; out.eicKids=seed.eicKids; out.eicAge=seed.eicAge; out.tuition=seed.tuition; out.tuitionEarly=seed.tuitionEarly;
   
@@ -19744,7 +19806,8 @@ function taxBuildHtml(year){
   const {inp,est}=W;
   const y=String(year).slice(0,4);
   const srcLab={hand:'by hand',documents:'from the documents',sheet:'from the sheet',stub:'from the pay stub, projected',log:'from the payments log',none:'nothing seeded',
-    itemized:'itemized: mortgage interest and state and local taxes',standard:'the standard deduction',answer:'your child care answer, Form 2441'};
+    itemized:'itemized: mortgage interest and state and local taxes',standard:'the standard deduction',answer:'your child care answer, Form 2441',
+    inheld:'none: before 2020 the sheet’s withholding holds it'};
   const fld=([f,label,line])=>{
     const hand=inp.src[f]==='hand';
     return '<tr><td class="mut" style="font-size:11px;width:34px">'+line+'</td>'
@@ -51220,7 +51283,7 @@ function renderOnce(name,fn){
     RCP,RCP_PROMPT,mailVouched,fxCode,fxOfText,fxMoney,fxDay,fxPending,fxRate,fxApply,fxSetCur,fxConvert,fxAfterRead,fxPanel,FX_CODES,FX_SOURCES,FX_WAIT,_fxCache,vendorIndex,matchVendor,suggestDest,commitReceipt,rcpCatIndex,rcpQueueHeal,catLand,normEx,parseJSONish,seedLines,guessCat,catForItem,
     rcpAddText,rcpClipApply,rcpLogEdit,rcpLogSave,rcpFiledEntries,rcpEditable,_rcpApplyText,rcpLines,rcpField,vnorm,wordIn,isTender,rcpDuplicate,getKey,setKey,_keyOnDisk,rcpKeyState,rcpNoteErr,rcpKeyWall,destLabel,DESTS,destsFor,destReady,callClaude,rcpTestKey,RCP_MODEL,keyFingerprint,keyShapeWarning,monthTarget,monthOptions,monthTemplateFor,ensureMonth,cardBrand,cardLast4,cardLabel,byDate,_r4SortRows,r4SortBy,R4_SORT0,_rbsPayParse,_rbsAlloc,_rbsDiscount,_rbsBands,_rbsSummary,_rbsFoots,RBS_ST,_rbsEarned,_rbsPairReturns,r4Payouts,r4AutoPay,r4Fortnight,r4Resync,r4ResyncSay,r4FillPlan,r4LastProj,R4_DAY,r4BackFor,r4PaidWhy,r4PaidNear,r4PaidFix,r4PaidWhySummary,r4MarkPaid,r4Unpay,seriesAddOpen,seriesAddSave,seriesRenOpen,seriesRenSave,r4Tie,r4TieSet,r4Untie,r4CfIndex,r4PaidIndex,r4OwnsLine,reconciledRefs,reconClaimKey,reconReceiptIndex,reconReceiptAt,reconReceiptRemoved,reconReceiptRefsHeal,reconBehindReceipts,reconBookCandidates,reconReview,reconReviewLink,workList,workEmployer,workLabel,workFind,workReceipt,workRcpIds,workLine,workAdd,workRelease,workDel,workFromLine,workUnlink,workSubmit,workPaid,workReopen,workSummary,workCsv,_reconPaidOn,_stmtYearInCycle,rcpExtract,HIDDEN_VIEWS,archHas,archPretty,archShape,archLabel,archKeys,nav,grp,aliasSet,aliasGet,dayParse,passStrength,syncPassRisk,localOnly,setLocalOnly,syncRemember,syncSetRemember,syncRulesProbe,syncAcctProbe,fsInjectAnon,_rulesAcctSay,securityPanel,rulesPanel,rulesText,syncErrText,fbConfig,fbSet,fbOwn,PF_COLL,PF_COLL_OLD,projectPanel,syncRepass,syncRepassLeft,syncRepassFinish,syncSetup,brandForLast4,parseHomeDepotEmail,parseHomeDepotReturn,parseHomeDepotStore,parseLowes,parseAmazonOrder,parseLineTableInvoice,parseLoosePdf,knownVendors,
     detectReceipt,setScreenCheck,_detIsScreen,_detTextOutside,imgToData,rcpSetCrop,rcpRedetect,_detSay,rcpAddFiles,detOverlay,catForItem,GRPCAT,rcpSplit,rcpAlloc,rcpTipParse,rcpPreTip,rcpSpreadTip,reconGap,reconFxGap,reconReceiptCand,reconAgreed,reconRefEq,reconVetoed,axisTick,axisLabelIdx,rcpFileable,rcpFileAll,
-    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxEic,taxEduCredit,TAX_EIC,taxMtcCarryIn,taxSchedAI,taxBackTestSet,taxBackTestFiled,taxSheetChecks,taxAddlMedW2,taxAddlMedPayroll,taxAddlMedSheet,taxAddlMedHeld,taxBackTest,taxBackTestHtml,navEntries,navEntryOf,navTarget,navSections,navForget,navRemember,taxTabParent,taxTabSections,taxDeprOf,taxDeprFor,taxAssetAdd,taxAssetDel,taxDeprCard,nyPenaltyOf,nyPenaltyFor,nyUnderpayRate,taxEicAgeOk,nycEicRate,taxForm1116,taxFtcSrcSet,taxFtcCard,taxFtcCarryIn,taxAiSet,taxAiFor,taxAiCard,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
+    bookShut,get _lockBypass(){return _lockBypass;},set _lockBypass(v){_lockBypass=!!v;},foldSheet,PIN_K,pinnedTile,setPinnedTile,tileOpen,tileSet,tilesWire,tilesAll,tilesButton,tblFit,taxSchDCarryOut,taxCapCarryIn,taxCapCarrySet,taxCapCarryCard,taxFtcFor,taxFtcLimit,taxEic,taxEduCredit,TAX_EIC,taxMtcCarryIn,taxSchedAI,taxBackTestSet,taxBackTestFiled,taxSheetChecks,taxAddlMedW2,taxAddlMedPayroll,taxAddlMedSheet,taxAddlMedHeld,taxAddlMedWagesSheet,taxAddlMedLine,taxMedhiHeader,taxBackTest,taxBackTestHtml,navEntries,navEntryOf,navTarget,navSections,navForget,navRemember,taxTabParent,taxTabSections,taxDeprOf,taxDeprFor,taxAssetAdd,taxAssetDel,taxDeprCard,nyPenaltyOf,nyPenaltyFor,nyUnderpayRate,taxEicAgeOk,nycEicRate,taxForm1116,taxFtcSrcSet,taxFtcCard,taxFtcCarryIn,taxAiSet,taxAiFor,taxAiCard,taxPenalty2210,taxPenaltyFor,taxPenaltyOfYear,taxPenaltySay,taxUnderpayRate,TAX_UNDERPAY_RATE,proseFit,icoSweep,icoFor,ICO_EMOJI,ICONS,tileKey,tileKeys,_openTiles,_shutTiles,isRealDay,isMarked,toggleMarked,markedSet,markedKey,entryRef,entryRefAt,entryRefsAt,entryAtRef,matchStillHolds,chargeRecon,cellReconState,reconWhereLabel,entryOrdinal,entryRefMigrate,markedOne,toggleMarkedOne,cellCharges,cellMarkState,markedChargeKey,chargeMarkDialog,chargeMarkSave,catShiftRefs,cellMarkExpand,cellRefsTrim,cellRefsRemove,lockOn,lockCloudOpen,get LOCKED(){return LOCKED;},setLocked(v){LOCKED=!!v;},lockBlob,lockOpen,lockSet,restoreBook,bookReset,
     BIO_K,bioSaved,bioHave,bioSupported,bioForget,bioEnrol,bioOpen,bioReseal,bioErr,LS_ENC,LOCK_K,mailKeyOff,mailKeyCarry,mailKeyElsewhere,mailOldScriptWords,MAIL_STMT_NOTICE_RE,mailAssistUnread,_maUnread,MAIL_ASSIST_V22,MAIL_FX_AMT,mailHasFx,mailRbsStmtSettle,mailRbsSelf,RENO_TABS,RENO_TWIN_DAYS,RENO_TWIN_FAR,renoProjectName,renoTrips,renoTwinsIn,renoTwinsAll,renoTwinWhat,renoTwinWords,renoTwinOff,renoTwinBar,NY_TABLES,NY_TABLE_SOURCE,NY_LINE_LABEL,NY_TUITION_CAP,nyCareCredit,nyTuitionCredit,nyCareFedRate,nyCareRate,nyCareApplicable,nyP,nyMarg,nySingle,nyMainTax,nySupplemental,nyRecaptureTax,nyStateTax,nycTax,nyStdDeduction,nyItemized,nyItemizedPhaseOut,nyItemizedStep,nyHouseholdCredit,nycHouseholdCredit,nyEmpireChildCredit,nycSchoolCredit,nyReturn,NY_ANSWERS,nyAnswers,nyAnswerSet,nyCityFor,nyInputs,nySecondOpinion,nyReturnHtml,nyPackBlock,nyPackCheck,nyOpenList,nyLinesShown,_inflate,inflateBudget,INFLATE_CAP,INFLATE_DOC,DEVSEAL_K,devSlots,devRead,devWrite,devOpen,devSealOn,devSealOff,devForget,devCloudSealed,devSettled,get _devOpen(){return _devOpen;},xlsxBoldMarks,zipEntries,
     syncNow,syncPass,syncSetPass,syncMarkRestored,syncRestored,syncIdless,syncPayload,SYNCST,applySynced,syncConflict,sha256,fsInject,PF_CHUNK,seedHash,
     syncContain,syncTally,syncCompareRows,syncKeys,syncPeek,syncUserBusy,syncAutoHold,syncWhyBlocked,syncHeldTrack,syncHeldFor,syncHeldPending,syncHeldWords,syncHeldLoud,syncHeldBar,HELD_LOUD,syncAutoFailed,autoPull,setAutoPull,AUTO_PULL,syncPaint,syncLocalTs,syncDevId,syncDevSince,syncDevStamp,syncPeers,_syncRosterMerge,_syncRosterRead,PF_DEV_CAP,PF_DEV_QUIET,
