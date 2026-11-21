@@ -9,7 +9,7 @@
    network untouched, so cross-origin and non-GET requests are never handled. */
 
 var VERSION = 'ledger-v2';
-var SHELL = ['./', './index.html', './manifest.webmanifest',
+var SHELL = ['./', './index.html', './app.js', './manifest.webmanifest',   /* app.js: the page's script, a file since v29.54 */
              './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon.svg',
              /* v1978: the maskable one was the one left out, and it is the icon Android puts on
                 the home screen - so the installed app lost exactly the icon it is installed with. */
