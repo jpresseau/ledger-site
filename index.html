@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-Z1PlrEPQmyyYWE20v0ynNzGgmeNuXOPtiiT4fUU4UcY=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/oNcVDcvUKWBECAEGmuucSNKJ0tTbK71BR+Ek3Feax8=' 'sha256-zos9DYY2pBp5JeZB2GJBEfUil66McVpij4V6P3Bm3yY=' 'sha256-Lr9rnvWi1FsU9O+6sbCEnko3yf1XoSpep08f9qvkKbk=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2999,7 +2999,7 @@ button.txsort:hover{color:var(--accent)}
 <script>
 "use strict";
 
-const APP_V="v29.51";
+const APP_V="v29.52";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -3013,7 +3013,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="ad9fcb1";
+const APP_BUILD="40bf0ee";
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -3706,10 +3706,16 @@ const ICO_EMOJI_RE=new RegExp('('+Object.keys(ICO_EMOJI).sort(function(a,b){ ret
 const ICO_SKIP='script,style,title,textarea,option,select,svg,[contenteditable],.eico,.noico';
 
 function icoFor(emoji){ const e=String(emoji||''); return ICO_EMOJI[e]||ICO_EMOJI[e.replace(/\uFE0F/g,'')]||''; }
+
+
+const _ICO_TPL=new Map();
 function _icoSpan(emoji){
-  const sp=document.createElement('span'); sp.className='eico'; sp.setAttribute('aria-hidden','true');
-  sp.innerHTML=ico(icoFor(emoji),16)+'<span class="eix"></span>'; sp.lastChild.textContent=emoji;
-  return sp;
+  const html=ico(icoFor(emoji),16)+'<span class="eix"></span>', k=html+'\u0000'+emoji;
+  let sp=_ICO_TPL.get(k);
+  if(!sp){ sp=document.createElement('span'); sp.className='eico'; sp.setAttribute('aria-hidden','true');
+    sp.innerHTML=html; sp.lastChild.textContent=emoji;
+    if(_ICO_TPL.size>400) _ICO_TPL.clear(); _ICO_TPL.set(k,sp); }
+  return sp.cloneNode(true);
 }
 
 function icoSweep(root){
@@ -8579,7 +8585,13 @@ function dashPace(mo,now){
 }
 
 
-function dashBudgetSplit(mo,sums){ return budgetSplit(mo,sums); }
+
+
+function dashBudgetSplit(mo,sums){
+  const B=budgetSplit(mo,sums), rows=B.rows.map(function(r){ return Object.assign({},r); });
+  const own=function(r){ return r?rows[B.rows.indexOf(r)]:r; };
+  return Object.assign({},B,{rows:rows,worst:own(B.worst),blame:own(B.blame)});
+}
 
 
 
@@ -23305,9 +23317,8 @@ function dayParse(text,year,after){
 
 
 
-function _signedDays(from,to){
-  return Math.round((new Date(to+'T00:00:00')-new Date(from+'T00:00:00'))/86400000);
-}
+
+function _signedDays(from,to){ return Math.round((onceDayT(to)-onceDayT(from))/86400000); }
 
 
 const R4_TIE=6;
@@ -25223,19 +25234,31 @@ function cellMarkState(mo,d,ci){
   return hit===0?'':(hit>=n?'all':'some');
 }
 
-function chargeRecon(mo,d,ci,n,RX){
+function chargeRecon(mo,d,ci,n,RX,IX){
   const rx=RX||reconciledRefs();
   
 
-  let st=rx.entry[entryRef(mo,d,ci,n)];
+  let st=IX&&!IX.refs?undefined:rx.entry[entryRef(mo,d,ci,n)];
   if(!st){
-    let seen=0;
-    for(const e of mo.entries){ if(e[0]===d&&e[1]===ci){
-      if(seen===n){ if(e[4]) st=rx.entry[mkey(mo.y,mo.m)+'|'+e[4]]; break; } seen++; } }
+    if(IX){ const c=IX.nth.get(d), a=c&&c.get(ci), e=a&&typeof n==='number'?a[n]:undefined;
+      if(e&&e[4]&&IX.refs) st=rx.entry[IX.mk+'|'+e[4]]; }
+    else { let seen=0;
+      for(const e of mo.entries){ if(e[0]===d&&e[1]===ci){
+        if(seen===n){ if(e[4]) st=rx.entry[mkey(mo.y,mo.m)+'|'+e[4]]; break; } seen++; } } }
   }
   if(st) return {done:true,by:'statement',where:st};
-  if(markedOne(mo,d,ci,n)) return {done:true,by:'hand',where:''};
+  if(markedOne(mo,d,ci,n,IX)) return {done:true,by:'hand',where:''};
   return {done:false,by:'',where:''};
+}
+
+
+function chargeReconIndex(mo,RXM){
+  const nth=new Map(), mk=mkey(mo.y,mo.m);
+  for(const e of (Array.isArray(mo.entries)?mo.entries:[])){ if(!e) continue; const d=e[0], ci=e[1]; if(d!==d||ci!==ci) continue;
+    let c=nth.get(d); if(!c){ c=new Map(); nth.set(d,c); }
+    let a=c.get(ci); if(!a){ a=[]; c.set(ci,a); } a.push(e); }
+  const set=(DB.marked||{})[mk];
+  return {mk:mk,nth:nth,marked:Array.isArray(set)?new Set(set):null,refs:!RXM||mk.indexOf('|')>=0||RXM.has(mk)};
 }
 
 function cellReconState(mo,d,ci,RX){
@@ -25252,7 +25275,8 @@ function cellReconState(mo,d,ci,RX){
   return {state:done===0?'':(done>=total?'all':'some'),done,total,
     by:done===0?'':(stmt&&hand?'both':stmt?'statement':'hand'),where};
 }
-function markedOne(mo,d,ci,n){
+function markedOne(mo,d,ci,n,IX){
+  if(IX){ const m=IX.marked; return !!m&&(m.has(markedKey(mo,d,ci))||m.has(markedChargeKey(d,ci,n))); }
   const set=(DB.marked||{})[mkey(mo.y,mo.m)];
   if(!Array.isArray(set)) return false;
   return set.indexOf(markedKey(mo,d,ci))>=0||set.indexOf(markedChargeKey(d,ci,n))>=0;
@@ -35133,13 +35157,14 @@ function mailRwMatch(it){
 
 function txAll(){
   const out=[];
-  const _RX=reconciledRefs();
+  const _RX=reconciledRefs(), RXM=new Set(Object.keys(_RX.entry||{}).map(k=>k.slice(0,k.indexOf('|'))));
   (DB.months||[]).forEach(mo=>{
-    const seen={};
+    
+    const seen={}, IX=mo?chargeReconIndex(mo,RXM):null;
     (mo.entries||[]).forEach(e=>{
       const ci=e[1], key=e[0]+'_'+ci;
       const n=seen[key]=(seen[key]===undefined?0:seen[key]+1);
-      const rc=chargeRecon(mo,e[0],ci,n,_RX);
+      const rc=chargeRecon(mo,e[0],ci,n,_RX,IX);
       out.push({y:mo.y,m:mo.m,d:e[0],ci,n,cat:mo.cats[ci]||'—',
         amt:r2v(e[2]),card:e[3]||'',
         iso:mo.y+'-'+String(mo.m).padStart(2,'0')+'-'+String(e[0]).padStart(2,'0'),
@@ -43292,10 +43317,11 @@ function renoTrips(){
 }
 
 
-function renoTwinsIn(mo,trips,used){
+function _rtByDay(trips){ const byDay={}; trips.forEach(function(t){ (byDay[t.date]=byDay[t.date]||[]).push(t); }); return byDay; }
+function renoTwinsIn(mo,trips,used,byDay){
   if(!mo||!Array.isArray(mo.entries)) return [];
   trips=trips||renoTrips(); used=used||{};
-  const byDay={}; trips.forEach(function(t){ (byDay[t.date]=byDay[t.date]||[]).push(t); });
+  byDay=byDay||_rtByDay(trips);
   const out=[], mk=mkey(mo.y,mo.m), done={};
   
 
@@ -43320,10 +43346,25 @@ function renoTwinsIn(mo,trips,used){
   });
   return out.sort(function(a,b){ return a.ix-b.ix; });
 }
+
+
 function renoTwinsAll(){
   const trips=renoTrips(), used={}, out=[];
   if(!trips.length) return out;
-  (DB.months||[]).forEach(function(mo){ renoTwinsIn(mo,trips,used).forEach(function(x){ out.push(x); }); });
+  const byDay=_rtByDay(trips), dates=Object.keys(byDay).sort();
+  const any=function(lo,hi){ let a=0, b=dates.length;
+    while(a<b){ const m=(a+b)>>1; if(dates[m]<lo) a=m+1; else b=m; }
+    return a<dates.length&&dates[a]<=hi; };
+  (DB.months||[]).forEach(function(mo){
+    let none=false;
+    if(mo&&Array.isArray(mo.entries)&&mo.entries.length){
+      try{ const first=_rtIso(mo.y,mo.m,1);
+        none=/^\d{4}-(0[1-9]|1[0-2])-01$/.test(first)&&mo.entries.every(function(e){ return !e||typeof e[0]==='number'; })
+          &&!any(_rtShift(first,-RENO_TWIN_DAYS),_rtShift(first,30+RENO_TWIN_DAYS))&&!any(first,_rtIso(mo.y,mo.m,31)); }
+      catch(e){ none=false; }
+    }
+    if(none) return;
+    renoTwinsIn(mo,trips,used,byDay).forEach(function(x){ out.push(x); }); });
   return out;
 }
 
@@ -51872,7 +51913,10 @@ const ONCE_NAMES=['cfTransfers','cardPays','cfSeries','cfSeriesAll','cfProject',
   
   '_btSheet',
   
-  'taxHarborYear','nyHarborYear'];
+  'taxHarborYear','nyHarborYear',
+  
+
+  'r4PaidIndex','trendRows','budgetSplit','worthSources','goalSources','taxFormLines','_taxByRow'];
 const _onceIds=new WeakMap(); let _onceN=0;
 const ONCE_HITS={};
 function _onceId(a){ if(!_onceIds.has(a)) _onceIds.set(a,++_onceN); return _onceIds.get(a); }
@@ -51899,6 +51943,13 @@ function renderOnce(name,fn){
     const v=fn.apply(this,arguments); cache.set(k,v); return v;
   };
 }
+
+
+let _odGen=-1; const _OD=new Map();
+function onceDayT(s){ const k=s+'T00:00:00';
+  if(!_rdepth) return new Date(k).getTime();
+  if(_odGen!==RGEN){ _OD.clear(); _odGen=RGEN; }
+  let v=_OD.get(k); if(v===undefined){ v=new Date(k).getTime(); _OD.set(k,v); } return v; }
 
 (function(){ if(typeof window==='undefined') return;
   ONCE_NAMES.forEach(function(n){ const f=window[n]; if(typeof f==='function'&&!f._once){ const w=renderOnce(n,f); w._once=f; window[n]=w; } });
