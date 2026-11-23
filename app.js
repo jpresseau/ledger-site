@@ -1,6 +1,6 @@
 
 "use strict";
-const APP_V="v29.62";
+const APP_V="v29.63";
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
 function ledgerMovedHtml(){
 if(!LEDGER_HOME) return '';
@@ -10,7 +10,7 @@ if(!here||here===home||here!==LEDGER_FROM) return '';
 return '<div class="sheet nofold movedbar" role="status" style="border-left:4px solid var(--amber);margin-bottom:12px"><b>The Ledger has its own address now: <a href="'+esc(LEDGER_HOME)+'">'+esc(LEDGER_HOME.replace(/^https:\/\//,'').replace(/\/$/,''))+'</a></b>'
 +'<div class="mut" style="font-size:12.5px;margin-top:4px">Its own address keeps the book away from the other apps on this site. To move it: <b>Data → Backup → Download backup (JSON)</b> here, then open the new address and use <b>Restore from backup</b> there. Your Gmail link, Betsy and everything in the book go with it; on a phone, add the new address to your home screen.</div></div>';
 }
-const APP_BUILD="54630ea";
+const APP_BUILD="fe2b3c0";
 function appBuild(){ return APP_BUILD; }
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -2529,7 +2529,16 @@ m++; if(m>12){ m=1; y++; }
 }
 return cfAddDays(iso,15);
 }
+const _CF_CAD=new Map();
 function cfCadence(dates){
+if((dates||[]).length<3) return null;
+if(typeof window!=='undefined'&&window.__PF_NO_CADCACHE) return _cfCadenceOf(dates);
+const k=dates.join(',');
+let r=_CF_CAD.get(k);
+if(r===undefined){ r=_cfCadenceOf(dates); if(_CF_CAD.size>5000) _CF_CAD.clear(); _CF_CAD.set(k,r); }
+return r&&Object.assign({},r);
+}
+function _cfCadenceOf(dates){
 if((dates||[]).length<3) return null;
 const g14=[];
 for(let i=1;i<dates.length;i++) g14.push(cfDaysBetween(dates[i-1],dates[i]));
