@@ -1,7 +1,7 @@
 
 "use strict";
 
-const APP_V="v29.58";
+const APP_V="v29.59";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -15,7 +15,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="e8af229";
+const APP_BUILD="a9e9c5c";
 function appBuild(){ return APP_BUILD; }   
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
@@ -1341,6 +1341,10 @@ function storagePanel(){
      +'<button class="btn ghost sm" data-act="snaplist">Earlier copies in the cloud</button>'
      +'<span class="mut" style="font-size:11.5px">every sync keeps one, going back about a month</span></div>'
    +(S.snap&&S.snap.rows?_snapPanelHtml():'')
+   +'<div class="formrow" style="margin-top:7px"><button class="btn ghost sm" data-act="ptlist">Restore points on this device</button>'
+     +'<span class="mut" style="font-size:11.5px">one a day, and one before anything replaces the book</span></div>'
+   +(S.pts?ptPanelHtml():'')
+   +(ptFail()?'<div class="mut off" style="font-size:12px;margin-top:6px"><b>The last restore point could not be kept.</b> The book itself is saved. ('+esc(ptFail())+')</div>':'')
    +'<div class="formrow" style="margin-top:7px"><label class="btn ghost sm" style="cursor:pointer">'
      +'Restore photographs only<input type="file" accept="application/json" data-act="imgadopt" style="display:none"></label>'
      +'<span class="mut" style="font-size:11.5px">reads a backup, takes only the pictures</span></div>'
@@ -42169,7 +42173,7 @@ function _imgLossOk(what){
         +(spent.length===1?'is':'are')+' replaced by what the statement actually says, '
         +'not added beside '+(spent.length===1?'it':'them')+'.\n\n':'')
       +'\u2318Z undoes the whole import.')) return;
-    snap('import Chase activity');
+    snap('import Chase activity'); ptBefore('before a bank import');
     
     add.forEach(function(x){ if(x.mk) x.e[1]=cfAccountAdd(x.mk); });
     
@@ -42728,6 +42732,27 @@ function _imgLossOk(what){
 
   
 
+  if(act==='ptlist'){
+    S.pts={busy:true}; render();
+    ptIndex().then(function(rows){ S.pts={rows:rows}; render(); },
+      function(e){ S.pts={err:'Could not read this device\u2019s restore points: '+((e&&e.message)||e)}; render(); });
+    return;
+  }
+  if(act==='ptput'){
+    const id=b.dataset.id, r=((S.pts||{}).rows||[]).find(function(x){ return x.id===id; });
+    if(!r) return;
+    if(!confirm('Put back the book as it was '+_ptWhen(r.at)+' ('+r.why+')?\n\nThe book as it is now is kept as a restore point first.')) return;
+    (async function(){
+      try{
+        const inc=await ptBook(id), res=restoreBook(inc);
+        S.pts=null; render();
+        toast('Put back the book from '+_ptWhen(r.at)+(res&&res.unlocked?' \u2014 this device is unlocked':''),'ok');
+      }catch(e){ toast(e.message||String(e),'warn'); }
+    })();
+    return;
+  }
+  
+
   if(act==='storeper'){ S.stores=Object.assign({per:'y0',open:'',all:false},S.stores,{per:b.dataset.p}); render(); }
   else if(act==='storeopen'){
     const k=b.dataset.k||'', st=S.stores=Object.assign({per:'y0',open:'',all:false},S.stores);
@@ -43057,6 +43082,7 @@ function _imgLossOk(what){
     if(!bookEmpty()){
       if(!confirm('Open the shared book on this device?\n\nThe book on this device is replaced by it. A copy of this device\u2019s book is saved to your downloads first.')) return;
       download('the-ledger-BEFORE-SHARED-'+todayISO()+'.json',JSON.stringify(DB));
+      ptBefore('before opening a shared book');
       setBook(healFromSeed(JSON.parse(JSON.stringify(SEED)))); save();
     }
     go();
@@ -43070,6 +43096,7 @@ function _imgLossOk(what){
         const inv=await hhJoin(j.iid,j.code,p);
         closeModal(); S.hhJoin=null;
         
+        ptBefore('before joining a shared book');
         setBook(healFromSeed(JSON.parse(JSON.stringify(SEED)))); save();
         await syncNow(true); render();
         toast('Joined '+(inv.from||'the')+'’s book','ok');
@@ -45570,6 +45597,7 @@ async function lockSet(on,pass){
 
 
 function restoreBook(inc){
+  ptBefore('before a restore');                    
   setBook(healFromSeed(inc));
   
 
@@ -45598,6 +45626,7 @@ function restoreBook(inc){
 
 
 function bookReset(){
+  ptBefore('before emptying the book');
   const wasLocked=lockOn(); S.servicer=null; S.advice=null; S.betsy=null; S.ivstmt=null; S.ivtax=null;   
   S.btPdf=null;   
   const server=typeof srvOn==='function'&&srvOn();
@@ -47632,6 +47661,7 @@ function applySynced(txt){
   
 
   try{ const a=document.activeElement; if(a&&a.blur) a.blur(); }catch(e){}
+  ptBefore('before a sync brought in another copy');
   setBook(healFromSeed(inc));
   
 
@@ -48215,6 +48245,115 @@ function syncSnapRows(list,now){
     });
 }
 
+
+
+const PT_DB='pfLedger_points', PT_RINGS={event:6,daily:10};
+let _ptDb=null, _ptQ=Promise.resolve(), _ptFail=null;
+function ptFail(){ return _ptFail; }
+function _ptOpen(){
+  if(_ptDb) return _ptDb;
+  _ptDb=new Promise(function(res,rej){
+    if(typeof indexedDB==='undefined') return rej(new Error('This browser keeps no IndexedDB here'));
+    let rq; try{ rq=indexedDB.open(PT_DB,1); }catch(e){ return rej(e); }
+    rq.onupgradeneeded=function(){ const d=rq.result;
+      if(!d.objectStoreNames.contains('index')) d.createObjectStore('index',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('body')) d.createObjectStore('body',{keyPath:'id'}); };
+    rq.onsuccess=function(){ res(rq.result); };
+    rq.onerror=function(){ rej(rq.error||new Error('IndexedDB refused')); };
+  });
+  _ptDb.catch(function(){ _ptDb=null; });
+  return _ptDb;
+}
+function _ptReq(r){ return new Promise(function(res,rej){ r.onsuccess=function(){ res(r.result); }; r.onerror=function(){ rej(r.error); }; }); }
+
+function ptCapture(){
+  try{
+    const plain=localStorage.getItem(LS_KEY), enc=localStorage.getItem(LS_ENC);
+    if(!plain&&!enc) return null;
+    return {plain:plain||null,enc:plain?null:enc,lock:localStorage.getItem(LOCK_K)==='1'};
+  }catch(e){ return null; }
+}
+async function _ptHash(s){
+  const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(d)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+}
+async function ptIndex(){
+  const db=await _ptOpen();
+  const all=await _ptReq(db.transaction('index','readonly').objectStore('index').getAll());
+  return all.sort(function(a,b){ return b.at-a.at; });
+}
+async function _ptWrite(ring,why,cap){
+  const s=JSON.stringify(cap), hash=await _ptHash(s);
+  const idx=await ptIndex(), mine=idx.filter(function(x){ return x.ring===ring; });
+  if(mine.some(function(x){ return x.hash===hash; })) return {same:true};
+  let months=null, last='';
+  if(cap.plain){ try{ const b=JSON.parse(cap.plain), ms=b.months||[]; months=ms.length; last=ms.length?String(ms[ms.length-1].key||''):''; }catch(e){} }
+  const z=await _gzip(s), at=Date.now();
+  const meta={id:ring+'-'+at+'-'+Math.random().toString(36).slice(2,8),ring:ring,why:String(why||''),at:at,day:todayISO(),
+    hash:hash,bytes:s.length,stored:z.bytes.length,months:months,last:last,locked:!cap.plain};
+  const drop=mine.slice(PT_RINGS[ring]-1).map(function(x){ return x.id; });   
+  const db=await _ptOpen();
+  await new Promise(function(res,rej){
+    const t=db.transaction(['index','body'],'readwrite');
+    t.objectStore('index').put(meta); t.objectStore('body').put({id:meta.id,z:z.z,bytes:z.bytes});
+    drop.forEach(function(id){ t.objectStore('index').delete(id); t.objectStore('body').delete(id); });
+    t.oncomplete=res; t.onerror=function(){ rej(t.error); }; t.onabort=function(){ rej(t.error||new Error('aborted')); };
+  });
+  return {ok:true,meta:meta,dropped:drop.length};
+}
+function _ptQueue(ring,why,cap){
+  const run=function(){ return _ptWrite(ring,why,cap).then(function(r){ _ptFail=null; return r; },
+    function(e){ _ptFail=String((e&&e.message)||e); return null; }); };
+  _ptQ=_ptQ.then(run,run);
+  return _ptQ;
+}
+
+function ptBefore(why){ const cap=ptCapture(); if(!cap) return Promise.resolve(null); return _ptQueue('event',why,cap); }
+
+async function ptDaily(){
+  const cap=ptCapture(); if(!cap) return null;
+  let idx=[]; try{ idx=await ptIndex(); }catch(e){ _ptFail=String((e&&e.message)||e); return null; }
+  if(idx.some(function(x){ return x.ring==='daily'&&x.day===todayISO(); })) return {today:true};
+  return _ptQueue('daily','the day’s point',cap);
+}
+function ptSettled(){ return _ptQ; }
+
+async function ptBook(id){
+  const db=await _ptOpen();
+  const body=await _ptReq(db.transaction('body','readonly').objectStore('body').get(id));
+  if(!body) throw new Error('That restore point is no longer on this device.');
+  const cap=JSON.parse(await _gunzip(body.bytes,body.z));
+  let txt=cap.plain;
+  if(!txt){
+    const pass=typeof syncPass==='function'?syncPass():null;
+    if(!pass) throw new Error('That point was saved locked, and this device has no passphrase open to read it.');
+    try{ txt=await pfDecrypt(JSON.parse(cap.enc),pass); }
+    catch(e){ throw new Error('That point was locked with a passphrase this device no longer uses, so it cannot be opened here.'); }
+  }
+  const inc=JSON.parse(txt);
+  if(!inc||!Array.isArray(inc.months)) throw new Error('That restore point does not hold a book.');
+  return inc;
+}
+function _ptWhen(at){ const d=new Date(at);
+  return d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})+', '
+    +d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}); }
+function ptPanelHtml(){
+  const st=S.pts||{};
+  if(st.busy) return '<div class="mut" style="font-size:12px;margin-top:7px">Reading this device…</div>';
+  if(st.err) return '<div class="mut off" style="font-size:12px;margin-top:7px">'+esc(st.err)+'</div>';
+  const rows=st.rows||[];
+  if(!rows.length) return '<div class="mut" style="font-size:12px;margin-top:7px">'
+    +'None yet — one is kept each day, and one before every restore, sync that brings in another copy, bank import or emptying.</div>';
+  return '<div class="tblwrap" style="margin-top:7px"><table class="tbl tight"><tbody>'
+    +rows.map(function(r){
+      return '<tr><td style="font-size:12px">'+esc(_ptWhen(r.at))+'<div class="mut" style="font-size:10.5px">'+esc(r.why)+'</div></td>'
+        +'<td class="mut" style="font-size:11.5px">'+(r.locked?'locked copy':(r.months!=null?r.months+' month'+(r.months===1?'':'s'):''))+'</td>'
+        +'<td class="acts"><button class="btn ghost sm" data-act="ptput" data-id="'+esc(r.id)+'">Put this back</button></td></tr>';
+    }).join('')
+    +'</tbody></table></div>'
+    +'<div class="mut" style="font-size:11.5px;margin-top:6px">Putting one back keeps the book as it is now as a point first. '
+    +'Photographs are kept apart from the book and are not touched.</div>';
+}
 
 
 function syncSetup(){
@@ -49092,5 +49231,8 @@ function onceDayT(s){ const k=s+'T00:00:00';
   if(typeof hhLinkOnBoot==='function'){ hhLinkOnBoot(); window.addEventListener('hashchange',hhLinkOnBoot); }
   setTimeout(function(){ if(!bookShut()) trialNotify(); },2600);
   weekBadgeStart();
+  
+  Object.assign(window.__PF,{ptBefore,ptDaily,ptIndex,ptSettled,ptBook,ptFail,ptCapture});
+  setTimeout(function(){ ptDaily(); },3000);
   window.__PF_OK=true;
 })();
