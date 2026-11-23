@@ -1,7 +1,7 @@
 
 "use strict";
 
-const APP_V="v29.57";
+const APP_V="v29.58";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -15,7 +15,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="05b4ace";
+const APP_BUILD="e8af229";
 function appBuild(){ return APP_BUILD; }   
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
@@ -277,10 +277,11 @@ function catSums(mo){ const s=mo.cats.map(()=>0); for(const[,ci,a] of mo.entries
 function tot(a){ return Math.round(a.reduce((x,y)=>x+(y||0),0)*100)/100; }
 
 
+
+
 function chartInk(){
-  const d=document.body.classList.contains('dark');
-  return d?{grid:'rgba(231,235,233,.10)',lab:'#8A939C',line:'#4FBF8B',dot:'#6FD3A4',neg:'#F0714A'}
-          :{grid:'rgba(22,25,28,.075)',lab:'#8A939C',line:'#2E7D5E',dot:'#24614A',neg:'#C2410C'};
+  const cs=getComputedStyle(document.body), v=function(k){ return cs.getPropertyValue('--chart-'+k).trim(); };
+  return {grid:v('grid'),lab:v('lab'),line:v('line'),dot:v('dot'),neg:v('neg'),bill:v('bill')};
 }
 
 
@@ -5885,7 +5886,7 @@ Views.dash=function(){
         :'<span class="'+(x.chg>0?'neg':x.chg<0?'pos':'mut')+'">'
           +(x.chg>0?'+':'')+money(x.chg,0)+'</span>')+'</td>'
       +'<td class="n num mut">'+esc(fD(x.d))+'</td>'
-      +'<td>'+spark(x.s.slice(-24).map(function(p){ return p[1]; }),96,20,'#A87F2E')+'</td></tr>'; }).join('');
+      +'<td>'+spark(x.s.slice(-24).map(function(p){ return p[1]; }),96,20,chartInk().bill)+'</td></tr>'; }).join('');
 
   
   const incLast=DB.income.length?DB.income[DB.income.length-1]:null;
@@ -21280,11 +21281,10 @@ function _yrHeatmap(Y){
   const vals=Object.values(day).filter(function(v){ return v>0; }).sort(function(a,b){ return a-b; });
   const q=function(p){ return vals.length?vals[Math.min(vals.length-1,Math.floor(vals.length*p))]:0; };
   const b1=q(.25),b2=q(.5),b3=q(.75),b4=q(.92);
-  const dk=document.body.classList.contains('dark');
-  const AL=function(a){ return dk?'rgba(79,191,139,'+a+')':'rgba(46,125,94,'+a+')'; };
+  const AL=function(a){ return 'rgba(var(--chart-heat),'+a+')'; };   
   const shade=function(v){ if(v==null||v<=0) return 'var(--hair2)';
     if(v<=b1) return AL(.26); if(v<=b2) return AL(.46);
-    if(v<=b3) return AL(.68); if(v<=b4) return AL(.9); return dk?'#F0714A':'#C2410C'; };
+    if(v<=b3) return AL(.68); if(v<=b4) return AL(.9); return 'var(--chart-neg)'; };
   let cards='';
   for(let m=1;m<=12;m++){
     const mo=mos.find(function(x){ return x.m===m; }), dim=daysIn(Y,m), mTot=mo?tot(catSums(mo)):null;
@@ -21298,7 +21298,7 @@ function _yrHeatmap(Y){
       +'<div class="hmg">'+cells+'</div></div>';
   }
   return {max:vals.length?vals[vals.length-1]:0,html:'<div class="sheet openwide yrdays"><h3>Every day <span class="r">'+tapWord()+' a day to open its month</span></h3><div class="hmwrap">'+cards+'</div>'
-    +'<div class="hmleg">Less <i style="background:var(--hair2)"></i><i style="background:'+AL(.26)+'"></i><i style="background:'+AL(.46)+'"></i><i style="background:'+AL(.68)+'"></i><i style="background:'+AL(.9)+'"></i><i style="background:'+(dk?'#F0714A':'#C2410C')+'"></i> More</div></div>'};
+    +'<div class="hmleg">Less <i style="background:var(--hair2)"></i><i style="background:'+AL(.26)+'"></i><i style="background:'+AL(.46)+'"></i><i style="background:'+AL(.68)+'"></i><i style="background:'+AL(.9)+'"></i><i style="background:var(--chart-neg)"></i> More</div></div>'};
 }
 Views.year=function(){
   const yrs=[...new Set(DB.months.map(function(m){ return m.y; }))].sort();
