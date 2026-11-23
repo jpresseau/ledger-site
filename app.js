@@ -1,6 +1,6 @@
 
 "use strict";
-const APP_V="v29.63";
+const APP_V="v29.64";
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
 function ledgerMovedHtml(){
 if(!LEDGER_HOME) return '';
@@ -10,7 +10,7 @@ if(!here||here===home||here!==LEDGER_FROM) return '';
 return '<div class="sheet nofold movedbar" role="status" style="border-left:4px solid var(--amber);margin-bottom:12px"><b>The Ledger has its own address now: <a href="'+esc(LEDGER_HOME)+'">'+esc(LEDGER_HOME.replace(/^https:\/\//,'').replace(/\/$/,''))+'</a></b>'
 +'<div class="mut" style="font-size:12.5px;margin-top:4px">Its own address keeps the book away from the other apps on this site. To move it: <b>Data → Backup → Download backup (JSON)</b> here, then open the new address and use <b>Restore from backup</b> there. Your Gmail link, Betsy and everything in the book go with it; on a phone, add the new address to your home screen.</div></div>';
 }
-const APP_BUILD="fe2b3c0";
+const APP_BUILD="7fa111f";
 function appBuild(){ return APP_BUILD; }
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -40034,32 +40034,53 @@ function ptCapture(){
 try{
 const plain=localStorage.getItem(LS_KEY), enc=localStorage.getItem(LS_ENC);
 if(!plain&&!enc) return null;
-return {plain:plain||null,enc:plain?null:enc,lock:localStorage.getItem(LOCK_K)==='1'};
+const ms=plain&&typeof DB!=='undefined'&&DB&&Array.isArray(DB.months)?DB.months:null;
+return {plain:plain||null,enc:plain?null:enc,lock:localStorage.getItem(LOCK_K)==='1',
+months:ms?ms.length:null,last:ms&&ms.length?String(ms[ms.length-1].key||''):''};
 }catch(e){ return null; }
-}
-async function _ptHash(s){
-const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
-return Array.from(new Uint8Array(d)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
 }
 async function ptIndex(){
 const db=await _ptOpen();
 const all=await _ptReq(db.transaction('index','readonly').objectStore('index').getAll());
 return all.sort(function(a,b){ return b.at-a.at; });
 }
+const PT_SLICE=1<<16;
+const _ptMC=typeof MessageChannel==='function'?new MessageChannel():null, _ptMQ=[];
+if(_ptMC) _ptMC.port1.onmessage=function(){ const f=_ptMQ.shift(); if(f) f(); };
+function _ptYield(){
+if(typeof document!=='undefined'&&document.visibilityState==='hidden') return Promise.resolve();
+return new Promise(function(r){ if(_ptMC){ _ptMQ.push(r); _ptMC.port2.postMessage(0); } else setTimeout(r,0); });
+}
+async function _ptUtf8(s){
+const out=new Uint8Array(s.length*3), te=new TextEncoder(); let at=0, w=0;
+while(at<s.length){
+let end=Math.min(s.length,at+PT_SLICE);
+if(end<s.length){ const c=s.charCodeAt(end-1); if(c>=0xD800&&c<=0xDBFF) end--; }
+w+=te.encodeInto(s.slice(at,end),out.subarray(w)).written; at=end;
+if(at<s.length) await _ptYield();
+}
+return out.subarray(0,w);
+}
+async function _ptGzip(bytes){
+if(typeof CompressionStream!=='function') return {z:'none',bytes:bytes};
+const cs=new CompressionStream('gzip'), wr=cs.writable.getWriter(), out=new Response(cs.readable).arrayBuffer();
+for(let i=0;i<bytes.length;i+=PT_SLICE){ await wr.write(bytes.slice(i,i+PT_SLICE)); await _ptYield(); }
+await wr.close();
+return {z:'gzip',bytes:new Uint8Array(await out)};
+}
 async function _ptWrite(ring,why,cap){
-const s=JSON.stringify(cap), hash=await _ptHash(s);
+const bytes=await _ptUtf8((cap.plain?'p':'e')+(cap.lock?'1':'0')+'\n'+(cap.plain||cap.enc));
+const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
 const idx=await ptIndex(), mine=idx.filter(function(x){ return x.ring===ring; });
 if(mine.some(function(x){ return x.hash===hash; })) return {same:true};
-let months=null, last='';
-if(cap.plain){ try{ const b=JSON.parse(cap.plain), ms=b.months||[]; months=ms.length; last=ms.length?String(ms[ms.length-1].key||''):''; }catch(e){} }
-const z=await _gzip(s), at=Date.now();
+const z=await _ptGzip(bytes), at=Date.now();
 const meta={id:ring+'-'+at+'-'+Math.random().toString(36).slice(2,8),ring:ring,why:String(why||''),at:at,day:todayISO(),
-hash:hash,bytes:s.length,stored:z.bytes.length,months:months,last:last,locked:!cap.plain};
+hash:hash,bytes:bytes.length,stored:z.bytes.length,months:cap.plain?cap.months:null,last:cap.plain?cap.last:'',locked:!cap.plain};
 const drop=mine.slice(PT_RINGS[ring]-1).map(function(x){ return x.id; });
 const db=await _ptOpen();
 await new Promise(function(res,rej){
 const t=db.transaction(['index','body'],'readwrite');
-t.objectStore('index').put(meta); t.objectStore('body').put({id:meta.id,z:z.z,bytes:z.bytes});
+t.objectStore('index').put(meta); t.objectStore('body').put({id:meta.id,z:z.z,bytes:z.bytes,f:2});
 drop.forEach(function(id){ t.objectStore('index').delete(id); t.objectStore('body').delete(id); });
 t.oncomplete=res; t.onerror=function(){ rej(t.error); }; t.onabort=function(){ rej(t.error||new Error('aborted')); };
 });
@@ -40083,7 +40104,9 @@ async function ptBook(id){
 const db=await _ptOpen();
 const body=await _ptReq(db.transaction('body','readonly').objectStore('body').get(id));
 if(!body) throw new Error('That restore point is no longer on this device.');
-const cap=JSON.parse(await _gunzip(body.bytes,body.z));
+const raw=await _gunzip(body.bytes,body.z);
+const nl=body.f===2?raw.indexOf('\n'):-1;
+const cap=body.f===2?(raw.charAt(0)==='p'?{plain:raw.slice(nl+1)}:{enc:raw.slice(nl+1)}):JSON.parse(raw);
 let txt=cap.plain;
 if(!txt){
 const pass=typeof syncPass==='function'?syncPass():null;
