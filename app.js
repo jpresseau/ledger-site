@@ -1,7 +1,7 @@
 
 "use strict";
 
-const APP_V="v29.56";
+const APP_V="v29.57";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -15,7 +15,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="3ee179b";
+const APP_BUILD="05b4ace";
 function appBuild(){ return APP_BUILD; }   
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);

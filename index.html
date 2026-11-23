@@ -145,6 +145,10 @@ input[type=file]{padding:0}
 input[type=date]::-webkit-calendar-picker-indicator{opacity:.5;cursor:pointer}
 button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:none;box-shadow:var(--ring);border-radius:7px}
 
+@media (forced-colors: active){
+  :focus-visible{outline:2px solid Highlight !important;outline-offset:2px !important}
+}
+
 
 .app{display:flex;flex-direction:column;min-height:100vh}
 
@@ -3004,8 +3008,8 @@ button.txsort:hover{color:var(--accent)}
   });
 })();
 </script>
-<!-- for a page before v29.54, which reads its build here: const APP_BUILD="3ee179b" -->
-<script src="app.js?v=3ee179b"></script>
+<!-- for a page before v29.54, which reads its build here: const APP_BUILD="05b4ace" -->
+<script src="app.js?v=05b4ace"></script>
 
 <script>
 
