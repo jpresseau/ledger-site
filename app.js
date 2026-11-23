@@ -1,7 +1,7 @@
 
 "use strict";
 
-const APP_V="v29.54";
+const APP_V="v29.55";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -15,7 +15,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="c1ee8b6";
+const APP_BUILD="25d41b2";
 function appBuild(){ return APP_BUILD; }   
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
@@ -755,6 +755,23 @@ function icoWatch(){
     }
   }).observe(document.body,{childList:true,subtree:true,characterData:true});
   icoSweep(document.body);   
+}
+
+
+
+function ynToggle(act,field,val,label){
+  const one=function(v,t){ const on=val===v;
+    return '<button type="button" class="'+(on?'on':'')+'" data-act="'+act+'" data-field="'+esc(field)+'" data-v="'+v+'" aria-pressed="'+on+'"'
+      +(on?' title="Press again to leave it unanswered"':'')+'>'+t+'</button>'; };
+  return '<span class="segbtn yn" role="group" aria-label="'+esc(label)+'">'+one('yes','Yes')+one('no','No')+'</span>';
+}
+
+
+function ynNext(cur,v){ return v!=='yes'&&v!=='no'?cur:(cur===v?'':v); }
+
+function ynFocus(act,field,v){
+  try{ const b=document.querySelector('[data-act="'+act+'"][data-field="'+String(field).replace(/["\\]/g,'')+'"][data-v="'+v+'"]');
+    if(b) b.focus({preventScroll:true}); }catch(e){}
 }
 
 
@@ -15506,7 +15523,7 @@ const TAX_GUIDE=[
     +_tgSteps(['Enter both birth years, and any tips, overtime premium or car-loan interest for the year.','Press <b>Save</b>. Whatever applies goes on Schedule 1-A.']); },
   done:function(c){ return c.y<2025||c.y>2028||(typeof taxNewDed==='function'&&taxNewDed(c.y,0,'mfj').asked)||!!c.G.skip.newded; },skip:'newded',skipLabel:'None apply'},
 {id:'asks',emoji:'💬',phase:'Gather',title:function(){ return 'Answer the interview'; },
-  where:{view:'taxes',tab:'plan'},target:['.qsel[data-act=taxintakeset]'],wrap:'.sheet',
+  where:{view:'taxes',tab:'plan'},target:['.segbtn.yn [data-act=taxintakeyn]'],wrap:'.sheet',
   text:function(){ return _tgH('A handful of yes-or-no questions a preparer would ask: an HSA, an IRA, gifts to charity, medical bills, estimated tax payments, a second earner.')
     +_tgH('A <b>yes</b> opens what it needs right under the question: the gifts log, the medical log, the payments you sent the IRS and New York.'); },
   done:function(c){ return !!(c.asks&&c.asks.total&&!c.asks.open); }},
@@ -16416,8 +16433,7 @@ function nyAnswersForm(year,a){
   return '<div class="secgrid" style="margin-top:8px">'+Object.keys(NY_ANSWERS).map(function(k){
     const q=NY_ANSWERS[k];
     const ctl=q.kind==='bool'
-      ?'<select data-act="nyset" data-field="'+k+'" aria-label="'+esc(q.label)+'"><option value=""'+(yn(a[k])===''?' selected':'')+'>—</option>'
-        +'<option value="yes"'+(a[k]===true?' selected':'')+'>Yes</option><option value="no"'+(a[k]===false?' selected':'')+'>No</option></select>'
+      ?ynToggle('nyyn',k,yn(a[k]),q.label)   
       :q.kind==='list'?'<input data-act="nyset" data-field="'+k+'" aria-label="'+esc(q.label)+'" size="16" value="'+(Array.isArray(a[k])?esc(a[k].join(', ')):'')+'" placeholder="none">'
       :'<input data-act="nyset" data-field="'+k+'" aria-label="'+esc(q.label)+'" inputmode="decimal" size="10" value="'+(a[k]!=null?esc(String(a[k])):'')+'" placeholder="$0">';
     return '<div class="secrow"><div><b>'+esc(q.label)+'</b></div><div>'+ctl+'</div></div>';
@@ -19128,14 +19144,9 @@ function _taxIntakeHtml(year,F){
   if(!F||!F.current||typeof taxIntakeSummary!=='function') return '';
   let S=null; try{ S=taxIntakeSummary(year); }catch(e){ return ''; }
   if(!S||!S.total) return '';
-  const sel=function(r){
-    
+  
 
-    return '<select class="qsel" aria-label="'+esc(r.q)+'" data-act="taxintakeset" data-field="'+esc(r.id)+'">'
-      +[['','—'],['yes','yes'],['no','no']].map(function(o){
-        return '<option value="'+o[0]+'"'+(o[0]===r.a?' selected':'')+'>'+o[1]+'</option>'; }).join('')
-      +'</select>';
-  };
+  const sel=function(r){ return ynToggle('taxintakeyn',r.id,r.a,r.q); };
   return '<div class="sheet"><h3>What this page has not asked you'
     +'<span class="r">'+(S.open?S.open+' unanswered':'all answered')+'</span></h3>'
     +'<div class="mut" style="font-size:12px;line-height:1.55;margin-bottom:9px">'
@@ -19153,7 +19164,7 @@ function _taxIntakeHtml(year,F){
       return (g[1]?'<tr class="qgrp"><th colspan="2" style="text-align:left;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;padding-top:12px">'+esc(g[1])
         +' <span class="mut" style="text-transform:none;letter-spacing:0;font-weight:400">· '+(open?open+' to answer':'all answered')+'</span></th></tr>':'')
       +mine.map(function(r){
-      return '<tr><td style="width:52px">'+sel(r)+'</td>'
+      return '<tr><td class="yncell">'+sel(r)+'</td>'
         +'<td style="font-size:12.5px">'+esc(r.q)
         +(r.a==='yes'?'<div class="mut" style="font-size:11.5px;margin-top:4px">'+esc(r.yes)+'</div>':'')
         
@@ -42687,6 +42698,28 @@ function _imgLossOk(what){
 
   
 
+  if(act==='taxintakeyn'){
+    const id=b.dataset.field, r=taxIntakeRead(S.tax.year).find(function(x){ return x.id===id; });
+    if(!r) return;
+    const v=ynNext(r.a,b.dataset.v); if(v===r.a) return;
+    snap('a tax question answered');
+    const res=taxIntakeSet(S.tax.year,id,v);
+    if(!res.ok){ snapCancel(); toast(res.why,'warn'); render(); return; }
+    save(); render(); ynFocus(act,id,b.dataset.v); return;
+  }
+  if(act==='nyyn'){
+    const k=b.dataset.field;
+    if(!Object.prototype.hasOwnProperty.call(NY_ANSWERS,k)||NY_ANSWERS[k].kind!=='bool') return;
+    const was=nyAnswers(S.tax.year)[k], cur=was===true?'yes':was===false?'no':'';
+    const v=ynNext(cur,b.dataset.v); if(v===cur) return;
+    snap('a New York answer');
+    const res=nyAnswerSet(S.tax.year,k,v);
+    if(!res.ok){ snapCancel(); toast(res.why,'warn'); render(); return; }
+    save(); render(); ynFocus(act,k,b.dataset.v); return;
+  }
+
+  
+
   if(act==='storeper'){ S.stores=Object.assign({per:'y0',open:'',all:false},S.stores,{per:b.dataset.p}); render(); }
   else if(act==='storeopen'){
     const k=b.dataset.k||'', st=S.stores=Object.assign({per:'y0',open:'',all:false},S.stores);
@@ -44013,11 +44046,6 @@ document.addEventListener('change',ev=>{
   if(el.dataset.act==='nyset'){   
     snap('a New York answer');
     const r=nyAnswerSet(S.tax.year,el.dataset.field,el.value);
-    if(!r.ok){ snapCancel(); toast(r.why,'warn'); render(); return; }
-    save(); render(); return; }
-  if(el.dataset.act==='taxintakeset'){
-    snap('a tax question answered');
-    const r=taxIntakeSet(S.tax.year,el.dataset.field,el.value);
     if(!r.ok){ snapCancel(); toast(r.why,'warn'); render(); return; }
     save(); render(); return; }
   
