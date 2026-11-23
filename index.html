@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Pb6TZCSCfiEbH6riQ+85m3+lsVKtnIO+m2ItlHwG+9s=' 'sha256-GDbJblN0O+ldUEdaQmJFCmEqbFBBBJCO4PGij2vgw8A=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-f/WcRs+VygfAVva9nCS7zfRfRu9+Ti3Q6KQ7zAQpFlE=' 'sha256-nAwfMcvkZjX6vgNfZBht6alaNqjlmpMoGSf8GNfhJPQ=' https://www.gstatic.com/firebasejs/ https://apis.google.com/ https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://*.firebaseapp.com https://*.web.app https://cdn.plaid.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- minimum-scale=1 is what makes "zoomed all the way out" mean "filling the
      screen". Without it iOS lets a pinch take the page BELOW 100%, and there is
      nothing under a page narrower than the screen — the rail's own border stops
@@ -2967,370 +2967,302 @@ button.txsort:hover{color:var(--accent)}
 </div>
 <script id="pfseed" type="application/json">{"meta":{"source":"","generated":"","firstMonth":"","lastMonth":""},"settings":{"salary":null,"takeHome":null,"fixedTotal":null,"fixed":[],"nextPay":""},"months":[],"income":[],"billOrder":[],"subs":{},"subOrder":[],"bills":{},"seriesArch":{"bills":[],"cards":[],"subs":[]},"seriesFreq":{"bills":{},"cards":{},"subs":{}},"cardOrder":[],"cards":{},"catTotals":{"cats":[],"rows":[]},"amortize":[],"cashflow":{"accounts":[],"entries":[]},"checking":[],"taxes":{},"renos":{"r1":{"name":"","total":null,"debt":null,"items":[]},"r2":{"name":"","total":null,"items":[]},"r3":{"name":"","purchases":[],"hours":[],"blocks":[]},"r4":{"name":"","rows":[],"hours":[],"payouts":[],"totals":{"block":[],"labor":null,"materials":null}}},"trains":{"n":[],"t":[]},"greenhouse":[],"recon":{},"taxdocs":[],"taxwork":{},"archive":{},"receipts":[]}</script>
 <script>
-
-
 (function(){
-  var lastWhy='';
-  function day(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
-  function saved(){
-    var plain=null, enc=null;
-    try{ plain=localStorage.getItem('pfLedger_v1'); enc=localStorage.getItem('pfLedger_v1e'); }catch(e){}
-    return {plain:plain,enc:enc};
-  }
-  function download(text,name){
-    var a=document.createElement('a'), url=URL.createObjectURL(new Blob([text],{type:'application/json'}));
-    a.href=url; a.download=name; document.body.appendChild(a); a.click();
-    setTimeout(function(){ try{ URL.revokeObjectURL(url); a.remove(); }catch(e){} },1000);
-  }
-  function el(tag,text,css){ var n=document.createElement(tag); if(text) n.textContent=text; if(css) n.style.cssText=css; return n; }
-  function show(why){
-    if(document.getElementById('pfRescue')||!document.body) return;
-    var s=saved(), box=el('div','','position:fixed;inset:0;z-index:2147483647;overflow:auto;background:#fff;color:#1c1c1a;'
-      +'font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:max(24px,env(safe-area-inset-top)) 20px 32px');
-    box.id='pfRescue'; box.setAttribute('role','alertdialog'); box.setAttribute('aria-labelledby','pfRescueH');
-    var h=el('h1','The Ledger could not start','font-size:22px;margin:0 0 10px'); h.id='pfRescueH';
-    box.appendChild(h);
-    box.appendChild(el('p',(s.plain||s.enc)?'Your book is still saved in this browser, and nothing has been changed. Download a copy of it first, then try again.'
-      :'Nothing is saved in this browser yet, so nothing can be lost here. Try again; if this keeps happening, a newer version may be on its way.','max-width:36em'));
-    var row=el('div','','display:flex;flex-wrap:wrap;gap:10px;margin:16px 0');
-    function btn(label,fn){ var b=el('button',label,'font:inherit;padding:10px 16px;border-radius:9px;border:1px solid #888;background:#f4f4f2;color:inherit'); b.type='button'; b.addEventListener('click',fn); row.appendChild(b); return b; }
-    if(s.plain) btn('Download the saved book',function(){ download(s.plain,'ledger-rescue-'+day()+'.json'); }).id='pfRescueBook';
-    if(s.enc) btn('Download the locked copy',function(){ download(s.enc,'ledger-rescue-locked-'+day()+'.json'); }).id='pfRescueLocked';
-    btn('Try again',function(){ try{ sessionStorage.removeItem('pfLedger_twoBuilds'); }catch(e){} location.reload(); }).id='pfRescueReload';   
-    box.appendChild(row);
-    if(s.enc) box.appendChild(el('p','The locked copy is encrypted with your passphrase.','font-size:13px;color:#555;max-width:36em'));
-    if(why) box.appendChild(el('pre',String(why).slice(0,400),'white-space:pre-wrap;font-size:12px;color:#555;background:#f4f4f2;padding:10px;border-radius:8px;max-width:40em'));
-    document.body.appendChild(box);
-  }
-  window.__pfRescue=show;
-  window.addEventListener('error',function(ev){
-    if(window.__PF_OK) return;
-    lastWhy=String((ev&&(ev.error&&ev.error.message||ev.message))||'An error stopped the app.');
-    setTimeout(function(){ if(!window.__PF_OK) show(lastWhy); },400);
-  });
-  window.addEventListener('load',function(){
-    setTimeout(function(){ if(!window.__PF_OK) show(lastWhy||'The app did not finish starting.'); },Number(window.__PF_RESCUE_MS)||12000);
-  });
+var lastWhy='';
+function day(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function saved(){
+var plain=null, enc=null;
+try{ plain=localStorage.getItem('pfLedger_v1'); enc=localStorage.getItem('pfLedger_v1e'); }catch(e){}
+return {plain:plain,enc:enc};
+}
+function download(text,name){
+var a=document.createElement('a'), url=URL.createObjectURL(new Blob([text],{type:'application/json'}));
+a.href=url; a.download=name; document.body.appendChild(a); a.click();
+setTimeout(function(){ try{ URL.revokeObjectURL(url); a.remove(); }catch(e){} },1000);
+}
+function el(tag,text,css){ var n=document.createElement(tag); if(text) n.textContent=text; if(css) n.style.cssText=css; return n; }
+function show(why){
+if(document.getElementById('pfRescue')||!document.body) return;
+var s=saved(), box=el('div','','position:fixed;inset:0;z-index:2147483647;overflow:auto;background:#fff;color:#1c1c1a;'
++'font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:max(24px,env(safe-area-inset-top)) 20px 32px');
+box.id='pfRescue'; box.setAttribute('role','alertdialog'); box.setAttribute('aria-labelledby','pfRescueH');
+var h=el('h1','The Ledger could not start','font-size:22px;margin:0 0 10px'); h.id='pfRescueH';
+box.appendChild(h);
+box.appendChild(el('p',(s.plain||s.enc)?'Your book is still saved in this browser, and nothing has been changed. Download a copy of it first, then try again.'
+:'Nothing is saved in this browser yet, so nothing can be lost here. Try again; if this keeps happening, a newer version may be on its way.','max-width:36em'));
+var row=el('div','','display:flex;flex-wrap:wrap;gap:10px;margin:16px 0');
+function btn(label,fn){ var b=el('button',label,'font:inherit;padding:10px 16px;border-radius:9px;border:1px solid #888;background:#f4f4f2;color:inherit'); b.type='button'; b.addEventListener('click',fn); row.appendChild(b); return b; }
+if(s.plain) btn('Download the saved book',function(){ download(s.plain,'ledger-rescue-'+day()+'.json'); }).id='pfRescueBook';
+if(s.enc) btn('Download the locked copy',function(){ download(s.enc,'ledger-rescue-locked-'+day()+'.json'); }).id='pfRescueLocked';
+btn('Try again',function(){ try{ sessionStorage.removeItem('pfLedger_twoBuilds'); }catch(e){} location.reload(); }).id='pfRescueReload';
+box.appendChild(row);
+if(s.enc) box.appendChild(el('p','The locked copy is encrypted with your passphrase.','font-size:13px;color:#555;max-width:36em'));
+if(why) box.appendChild(el('pre',String(why).slice(0,400),'white-space:pre-wrap;font-size:12px;color:#555;background:#f4f4f2;padding:10px;border-radius:8px;max-width:40em'));
+document.body.appendChild(box);
+}
+window.__pfRescue=show;
+window.addEventListener('error',function(ev){
+if(window.__PF_OK) return;
+lastWhy=String((ev&&(ev.error&&ev.error.message||ev.message))||'An error stopped the app.');
+setTimeout(function(){ if(!window.__PF_OK) show(lastWhy); },400);
+});
+window.addEventListener('load',function(){
+setTimeout(function(){ if(!window.__PF_OK) show(lastWhy||'The app did not finish starting.'); },Number(window.__PF_RESCUE_MS)||12000);
+});
 })();
 </script>
-<!-- for a page before v29.54, which reads its build here: const APP_BUILD="a9e9c5c" -->
-<script src="app.js?v=a9e9c5c"></script>
+<!-- for a page before v29.54, which reads its build here: const APP_BUILD="a2b1c3b" -->
+<script src="app.js?v=a2b1c3b"></script>
 
 <script>
-
-
 (function(){
-  var PF = window.__PF || {};
-  function say(m,k){ try{ (PF.toast||function(){})(m,k); }catch(e){} }
-
-  
-  var reg = null;
-  if('serviceWorker' in navigator && location.protocol !== 'file:'){
-    window.addEventListener('load', function(){
-      navigator.serviceWorker.register('sw.js').then(function(r){ reg = r; })
-        .catch(function(){  });
-    });
-    navigator.serviceWorker.addEventListener('message', function(e){
-      if(e.data && e.data.type === 'PURGED') location.reload();
-    });
-  }
-
-  
-  
-
-  function refreshReachable(){
-    try{
-      
-
-      if(location.protocol === 'file:') return Promise.resolve(true);
-      if(navigator.onLine === false) return Promise.resolve(false);
-      lastProbe = '';
-      var probe = fetch('build.txt?reach=' + Date.now(), { method: 'HEAD', cache: 'no-store' }).then(function(r){
-        var ct = '';
-        try{ ct = String((r && r.headers && r.headers.get('content-type')) || ''); }catch(e){}
-        if(/text\/html/i.test(ct)){ lastProbe = 'page'; return false; }
-        return true;
-      }, function(){ return false; });
-      return Promise.race([probe, new Promise(function(r){ setTimeout(function(){ r(false); }, 8000); })]);
-    }catch(e){ return Promise.resolve(true); }   
-  }
-  var lastProbe = '';
-  
-
-  var MIRRORS = {
-    'https://ledger.jpresseau.com': ['https://jpresseau.github.io/ledger/index.html', 'https://raw.githubusercontent.com/jpresseau/ledger-site/main/index.html'],
-    'https://jpresseau.github.io': ['https://raw.githubusercontent.com/jpresseau/ledger-site/main/index.html']
-  };
-  function refreshMirrors(){
-    var P = window.__PF || {};
-    if(Object.prototype.toString.call(P._refreshMirrors) === '[object Array]') return P._refreshMirrors;   
-    return MIRRORS[location.origin] || [];
-  }
-  
-
-  function pageBuild(html){ var m = /const APP_BUILD="([0-9a-f]{7})"/.exec(String(html || '')); return m ? m[1] : ''; }
-  function pageFile(html){ var m = /<script src="(app\.js)\?v=([0-9a-f]{7})"><\/script>/.exec(String(html || '')); return m ? { name: m[1], build: m[2] } : null; }
-  
-
-  function scriptOf(js, b){ return !!js && !/^\s*</.test(js) && js.indexOf('__PF') >= 0 && pageBuild(js) === b; }
-  
-  function pageScriptBuild(){
-    var tag = document.querySelector('script[src^="app.js?v="]'), m = tag && /^app\.js\?v=([0-9a-f]{7})$/.exec(tag.getAttribute('src') || '');
-    return m ? m[1] : '';
-  }
-  
-
-  function text(u){
-    return Promise.race([fetch(u, { cache: 'no-store' }).then(function(r){ return r && r.ok ? r.text() : ''; }),
-      new Promise(function(r){ setTimeout(function(){ r(''); }, 8000); })]);
-  }
-  
-  function saveFirst(){
-    var saved;
-    try{ var P = window.__PF || {}; saved = typeof P.saveSettled === 'function' ? P.saveSettled() : Promise.resolve(); }catch(e){ saved = Promise.resolve(); }
-    return Promise.race([Promise.resolve(saved)['catch'](function(){}), new Promise(function(r){ setTimeout(r, 4000); })]);
-  }
-  function fromMirror(){
-    var list = refreshMirrors().slice(), i = 0;
-    if(!list.length || !window.caches || lastProbe === 'page') return Promise.resolve(null);
-    var next = function(){
-      if(i >= list.length) return Promise.resolve(null);
-      var at = list[i++];
-      return text(at).then(function(t){
-        var f = pageFile(t);
-        if(!f) return t && t.indexOf('__PF') >= 0 && pageBuild(t) ? { html: t, build: pageBuild(t) } : next();
-        return text(new URL(f.name, at).href).then(function(js){
-          return scriptOf(js, f.build) ? { html: t, js: js, file: f.name, build: f.build } : next(); }, next);
-      }, next);
-    };
-    return next();
-  }
-  
-
-  function keepCopies(list){
-    return caches.keys().then(function(ks){
-      var name = (ks || []).filter(function(k){ return k.indexOf('ledger-') === 0; })[0] || 'ledger-v2';
-      return caches.open(name).then(function(c){
-        return Promise.all(list.map(function(x){ return c.put(new URL(x[0], location.href).href, new Response(x[1], { headers: { 'Content-Type': x[2] } })); }));
-      });
-    });
-  }
-  function reloadPage(){
-    var nav = window.__PF && window.__PF._refreshNav;
-    if(typeof nav === 'function') nav(location.pathname + location.search + location.hash); else location.reload();
-  }
-  
-
-  var SCRIPT_RETRY_MS = 60000;
-  function scriptCheck(){
-    var want = pageScriptBuild(), got = '';
-    try{ got = typeof window.appBuild === 'function' ? String(window.appBuild()) : ''; }catch(e){}
-    if(!want || got === want) return Promise.resolve('');
-    var k = 'pfLedger_twoBuilds', v = got + '>' + want;
-    try{
-      var last = String(sessionStorage.getItem(k) || ''), cut = last.lastIndexOf('@'), when = Number(last.slice(cut + 1));
-      if(cut > 0 && last.slice(0, cut) === v && Date.now() - when >= 0 && Date.now() - when < SCRIPT_RETRY_MS) return Promise.resolve('tried');
-      sessionStorage.setItem(k, v + '@' + Date.now());
-    }catch(e){ return Promise.resolve(''); }
-    var at = ['app.js?v=' + want].concat(refreshMirrors().map(function(u){ return new URL('app.js', u).href; })), i = 0;
-    var next = function(){
-      if(i >= at.length) return Promise.resolve('');
-      return text(at[i++]).then(function(js){ return scriptOf(js, want) ? js : next(); }, next);
-    };
-    return next().then(function(js){
-      if(!js || !window.caches) return 'reload';
-      return keepCopies([['./app.js', js, 'text/javascript; charset=utf-8']]).then(function(){ return 'kept'; }, function(){ return 'reload'; });
-    }).then(function(how){ return saveFirst().then(function(){ reloadPage(); return how; }); });
-  }
-  try{ scriptCheck(); }catch(e){}
-  function mirrorInstall(m){
-    say('Can\u2019t reach ' + location.host + ', so the latest version came from GitHub \u2014 reloading\u2026', 'warn');
-    var safe = saveFirst();
-    var H = 'text/html; charset=utf-8', copies = [['./', m.html, H], ['./index.html', m.html, H]];
-    if(m.js) copies.push(['./' + m.file, m.js, 'text/javascript; charset=utf-8']);   
-    return safe.then(function(){ return keepCopies(copies); }).then(function(){
-      
-      reloadPage();
-    }, function(e){
-      say('Could not keep the version from GitHub (' + ((e && e.message) || e) + '). The copy on this device is kept.', 'warn');
-    });
-  }
-  function hardRefresh(){
-    say('Checking for the latest version…');
-    return refreshReachable().then(function(ok){
-      if(ok) return refreshNow();
-      return fromMirror().then(function(m){
-        if(m && m.build !== runningBuild()) return mirrorInstall(m);
-        
-
-        if(m) return say('You have the latest version (build ' + m.build + '). ' + location.host + ' can\u2019t be reached '
-          + 'from this network, so Refresh asked GitHub instead, and it has this same version.', 'ok');
-        say('Can\u2019t reach ' + location.host + ' right now, so nothing was refreshed. '
-          + 'The copy on this device is kept and the app keeps working from it.', 'warn');
-      });
-    });
-  }
-  function refreshNow(){
-    say('Fetching the latest version…');
-    
-
-    var done = false, go = function(){
-      if(done) return; done = true;
-      var to = location.pathname + '?fresh=' + Date.now() + location.hash;
-      
-      var nav = window.__PF && window.__PF._refreshNav;
-      try{ if(typeof nav === 'function') nav(to); else location.replace(to); }
-      catch(e){ location.reload(); }
-    };
-    
-
-    var saved;
-    try{
-      var P = window.__PF || {};
-      saved = typeof P.saveSettled === 'function' ? P.saveSettled() : Promise.resolve();
-    }catch(e){ saved = Promise.resolve(); }
-    var safe = Promise.race([Promise.resolve(saved)['catch'](function(){}),
-      new Promise(function(r){ setTimeout(r, 4000); })]);
-    var after = function(){ safe.then(go, go); };
-    setTimeout(after, 1500);                    
-    try{
-      
-
-      
-
-      var jobs = [];
-      if(window.caches) jobs.push(caches.keys().then(function(ks){
-        return Promise.all(ks.filter(function(k){ return k.indexOf('ledger-') === 0; })
-          .map(function(k){ return caches.delete(k); }));
-      }));
-      if(navigator.serviceWorker && navigator.serviceWorker.getRegistrations)
-        jobs.push(navigator.serviceWorker.getRegistrations().then(function(rs){
-          return Promise.all(rs.filter(function(r){
-            var sc = '';
-            try{ sc = String((r.scope || '')); }catch(e){ sc = ''; }
-            
-            try{ sc = new URL(sc, location.href).pathname; }catch(e){}
-            return sc.indexOf('/ledger/') >= 0;
-          }).map(function(r){ return r.unregister(); }));
-        }));
-      if(jobs.length) Promise.all(jobs).then(after, after); else after();
-    }catch(e){ after(); }
-  }
-
-  
-
-  var announced = '';
-  function runningBuild(){
-    
-
-    var P = window.__PF || {};
-    var b = pageScriptBuild() || String(P.APP_BUILD || '');
-    
-    return /^[0-9a-f]{7}$/.test(b) ? b : '';
-  }
-  function updateCheck(){
-    
-
-    if(location.protocol === 'file:') return Promise.resolve();
-    var here = runningBuild();
-    if(!here) return Promise.resolve();
-    return fetch('build.txt?t=' + Date.now(), { cache: 'no-cache' })
-      .then(function(r){ return r.ok ? r.text() : null; })
-      .then(function(txt){
-        if(txt == null) return;
-        var there = String(txt).trim();
-        
-
-        if(!/^[0-9a-f]{7}$/.test(there)) return;
-        if(there === here || there === announced) return;
-        announced = there;
-        var b = document.getElementById('qbRefresh');
-        if(b){
-          b.classList.add('newer');
-          b.title = 'Version ' + there + ' is deployed — you are running ' + here + '. Tap to load it.';
-        }
-        say('A new version is ready — tap ⟳ Refresh to load it', 'ok');
-      })
-      .catch(function(){  });
-  }
-  
-
-  if('fetch' in window){
-    setTimeout(updateCheck, 4000);
-    document.addEventListener('visibilitychange', function(){
-      if(!document.hidden) updateCheck();
-    });
-    setInterval(updateCheck, 30 * 60 * 1000);
-  }
-
-  
-  var deferred = null;
-  var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent||'')
-         || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  
-
-  function standalone(){
-    if(typeof appInstalled === 'function') return appInstalled();
-    try{ return (matchMedia && matchMedia('(display-mode: standalone)').matches)
-      || navigator.standalone === true; }catch(e){ return false; }
-  }
-  var btnInstall = document.getElementById('qbInstall');
-  function showInstall(){ if(btnInstall) btnInstall.classList.add('show'); }
-
-  window.addEventListener('beforeinstallprompt', function(e){
-    e.preventDefault(); deferred = e; showInstall();
-  });
-  window.addEventListener('appinstalled', function(){
-    deferred = null;
-    if(btnInstall) btnInstall.classList.remove('show');
-    say('Installed — open it from your home screen','ok');
-  });
-  
-  if(iOS && !standalone()) showInstall();
-
-  function doInstall(){
-    if(deferred){ deferred.prompt(); deferred = null;
-      if(btnInstall) btnInstall.classList.remove('show'); return; }
-    if(iOS){ say('Tap Share, then “Add to Home Screen”'); return; }
-    say('Use your browser menu → Install app');
-  }
-
-  
-  try{
-    if(navigator.storage && navigator.storage.persist && navigator.storage.persisted){
-      navigator.storage.persisted().then(function(already){
-        if(!already) navigator.storage.persist().catch(function(){});
-      }).catch(function(){});
-    }
-  }catch(e){}
-
-  
-  document.addEventListener('click', function(e){
-    var b = e.target && e.target.closest && e.target.closest('[data-act]');
-    if(!b) return;
-    var a = b.getAttribute('data-act');
-    if(a === 'swrefresh'){ e.preventDefault(); hardRefresh(); }
-    else if(a === 'install'){ e.preventDefault(); doInstall(); }
-  });
-
-  
-  try{ if(window.__PF){ window.__PF.updateCheck = updateCheck; window.__PF.refreshReachable = refreshReachable; window.__PF.hardRefresh = hardRefresh; window.__PF._scriptCheck = scriptCheck; } }catch(e){}
-
-  
-  try{
-    var qs = new URLSearchParams(location.search);
-    var want = qs.get('view');
-    if(want && PF.S && PF.render && PF.NAVDEF && PF.NAVDEF.some(function(r){ return r[0]!=='grp'&&r[0]===want; })){
-      PF.S.view = want; PF.render();
-    }
-    
-
-    if(qs.has('fresh')){
-      qs.delete('fresh');
-      var q = qs.toString();
-      history.replaceState(null, '', location.pathname + (q ? '?' + q : '') + location.hash);
-    }
-  }catch(e){}
+var PF = window.__PF || {};
+function say(m,k){ try{ (PF.toast||function(){})(m,k); }catch(e){} }
+var reg = null;
+if('serviceWorker' in navigator && location.protocol !== 'file:'){
+window.addEventListener('load', function(){
+navigator.serviceWorker.register('sw.js').then(function(r){ reg = r; })
+.catch(function(){  });
+});
+navigator.serviceWorker.addEventListener('message', function(e){
+if(e.data && e.data.type === 'PURGED') location.reload();
+});
+}
+function refreshReachable(){
+try{
+if(location.protocol === 'file:') return Promise.resolve(true);
+if(navigator.onLine === false) return Promise.resolve(false);
+lastProbe = '';
+var probe = fetch('build.txt?reach=' + Date.now(), { method: 'HEAD', cache: 'no-store' }).then(function(r){
+var ct = '';
+try{ ct = String((r && r.headers && r.headers.get('content-type')) || ''); }catch(e){}
+if(/text\/html/i.test(ct)){ lastProbe = 'page'; return false; }
+return true;
+}, function(){ return false; });
+return Promise.race([probe, new Promise(function(r){ setTimeout(function(){ r(false); }, 8000); })]);
+}catch(e){ return Promise.resolve(true); }
+}
+var lastProbe = '';
+var MIRRORS = {
+'https://ledger.jpresseau.com': ['https://jpresseau.github.io/ledger/index.html', 'https://raw.githubusercontent.com/jpresseau/ledger-site/main/index.html'],
+'https://jpresseau.github.io': ['https://raw.githubusercontent.com/jpresseau/ledger-site/main/index.html']
+};
+function refreshMirrors(){
+var P = window.__PF || {};
+if(Object.prototype.toString.call(P._refreshMirrors) === '[object Array]') return P._refreshMirrors;
+return MIRRORS[location.origin] || [];
+}
+function pageBuild(html){ var m = /const APP_BUILD="([0-9a-f]{7})"/.exec(String(html || '')); return m ? m[1] : ''; }
+function pageFile(html){ var m = /<script src="(app\.js)\?v=([0-9a-f]{7})"><\/script>/.exec(String(html || '')); return m ? { name: m[1], build: m[2] } : null; }
+function scriptOf(js, b){ return !!js && !/^\s*</.test(js) && js.indexOf('__PF') >= 0 && pageBuild(js) === b; }
+function pageScriptBuild(){
+var tag = document.querySelector('script[src^="app.js?v="]'), m = tag && /^app\.js\?v=([0-9a-f]{7})$/.exec(tag.getAttribute('src') || '');
+return m ? m[1] : '';
+}
+function text(u){
+return Promise.race([fetch(u, { cache: 'no-store' }).then(function(r){ return r && r.ok ? r.text() : ''; }),
+new Promise(function(r){ setTimeout(function(){ r(''); }, 8000); })]);
+}
+function saveFirst(){
+var saved;
+try{ var P = window.__PF || {}; saved = typeof P.saveSettled === 'function' ? P.saveSettled() : Promise.resolve(); }catch(e){ saved = Promise.resolve(); }
+return Promise.race([Promise.resolve(saved)['catch'](function(){}), new Promise(function(r){ setTimeout(r, 4000); })]);
+}
+function fromMirror(){
+var list = refreshMirrors().slice(), i = 0;
+if(!list.length || !window.caches || lastProbe === 'page') return Promise.resolve(null);
+var next = function(){
+if(i >= list.length) return Promise.resolve(null);
+var at = list[i++];
+return text(at).then(function(t){
+var f = pageFile(t);
+if(!f) return t && t.indexOf('__PF') >= 0 && pageBuild(t) ? { html: t, build: pageBuild(t) } : next();
+return text(new URL(f.name, at).href).then(function(js){
+return scriptOf(js, f.build) ? { html: t, js: js, file: f.name, build: f.build } : next(); }, next);
+}, next);
+};
+return next();
+}
+function keepCopies(list){
+return caches.keys().then(function(ks){
+var name = (ks || []).filter(function(k){ return k.indexOf('ledger-') === 0; })[0] || 'ledger-v2';
+return caches.open(name).then(function(c){
+return Promise.all(list.map(function(x){ return c.put(new URL(x[0], location.href).href, new Response(x[1], { headers: { 'Content-Type': x[2] } })); }));
+});
+});
+}
+function reloadPage(){
+var nav = window.__PF && window.__PF._refreshNav;
+if(typeof nav === 'function') nav(location.pathname + location.search + location.hash); else location.reload();
+}
+var SCRIPT_RETRY_MS = 60000;
+function scriptCheck(){
+var want = pageScriptBuild(), got = '';
+try{ got = typeof window.appBuild === 'function' ? String(window.appBuild()) : ''; }catch(e){}
+if(!want || got === want) return Promise.resolve('');
+var k = 'pfLedger_twoBuilds', v = got + '>' + want;
+try{
+var last = String(sessionStorage.getItem(k) || ''), cut = last.lastIndexOf('@'), when = Number(last.slice(cut + 1));
+if(cut > 0 && last.slice(0, cut) === v && Date.now() - when >= 0 && Date.now() - when < SCRIPT_RETRY_MS) return Promise.resolve('tried');
+sessionStorage.setItem(k, v + '@' + Date.now());
+}catch(e){ return Promise.resolve(''); }
+var at = ['app.js?v=' + want].concat(refreshMirrors().map(function(u){ return new URL('app.js', u).href; })), i = 0;
+var next = function(){
+if(i >= at.length) return Promise.resolve('');
+return text(at[i++]).then(function(js){ return scriptOf(js, want) ? js : next(); }, next);
+};
+return next().then(function(js){
+if(!js || !window.caches) return 'reload';
+return keepCopies([['./app.js', js, 'text/javascript; charset=utf-8']]).then(function(){ return 'kept'; }, function(){ return 'reload'; });
+}).then(function(how){ return saveFirst().then(function(){ reloadPage(); return how; }); });
+}
+try{ scriptCheck(); }catch(e){}
+function mirrorInstall(m){
+say('Can\u2019t reach ' + location.host + ', so the latest version came from GitHub \u2014 reloading\u2026', 'warn');
+var safe = saveFirst();
+var H = 'text/html; charset=utf-8', copies = [['./', m.html, H], ['./index.html', m.html, H]];
+if(m.js) copies.push(['./' + m.file, m.js, 'text/javascript; charset=utf-8']);
+return safe.then(function(){ return keepCopies(copies); }).then(function(){
+reloadPage();
+}, function(e){
+say('Could not keep the version from GitHub (' + ((e && e.message) || e) + '). The copy on this device is kept.', 'warn');
+});
+}
+function hardRefresh(){
+say('Checking for the latest version…');
+return refreshReachable().then(function(ok){
+if(ok) return refreshNow();
+return fromMirror().then(function(m){
+if(m && m.build !== runningBuild()) return mirrorInstall(m);
+if(m) return say('You have the latest version (build ' + m.build + '). ' + location.host + ' can\u2019t be reached '
++ 'from this network, so Refresh asked GitHub instead, and it has this same version.', 'ok');
+say('Can\u2019t reach ' + location.host + ' right now, so nothing was refreshed. '
++ 'The copy on this device is kept and the app keeps working from it.', 'warn');
+});
+});
+}
+function refreshNow(){
+say('Fetching the latest version…');
+var done = false, go = function(){
+if(done) return; done = true;
+var to = location.pathname + '?fresh=' + Date.now() + location.hash;
+var nav = window.__PF && window.__PF._refreshNav;
+try{ if(typeof nav === 'function') nav(to); else location.replace(to); }
+catch(e){ location.reload(); }
+};
+var saved;
+try{
+var P = window.__PF || {};
+saved = typeof P.saveSettled === 'function' ? P.saveSettled() : Promise.resolve();
+}catch(e){ saved = Promise.resolve(); }
+var safe = Promise.race([Promise.resolve(saved)['catch'](function(){}),
+new Promise(function(r){ setTimeout(r, 4000); })]);
+var after = function(){ safe.then(go, go); };
+setTimeout(after, 1500);
+try{
+var jobs = [];
+if(window.caches) jobs.push(caches.keys().then(function(ks){
+return Promise.all(ks.filter(function(k){ return k.indexOf('ledger-') === 0; })
+.map(function(k){ return caches.delete(k); }));
+}));
+if(navigator.serviceWorker && navigator.serviceWorker.getRegistrations)
+jobs.push(navigator.serviceWorker.getRegistrations().then(function(rs){
+return Promise.all(rs.filter(function(r){
+var sc = '';
+try{ sc = String((r.scope || '')); }catch(e){ sc = ''; }
+try{ sc = new URL(sc, location.href).pathname; }catch(e){}
+return sc.indexOf('/ledger/') >= 0;
+}).map(function(r){ return r.unregister(); }));
+}));
+if(jobs.length) Promise.all(jobs).then(after, after); else after();
+}catch(e){ after(); }
+}
+var announced = '';
+function runningBuild(){
+var P = window.__PF || {};
+var b = pageScriptBuild() || String(P.APP_BUILD || '');
+return /^[0-9a-f]{7}$/.test(b) ? b : '';
+}
+function updateCheck(){
+if(location.protocol === 'file:') return Promise.resolve();
+var here = runningBuild();
+if(!here) return Promise.resolve();
+return fetch('build.txt?t=' + Date.now(), { cache: 'no-cache' })
+.then(function(r){ return r.ok ? r.text() : null; })
+.then(function(txt){
+if(txt == null) return;
+var there = String(txt).trim();
+if(!/^[0-9a-f]{7}$/.test(there)) return;
+if(there === here || there === announced) return;
+announced = there;
+var b = document.getElementById('qbRefresh');
+if(b){
+b.classList.add('newer');
+b.title = 'Version ' + there + ' is deployed — you are running ' + here + '. Tap to load it.';
+}
+say('A new version is ready — tap ⟳ Refresh to load it', 'ok');
+})
+.catch(function(){  });
+}
+if('fetch' in window){
+setTimeout(updateCheck, 4000);
+document.addEventListener('visibilitychange', function(){
+if(!document.hidden) updateCheck();
+});
+setInterval(updateCheck, 30 * 60 * 1000);
+}
+var deferred = null;
+var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent||'')
+|| (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function standalone(){
+if(typeof appInstalled === 'function') return appInstalled();
+try{ return (matchMedia && matchMedia('(display-mode: standalone)').matches)
+|| navigator.standalone === true; }catch(e){ return false; }
+}
+var btnInstall = document.getElementById('qbInstall');
+function showInstall(){ if(btnInstall) btnInstall.classList.add('show'); }
+window.addEventListener('beforeinstallprompt', function(e){
+e.preventDefault(); deferred = e; showInstall();
+});
+window.addEventListener('appinstalled', function(){
+deferred = null;
+if(btnInstall) btnInstall.classList.remove('show');
+say('Installed — open it from your home screen','ok');
+});
+if(iOS && !standalone()) showInstall();
+function doInstall(){
+if(deferred){ deferred.prompt(); deferred = null;
+if(btnInstall) btnInstall.classList.remove('show'); return; }
+if(iOS){ say('Tap Share, then “Add to Home Screen”'); return; }
+say('Use your browser menu → Install app');
+}
+try{
+if(navigator.storage && navigator.storage.persist && navigator.storage.persisted){
+navigator.storage.persisted().then(function(already){
+if(!already) navigator.storage.persist().catch(function(){});
+}).catch(function(){});
+}
+}catch(e){}
+document.addEventListener('click', function(e){
+var b = e.target && e.target.closest && e.target.closest('[data-act]');
+if(!b) return;
+var a = b.getAttribute('data-act');
+if(a === 'swrefresh'){ e.preventDefault(); hardRefresh(); }
+else if(a === 'install'){ e.preventDefault(); doInstall(); }
+});
+try{ if(window.__PF){ window.__PF.updateCheck = updateCheck; window.__PF.refreshReachable = refreshReachable; window.__PF.hardRefresh = hardRefresh; window.__PF._scriptCheck = scriptCheck; } }catch(e){}
+try{
+var qs = new URLSearchParams(location.search);
+var want = qs.get('view');
+if(want && PF.S && PF.render && PF.NAVDEF && PF.NAVDEF.some(function(r){ return r[0]!=='grp'&&r[0]===want; })){
+PF.S.view = want; PF.render();
+}
+if(qs.has('fresh')){
+qs.delete('fresh');
+var q = qs.toString();
+history.replaceState(null, '', location.pathname + (q ? '?' + q : '') + location.hash);
+}
+}catch(e){}
 })();
 </script>
 </body>
