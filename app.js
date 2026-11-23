@@ -1,7 +1,7 @@
 
 "use strict";
 
-const APP_V="v29.55";
+const APP_V="v29.56";
 
 
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
@@ -15,7 +15,7 @@ function ledgerMovedHtml(){
 }
 
 
-const APP_BUILD="25d41b2";
+const APP_BUILD="3ee179b";
 function appBuild(){ return APP_BUILD; }   
 
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
@@ -34247,6 +34247,14 @@ const _MFOCUS='a[href],button:not([disabled]),input:not([type=hidden]):not([disa
 function _mFocusable(w){ return [...w.querySelectorAll(_MFOCUS)]
   .filter(e=>e.offsetWidth||e.offsetHeight||e.getClientRects().length); }
 let _modalPrev=null;
+
+
+function _mTouch(){ try{ return !!(window.matchMedia&&matchMedia('(hover:none) and (pointer:coarse)').matches); }catch(e){ return false; } }
+function _mTyped(el){
+  if(!el) return false;
+  if(el.tagName==='TEXTAREA') return true;
+  return el.tagName==='INPUT'&&/^(text|search|email|url|tel|password|number)?$/i.test(el.getAttribute('type')||'');
+}
 function modal(title,bodyHtml,footHtml,extraClass){
   
 
@@ -34274,7 +34282,7 @@ function modal(title,bodyHtml,footHtml,extraClass){
   });
   const box=w.querySelector('.mbox');
   const field=w.querySelector('.mb input:not([type=hidden]):not([disabled]),.mb select:not([disabled]),.mb textarea:not([disabled])');
-  (field||box).focus();
+  ((field&&(_mTyped(field)||!_mTouch())?field:null)||box).focus();
   return w;
 }
 
