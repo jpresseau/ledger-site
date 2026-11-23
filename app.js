@@ -1,6 +1,6 @@
 
 "use strict";
-const APP_V="v29.61";
+const APP_V="v29.62";
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
 function ledgerMovedHtml(){
 if(!LEDGER_HOME) return '';
@@ -10,7 +10,7 @@ if(!here||here===home||here!==LEDGER_FROM) return '';
 return '<div class="sheet nofold movedbar" role="status" style="border-left:4px solid var(--amber);margin-bottom:12px"><b>The Ledger has its own address now: <a href="'+esc(LEDGER_HOME)+'">'+esc(LEDGER_HOME.replace(/^https:\/\//,'').replace(/\/$/,''))+'</a></b>'
 +'<div class="mut" style="font-size:12.5px;margin-top:4px">Its own address keeps the book away from the other apps on this site. To move it: <b>Data → Backup → Download backup (JSON)</b> here, then open the new address and use <b>Restore from backup</b> there. Your Gmail link, Betsy and everything in the book go with it; on a phone, add the new address to your home screen.</div></div>';
 }
-const APP_BUILD="a3c7274";
+const APP_BUILD="54630ea";
 function appBuild(){ return APP_BUILD; }
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -4433,6 +4433,34 @@ const bar=function(r){ return '<button class="pgsec" data-act="go" data-view="'+
 return '<div class="pgsecs" data-group="'+esc(e.name)+'">'+e.views.slice(0,i).map(bar).join('')+'</div>'
 +'<div class="pgopen" data-view="'+esc(view)+'">'+body+'</div>'
 +'<div class="pgsecs after" data-group="'+esc(e.name)+'">'+e.views.slice(i+1).map(bar).join('')+'</div>';
+}
+function tapThen(ev,b,fn){
+if(!ev||!ev.isTrusted||typeof requestAnimationFrame!=='function'){ fn(); return; }
+tapShow(b);
+let done=false;
+const go=function(){ if(done) return; done=true; const g=RGEN;
+try{ fn(); } finally { if(RGEN===g) nav(); if(b&&b.classList) b.classList.remove('tapped'); } };
+requestAnimationFrame(function(){ setTimeout(go,0); });
+setTimeout(go,500);
+}
+function tapShow(b){
+if(!b||!b.classList) return;
+b.classList.add('tapped');
+const v=b.dataset&&b.dataset.view; if(!v) return;
+const e=typeof navEntryOf==='function'?navEntryOf(v):null;
+[['tabbar',function(x){ return x.dataset.view===v; },'[data-act=navmenu]'],
+['nav',function(x){ return x===b||(e&&x.dataset.entry===e.name); },'']].forEach(function(r){
+const bar=document.getElementById(r[0]); if(!bar) return;
+const to=[].slice.call(bar.querySelectorAll('[data-act=go]')).find(r[1])||(r[2]&&bar.querySelector(r[2]));
+if(!to) return;
+bar.querySelectorAll('.on').forEach(function(x){ x.classList.remove('on'); x.removeAttribute('aria-current'); });
+to.classList.add('on'); if(r[0]==='tabbar'&&to.dataset.act==='go') to.setAttribute('aria-current','page');
+});
+}
+function tapWarm(){
+if(menusOpen()||_navOpen||document.getElementById('tmenu')||document.getElementById('modalWrap')) return;
+const el=document.getElementById('tabbar')||document.getElementById('nav'); if(!el) return;
+try{ el.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true})); }catch(e){}
 }
 const Views={};
 function dashPace(mo,now){
@@ -33613,8 +33641,8 @@ else if(act==='txpg'){ S.tx.page+=Number(b.dataset.d)||0; render(); }
 else if(act==='txclear'){ S.tx={q:'',cat:'',card:'',rec:'',from:'',to:'',sort:S.tx.sort,dir:S.tx.dir,page:0}; render(); }
 else if(act==='txcsv'){ txCsv(); }
 else if(act==='txopen'){
-S.view='months'; S.month=b.dataset.y+'-'+String(b.dataset.m).padStart(2,'0'); render();
-dayDrawer(Number(b.dataset.d)); }
+tapThen(ev,b,function(){ S.view='months'; S.month=b.dataset.y+'-'+String(b.dataset.m).padStart(2,'0'); render();
+dayDrawer(Number(b.dataset.d)); }); }
 else if(act==='mview'){ S.mview=b.dataset.v==='cal'||b.dataset.v==='list'?b.dataset.v:'sheet';
 try{ localStorage.setItem('pfLedger_mview',S.mview); }catch(e){}
 render(); }
@@ -33623,7 +33651,7 @@ const mo=curMonth();
 S.tx=S.tx||{}; S.tx.cat=b.dataset.c||''; S.tx.q=''; S.tx.rec=''; S.tx.card=''; S.tx.page=0;
 if(mo){ S.tx.from=mkey(mo.y,mo.m)+'-01';
 S.tx.to=mkey(mo.y,mo.m)+'-'+String(daysIn(mo.y,mo.m)).padStart(2,'0'); }
-S.view='charges'; render(); }
+tapThen(ev,b,function(){ S.view='charges'; render(); }); }
 else if(act==='dayopen'){ dayDrawer(Number(b.dataset.d)); }
 else if(act==='dayadd'){ dayAddRow(); }
 else if(act==='daydel'){ const tr=b.closest('tr[data-drow]'); if(tr) tr.remove(); dayRecount(); }
@@ -33640,7 +33668,7 @@ if(!(DB.receipts||[])[i]) return;
 if(!confirm('Remove this receipt from the log? The figures it filed stay in place.')) return;
 snap('remove receipt log entry'); reconReceiptRemoved(i); DB.receipts.splice(i,1);
 closeModal(); save(); render(); toast('Removed from log — \u2318Z to undo','ok'); }
-else if(act==='rcpfile'){ commitReceipt(Number(b.dataset.id)); }
+else if(act==='rcpfile'){ tapThen(ev,b,function(){ commitReceipt(Number(b.dataset.id)); }); }
 else if(act==='rcpfileall'){ rcpFileAll(); }
 else if(act==='bioopen'){
 SYNCST.msg='Waiting for Face ID / Touch ID…'; SYNCST.ok=null; render();
@@ -33710,8 +33738,8 @@ toast(on?'Locked — this device now asks for the passphrase, and the book is en
 });
 }
 else if(act==='unlockskip'){ _lockBypass=true;
-if(typeof welWanted==='function'&&welWanted()){ S.wel=welDraft(); S.view='welcome'; }
-render(); }
+tapThen(ev,b,function(){ if(typeof welWanted==='function'&&welWanted()){ S.wel=welDraft(); S.view='welcome'; }
+render(); }); }
 else if(act==='stmtimport'){
 const el=document.getElementById('stmtText');
 reconImport(el?el.value:'');
@@ -33727,9 +33755,9 @@ toast(r.added+' line'+(r.added===1?'':'s')+' added — '+r.open+' to work throug
 +r.crossed+' already crossed off'+(r.dupes?', '+r.dupes+' already there':'')+' · ⌘Z to undo','ok');
 }
 else if(act==='stmtphotodrop'){ S.recon.photo=null; render(); }
-else if(act==='reconreview'){ const r=reconReview(S.recon.card,S.recon.ym,b.dataset.id);
+else if(act==='reconreview'){ tapThen(ev,b,function(){ const r=reconReview(S.recon.card,S.recon.ym,b.dataset.id);
 if(!r.ok) return toast(r.why,'warn');
-render(); toast('Check where it goes, then File it — the statement is settled when it is filed','ok'); }
+render(); toast('Check where it goes, then File it — the statement is settled when it is filed','ok'); }); }
 else if(act==='reconclosed'){ S.recon.closed=!S.recon.closed; S.recon.note='';
 if(!S.recon.closed&&cardIsClosed(S.recon.card)&&cardsOpen().length){ S.recon.card=cardsOpen()[0]; S.recon.reimport=false; S.recon.photo=null; }
 render(); }
@@ -33854,7 +33882,7 @@ syncSetPass(''); SYNCST.msg=''; SYNCST.remoteTs=0; closeModal(); render();
 if(typeof syncBaseForget==='function') syncBaseForget();
 toast('Stopped syncing this device','ok'); }
 else if(act==='lbclose'){ const l=document.getElementById('lightbox'); if(l) l.remove(); }
-else if(act==='palgo'){ palGo(Number(b.dataset.i)); }
+else if(act==='palgo'){ tapThen(ev,b,function(){ palGo(Number(b.dataset.i)); }); }
 else if(act==='undo'){ undo(); }
 else if(act==='redo'){ redo(); }
 else if(act==='palopen'){ palOpen(); }
@@ -33865,15 +33893,15 @@ mo.entries.slice().sort((x,y)=>x[0]-y[0]||x[1]-y[1]).forEach(([d,ci,a])=>rows.pu
 downloadText('ledger-'+mkey(mo.y,mo.m)+'.csv',csv(rows)); toast('Exported '+monthLabel(mo),'ok'); }
 else if(act==='yrsel'){ S.year.y=Number(b.dataset.v); S.year.sel=null; render(); }
 else if(act==='yrmsel'){ const sv=b.closest('svg'), m=Number(b.dataset.m), k=mkey(S.year.y,m);
-if(sv&&Number(sv.getAttribute('data-sel'))===m){ if(!monthByKey(k)) return toast('No sheet for '+MN[m-1]+' '+S.year.y+' yet','warn'); S.month=k; S.view='months'; render(); window.scrollTo(0,0); }
+if(sv&&Number(sv.getAttribute('data-sel'))===m){ if(!monthByKey(k)) return toast('No sheet for '+MN[m-1]+' '+S.year.y+' yet','warn'); tapThen(ev,b,function(){ S.month=k; S.view='months'; render(); window.scrollTo(0,0); }); }
 else { S.year.sel=m; render(); } }
 else if(act==='yrmpick'){ S.year.sel=Number(b.dataset.m); render(); }
-else if(act==='yrcat'){ trendsOpenCat(b.dataset.v,true); render(); window.scrollTo(0,0); }
-else if(act==='catgo'){ trendsOpenCat(b.dataset.cat,false); render(); window.scrollTo(0,0); }
+else if(act==='yrcat'){ tapThen(ev,b,function(){ trendsOpenCat(b.dataset.v,true); render(); window.scrollTo(0,0); }); }
+else if(act==='catgo'){ tapThen(ev,b,function(){ trendsOpenCat(b.dataset.cat,false); render(); window.scrollTo(0,0); }); }
 else if(act==='hmday'){ const hk=mkey(S.year.y,Number(b.dataset.m));
 if(!monthByKey(hk)) return toast('No sheet for '+MN[Number(b.dataset.m)-1]+' '+S.year.y+' yet','warn');
-S.month=hk; S.view='months'; render(); window.scrollTo(0,0); }
-else if(act==='tdrill'){ S.month=b.dataset.k; S.view='months'; render(); window.scrollTo(0,0); }
+tapThen(ev,b,function(){ S.month=hk; S.view='months'; render(); window.scrollTo(0,0); }); }
+else if(act==='tdrill'){ tapThen(ev,b,function(){ S.month=b.dataset.k; S.view='months'; render(); window.scrollTo(0,0); }); }
 else if(act==='catmg'){ catManager(); }
 else if(act==='grpmg'){ grpManager(); }
 else if(act==='grpsave'){
@@ -34015,11 +34043,11 @@ const arr=(DB[set==='bill'?'bills':set==='card'?'cards':'subs']||{})[nm]; if(!ar
 if(!confirm('Delete '+titleCase(nm)+' reading '+fD(arr[i][0])+'?')) return;
 snap('delete '+nm+' reading'); arr.splice(i,1); }
 save(); render(); toast('Deleted — ⌘Z to undo','ok'); }
-else if(act==='go'){ navSet(false); S.view=b.dataset.view; render(); window.scrollTo(0,0); }
+else if(act==='go'){ navSet(false); tapThen(ev,b,function(){ S.view=b.dataset.view; render(); window.scrollTo(0,0); }); }
 else if(act==='dashinsall'){ S.dashInsAll=!S.dashInsAll; render(); }
 else if(act==='navmenu'){ navSet(!_navOpen); nav(); }
-else if(act==='navback') macBack();
-else if(act==='navfwd') macFwd();
+else if(act==='navback') tapThen(ev,b,macBack);
+else if(act==='navfwd') tapThen(ev,b,macFwd);
 else if(act==='sbtoggle') macSideSet(!document.body.classList.contains('sbshut'));
 else if(act==='qbmore') qbMoreToggle();
 else if(act==='mnav'){ const dir=Number(b.dataset.dir);
@@ -34433,9 +34461,9 @@ else if(act==='tcat'){ const v=b.dataset.v||null; S.trends.cat=v&&v!==S.trends.c
 else if(act==='tmvall'){ S.trends.all=!S.trends.all; render(); }
 else if(act==='trpick'){ S.trends.sel=b.dataset.k; render(); }
 else if(act==='trsel'){ const sv=b.closest('svg'), cur=sv&&sv.getAttribute('data-sel');
-if(cur&&cur===b.dataset.k){ S.month=b.dataset.k; S.view='months'; render(); window.scrollTo(0,0); } else { S.trends.sel=b.dataset.k; render(); } }
+if(cur&&cur===b.dataset.k){ tapThen(ev,b,function(){ S.month=b.dataset.k; S.view='months'; render(); window.scrollTo(0,0); }); } else { S.trends.sel=b.dataset.k; render(); } }
 else if(act==='tryear'){ const sv=b.closest('svg'), y=Number(b.dataset.v);
-if(sv&&Number(sv.getAttribute('data-sel'))===y){ S.year.y=y; S.year.sel=null; S.view='year'; render(); window.scrollTo(0,0); } else { S.trends.year=y; render(); } }
+if(sv&&Number(sv.getAttribute('data-sel'))===y){ tapThen(ev,b,function(){ S.year.y=y; S.year.sel=null; S.view='year'; render(); window.scrollTo(0,0); }); } else { S.trends.year=y; render(); } }
 else if(act==='trtap'){ const r=b.getBoundingClientRect(), sv=b.closest('svg'), hits=sv?Array.prototype.slice.call(sv.querySelectorAll('.trhit')):[];
 if(hits.length&&r.width>0){ const i=Math.max(0,Math.min(hits.length-1,Math.floor((ev.clientX-r.left)/r.width*hits.length))); hits[i].dispatchEvent(new MouseEvent('click',{bubbles:true})); } }
 else if(act==='budapply'){ const sh=b.closest('.trbudgets'), picks={};
@@ -34444,7 +34472,7 @@ if(c&&c.checked&&v){ const n=pnum(v.value); if(n!=null&&n>=0) picks[v.getAttribu
 if(!Object.keys(picks).length) return toast('Tick a category first, with an amount','warn');
 const T=budgetTarget(); snap('budgets from how you spend'); const n=budgetApply(picks); save(); render();
 toast(n+' budget'+(n===1?'':'s')+' set from '+(T?MN[T.m-1]+' '+T.y:'this month')+' on','ok'); }
-else if(act==='tryopen'){ S.year.y=Number(b.dataset.v); S.year.sel=null; S.view='year'; render(); window.scrollTo(0,0); }
+else if(act==='tryopen'){ tapThen(ev,b,function(){ S.year.y=Number(b.dataset.v); S.year.sel=null; S.view='year'; render(); window.scrollTo(0,0); }); }
 if(act==='renotab'){ S.reno.tab=b.dataset.v; S.reno.pay=null; render(); }
 else if(act==='r4sort'){ r4SortBy(b.dataset.k); render(); }
 else if(act==='r4pay'){ const i=Number(b.dataset.i); S.reno.pay=S.reno.pay===i?null:i; render(); }
@@ -34650,7 +34678,7 @@ else if(act==='cfxreset'){
 snap('offer ruled-out transfers again');
 const n=cfXferNoReset(); save(); render(); toast(n+' pair'+(n===1?'':'s')+' offered again','ok');
 }
-else if(act==='cardpaygo'){ if(!cfBankGet(b.dataset.v)) return; navSet(false); S.view='cashflow'; cfBankGo(b.dataset.v); render(); window.scrollTo(0,0); }
+else if(act==='cardpaygo'){ if(!cfBankGet(b.dataset.v)) return; navSet(false); tapThen(ev,b,function(){ S.view='cashflow'; cfBankGo(b.dataset.v); render(); window.scrollTo(0,0); }); }
 if(act==='cfaggacct'){
 const st=S.cfimp, el=document.getElementById('cfAggAcct'); if(!st||!st.text||!el) return;
 if(st.bank&&st.bank!==cfBankId()){ S.cfimp=null; render(); return; }
@@ -34663,7 +34691,7 @@ if(!p||!p.ok||!p.rows||!p.rows.length) return toast((p&&p.why)||'Nothing in that
 snap('a card from '+(st.agg?st.agg.label:'another app'));
 const r=aggToRecon(p.rows,c.value);
 S.cfimp=null; save();
-S.view='reconcile'; S.recon.card=c.value; S.recon.ym=r.months[r.months.length-1]||S.recon.ym; render();
+S.recon.card=c.value; S.recon.ym=r.months[r.months.length-1]||S.recon.ym; tapThen(ev,b,function(){ S.view='reconcile'; render(); });
 toast(r.added+' line'+(r.added===1?'':'s')+' on '+titleCase(c.value)+'’s statements ('+r.months.length+' month'+(r.months.length===1?'':'s')+(r.kept?', '+r.kept+' already there':'')+(r.left?', '+r.left+' between two of its statements, left out':'')+'). File them onto the month sheets here','ok');
 }
 else if(act==='cfimpuse'){
@@ -35239,7 +35267,7 @@ if(!it||!it.go) return;
 const g=it.go;
 if(g.view==='reconcile') S.recon=Object.assign({},S.recon,{card:g.card,ym:g.ym,reimport:false});
 if(g.open&&S[g.view]) S[g.view].open=g.open;
-S.view=g.view; render(); window.scrollTo(0,0);
+tapThen(ev,b,function(){ S.view=g.view; render(); window.scrollTo(0,0); });
 }
 else if(act==='closetoggle'){
 S.close=S.close||{ym:null};
@@ -35255,8 +35283,8 @@ toast(was?closeLabel(ym)+' reopened':closeLabel(ym)+' closed'+(s.todo?' with '+s
 if(act==='audshow'){
 const k=mkey(Number(b.dataset.y),Number(b.dataset.m)), d=Number(b.dataset.d)||0;
 if(!monthByKey(k)) return toast('That month’s sheet is gone','warn');
-S.view='months'; S.month=k; render(); window.scrollTo(0,0);
-if(d&&typeof dayDrawer==='function') dayDrawer(d);
+tapThen(ev,b,function(){ S.view='months'; S.month=k; render(); window.scrollTo(0,0);
+if(d&&typeof dayDrawer==='function') dayDrawer(d); });
 }
 else if(act==='audnodupe'){
 const k=String(b.dataset.k||''); if(!k) return;
@@ -35283,7 +35311,7 @@ go.forEach(x=>{ x.r.card=x.label; if(x.card&&typeof rcpCardLinkSet==='function'&
 save(); render(); toast((go.length===1?'Card filled in: '+go[0].label:go.length+' receipts’ cards filled in')+' · ⌘Z to undo','ok');
 }
 else if(act==='audrecon'){
-S.view='reconcile'; S.recon=Object.assign({},S.recon,{card:b.dataset.card||'',ym:b.dataset.ym||''}); render(); window.scrollTo(0,0);
+tapThen(ev,b,function(){ S.view='reconcile'; S.recon=Object.assign({},S.recon,{card:b.dataset.card||'',ym:b.dataset.ym||''}); render(); window.scrollTo(0,0); });
 }
 if(act==='taxinvintsave'){
 const v=id=>{ const e=document.getElementById(id); return e?e.value:''; };
@@ -35377,13 +35405,13 @@ const fil=typeof taxFilingFor==='function'?taxFilingFor(y).filing:'single', R=ty
 const N=taxNewDed(y,R&&R.sum?R.sum.agi:null,fil);
 toast(N.total>0?'New deductions for '+y+': '+money(N.total,0)+' · ⌘Z to undo':'Saved — none of the new deductions applies for '+y+' as answered','ok');
 }
-if(act==='guideopen'){ taxGuideOpen(); return; }
-if(act==='tourapp'){ taxGuideOpen(null,'app'); return; }
+if(act==='guideopen'){ tapThen(ev,b,function(){ taxGuideOpen(); }); return; }
+if(act==='tourapp'){ tapThen(ev,b,function(){ taxGuideOpen(null,'app'); }); return; }
 if(act==='guidefinish'){ taxGuideFinish(); return; }
 if(act==='guideclose'){ taxGuideClose(); return; }
-if(act==='guidenext'||act==='guideprev'){ const g=S.tax.guide; if(g) taxGuideGo(g.i+(act==='guidenext'?1:-1),act==='guidenext'?1:-1); return; }
-if(act==='guidego'){ const g=S.tax.guide, i=Number(b.dataset.i); if(g&&isFinite(i)) taxGuideGo(i,i>g.i?1:i<g.i?-1:0); return; }
-if(act==='guideshow'){ const g=S.tax.guide; if(g) taxGuideGo(g.i,0); return; }
+if(act==='guidenext'||act==='guideprev'){ const g=S.tax.guide; if(g) tapThen(ev,b,function(){ taxGuideGo(g.i+(act==='guidenext'?1:-1),act==='guidenext'?1:-1); }); return; }
+if(act==='guidego'){ const g=S.tax.guide, i=Number(b.dataset.i); if(g&&isFinite(i)) tapThen(ev,b,function(){ taxGuideGo(i,i>g.i?1:i<g.i?-1:0); }); return; }
+if(act==='guideshow'){ const g=S.tax.guide; if(g) tapThen(ev,b,function(){ taxGuideGo(g.i,0); }); return; }
 if(act==='guidestart'){
 const g=S.tax.guide; if(!g) return; const K=g.y+' Taxes';
 if(!(DB.taxes&&DB.taxes[K])){ snap('start the '+g.y+' return'); DB.taxes=DB.taxes||{}; DB.taxes[K]=[]; save(); }
@@ -35680,7 +35708,7 @@ function(e){ S.plaid=Object.assign({},S.plaid,{busy:false,err:e.message||String(
 else if(act==='plaidreview'){
 const r=plaidReview(b.dataset.bank);
 if(!r.ok) return toast(r.why,'warn');
-S.view='cashflow'; render();
+tapThen(ev,b,function(){ S.view='cashflow'; render(); });
 }
 else if(act==='plaiddel'){
 const item=b.dataset.item, it=(((S.plaid||{}).st||{}).items||[]).find(function(x){ return x.id===item; });
@@ -35780,7 +35808,7 @@ const read=function(){
 ['welSubsMore','subsMore'],['welTake','takeHome'],['welPay','nextPay']].forEach(function(x){
 const t=v(x[0]); if(t!==null) d[x[1]]=t.trim(); });
 };
-if(act==='welgo'){ S.wel=welDraft(); S.view='welcome'; render(); window.scrollTo(0,0); }
+if(act==='welgo'){ tapThen(ev,b,function(){ S.wel=welDraft(); S.view='welcome'; render(); window.scrollTo(0,0); }); }
 else if(act==='welnext'){ if(!b.dataset.skip) read(); d.step=Math.min(d.step+1,WEL_STEPS.length-1); render(); window.scrollTo(0,0); }
 else if(act==='welback'){ read(); d.step=Math.max(0,d.step-1); render(); window.scrollTo(0,0); }
 else if(act==='weltog'){
@@ -35811,10 +35839,10 @@ toast('Your book is set up — '+got.cats+' categories'
 }
 else if(act==='welskip'){
 welApply(Object.assign(welDraft(),{cats:[]}));
-S.wel=null; S.view='months'; render(); window.scrollTo(0,0);
+S.wel=null; tapThen(ev,b,function(){ S.view='months'; render(); window.scrollTo(0,0); });
 toast('This month is started — type into it','ok');
 }
-else if(act==='welgoto'){ S.wel=null; S.view=b.dataset.view||'dash'; render(); window.scrollTo(0,0); }
+else if(act==='welgoto'){ S.wel=null; tapThen(ev,b,function(){ S.view=b.dataset.view||'dash'; render(); window.scrollTo(0,0); }); }
 }
 if(act==='worthspan'){ S.worth=Object.assign({span:'3y'},S.worth,{span:b.dataset.s}); render(); }
 else if(act==='ahwhat'){ const f=b.closest('[data-form=ahwhat]'); if(!f) return; const q=function(n){ const e=f.querySelector('[name='+n+']'); return e?e.value:''; };
@@ -36242,7 +36270,7 @@ const M=mailEnsure(); if(M.skip.indexOf(addr)<0) M.skip.push(addr);
 M.items.forEach(function(x){ if(mailAddr(x.from)===addr&&x.state==='new') x.state='skip'; });
 save(); render(); toast('No more mail from '+addr+' · ⌘Z to undo','ok');
 }
-else if(act==='mailgo'){ S.view=b.dataset.view||'mail'; render(); window.scrollTo(0,0); }
+else if(act==='mailgo'){ tapThen(ev,b,function(){ S.view=b.dataset.view||'mail'; render(); window.scrollTo(0,0); }); }
 else if(act==='mailrcp'){
 const it=mailItem(b.dataset.id); if(!it) return;
 const docs=(it.atts||[]).filter(function(a){ return mailAttIsPdf(a)||mailAttIsImg(a); });
@@ -36260,7 +36288,7 @@ mailQueueReceipts();
 const q=RCP.queue.find(function(x){ return x.mailId===it.id; });
 if(!q){ Object.assign(it,was); ['note','moved','self','selfTried','selfHand','viaDoc'].forEach(function(k){ if(was[k]==null) delete it[k]; }); snapCancel(); return toast('Nothing in that email read as a receipt','warn'); }
 if(was.kind===it.kind&&was.state===it.state) snapCancel(); else save();
-S.rcp.sel=q.id; S.view='receipts'; render(); window.scrollTo(0,0);
+tapThen(ev,b,function(){ S.rcp.sel=q.id; S.view='receipts'; render(); window.scrollTo(0,0); });
 }
 else if(act==='mailbill'){
 const it=mailItem(b.dataset.id); if(!it) return;
@@ -36269,7 +36297,7 @@ try{ S.bills.parsed=parseBillAlert(S.bills.text); }catch(e){ S.bills.parsed={ok:
 S.bills.mailToken=typeof _billToken==='function'?_billToken(mailName(it.from)):''; S.bills.mailDay=mailDay(it);
 if(S.bills.parsed&&S.bills.parsed.ok&&S.bills.mailToken) S.bills.parsed.token=S.bills.mailToken;
 S.bills.nm=(S.bills.parsed&&S.bills.parsed.nm)||''; S.bills.date=(S.bills.parsed&&S.bills.parsed.date)||S.bills.mailDay;
-S.bills.paste=true; S.bills.mailId=it.id; S.view='bills'; render(); window.scrollTo(0,0);
+S.bills.paste=true; S.bills.mailId=it.id; tapThen(ev,b,function(){ S.view='bills'; render(); window.scrollTo(0,0); });
 }
 else if(act==='mailattopen'||act==='mailattrcp'||act==='mailattread'){
 const it=mailItem(b.dataset.id), a=it&&(it.atts||[])[Number(b.dataset.att)]; if(!a) return;
@@ -36301,7 +36329,7 @@ else if(act==='mailunignore'){
 snap('stop ignoring an email'); if(mailUnignore(b.dataset.id)){ save(); render(); toast('Back — and the next ones like it will show again','ok'); }
 }
 else if(act==='mailigntoggle'){ S.mailIgn=!S.mailIgn; render(); }
-else if(act==='mailsub'){ const it=mailItem(b.dataset.id); if(!it) return; mailSubOpen(it); render(); window.scrollTo(0,0); }
+else if(act==='mailsub'){ const it=mailItem(b.dataset.id); if(!it) return; tapThen(ev,b,function(){ mailSubOpen(it); render(); window.scrollTo(0,0); }); }
 else if(act==='msubclose'){ S.subRec=null; render(); }
 else if(act==='msubrec'){
 const st=S.subRec; if(!st) return;
@@ -36405,8 +36433,8 @@ toast(money(r.total,2)+(r.pts?' ('+r.pts.toLocaleString('en-US')+' points)':'')+
 }
 else if(act==='mailcash'){
 const it=mailItem(b.dataset.id); if(!it) return;
-const has=mailCashOpen(it); render(); window.scrollTo(0,0);
-if(!has) toast('Cash Flow has no account to file it under yet — add one here first','warn');
+tapThen(ev,b,function(){ const has=mailCashOpen(it); render(); window.scrollTo(0,0);
+if(!has) toast('Cash Flow has no account to file it under yet — add one here first','warn'); });
 }
 else if(act==='mailrwact'){
 const it=mailItem(b.dataset.id); if(!it) return;
@@ -36422,7 +36450,7 @@ const it=mailItem(b.dataset.id); if(!it) return;
 const d=mailDay(it);
 const back=it.kind==='refund'?MAIL_REFUND_BACK:4;
 S.tx=Object.assign({},S.tx,{q:it.amt!=null?String(it.amt):'',from:cfAddDays(d,-back),to:cfAddDays(d,4),cat:'',card:'',rec:'',page:0});
-S.view='charges'; render(); window.scrollTo(0,0);
+tapThen(ev,b,function(){ S.view='charges'; render(); window.scrollTo(0,0); });
 }
 if(act==='errcopy'){
 const txt=errText()||'No errors are kept on this device.';
@@ -40747,7 +40775,8 @@ if(typeof cloudLinkOnBoot==='function'){ cloudLinkOnBoot(); window.addEventListe
 if(typeof hhLinkOnBoot==='function'){ hhLinkOnBoot(); window.addEventListener('hashchange',hhLinkOnBoot); }
 setTimeout(function(){ if(!bookShut()) trialNotify(); },2600);
 weekBadgeStart();
-Object.assign(window.__PF,{ptBefore,ptDaily,ptIndex,ptSettled,ptBook,ptFail,ptCapture});
+Object.assign(window.__PF,{ptBefore,ptDaily,ptIndex,ptSettled,ptBook,ptFail,ptCapture,tapThen});
 setTimeout(function(){ ptDaily(); },3000);
+setTimeout(tapWarm,700);
 window.__PF_OK=true;
 })();
