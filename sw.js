@@ -14,6 +14,12 @@ var SHELL = ['./', './index.html', './app.js', './manifest.webmanifest',   /* ap
              /* v1978: the maskable one was the one left out, and it is the icon Android puts on
                 the home screen - so the installed app lost exactly the icon it is installed with. */
              './icon-maskable-512.png'];
+/* v29.61: the page and its own files wait this long for the network, then open from the copy here (below). */
+var WAIT = 4000;
+/* When the copy here last had to stand in for a network that hung: for a little while after, the page's own files
+   take the copy at once rather than each waiting WAIT in turn (the page, then app.js). */
+var HUNG_AT = 0, HUNG_FOR = 30000;
+var SHELL_PATHS = SHELL.map(function (u) { return new URL(u, self.location).pathname; });
 
 self.addEventListener('install', function (e) {
   self.skipWaiting();
@@ -70,25 +76,48 @@ self.addEventListener('fetch', function (e) {
     ? fetch(req.url, { cache: 'no-cache', credentials: 'same-origin', redirect: 'follow' })
     : fetch(req, { cache: 'no-cache' });
 
-  e.respondWith(
-    fresh.then(function (res) {
-      if (res && res.ok && res.type === 'basic') {
-        var copy = res.clone();
-        /* Keyed WITHOUT the query string. The app polls build.txt?t=<time> to
-           notice a deploy, and every poll was stored as a new entry — the cache
-           grew by one copy per check, for ever. A deep link (?view=receipts)
-           is the same page, so it is one entry too. */
-        caches.open(VERSION).then(function (c) { c.put(url.origin + url.pathname, copy); }).catch(function () {});
-      }
-      return res;
-    }).catch(function () {
-      return caches.match(req, { ignoreSearch: true }).then(function (hit) {
-        /* A navigation to any in-scope URL falls back to the cached shell so
-           deep links (?view=receipts) still open with no signal. */
-        return hit || (req.mode === 'navigate' ? caches.match('./index.html') : undefined);
-      });
-    })
-  );
+  var put = null;
+  var net = fresh.then(function (res) {
+    if (res && res.ok && res.type === 'basic') {
+      var copy = res.clone();
+      /* Keyed WITHOUT the query string. The app polls build.txt?t=<time> to
+         notice a deploy, and every poll was stored as a new entry — the cache
+         grew by one copy per check, for ever. A deep link (?view=receipts)
+         is the same page, so it is one entry too. */
+      put = caches.open(VERSION).then(function (c) { return c.put(url.origin + url.pathname, copy); }).catch(function () {});
+    }
+    return res;
+  });
+  var kept = function () {
+    return caches.match(req, { ignoreSearch: true }).then(function (hit) {
+      /* A navigation to any in-scope URL falls back to the cached shell so
+         deep links (?view=receipts) still open with no signal. */
+      return hit || (req.mode === 'navigate' ? caches.match('./index.html') : undefined);
+    });
+  };
+  /* A NETWORK THAT HANGS IS NOT A NETWORK THAT FAILS (v29.61). One that fails
+     was answered from the copy here at once; one that neither answers nor fails
+     (a weak signal, a captive portal, a train) held the page blank for as long
+     as the browser let the request run. So the page and its own files (SHELL)
+     wait WAIT for the network and then take the copy here, if there is one; the
+     network's answer, when it comes, still goes into the cache for next time
+     (waitUntil keeps the worker up for it), and installed.js's poll of build.txt,
+     which is NOT raced, lights Refresh if it was a newer build. Everything else
+     (build.txt among it) waits for the network as before. With no copy, the
+     page waits, as before. MAMBA and HighWall do the same (e2e 71). */
+  if (req.mode !== 'navigate' && SHELL_PATHS.indexOf(url.pathname) < 0) { e.respondWith(net.catch(kept)); return; }
+  if (e.waitUntil) e.waitUntil(net.then(function () { return put; }, function () {}));
+  e.respondWith(new Promise(function (answer) {
+    var done = false;
+    var give = function (r) { if (!done) { done = true; answer(r); } };
+    var slow = setTimeout(function () {
+      kept().then(function (hit) { if (hit) { HUNG_AT = Date.now(); give(hit); } }).catch(function () {});
+    }, Date.now() - HUNG_AT < HUNG_FOR ? 0 : WAIT);
+    net.then(function (res) { clearTimeout(slow); HUNG_AT = 0; give(res); }, function () {
+      clearTimeout(slow);
+      kept().then(function (hit) { give(hit || Response.error()); }, function () { give(Response.error()); });
+    });
+  }));
 });
 
 /* The in-app ⟳ Refresh button asks for a clean slate before reloading. */
