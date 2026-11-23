@@ -1,6 +1,6 @@
 
 "use strict";
-const APP_V="v29.64";
+const APP_V="v29.65";
 const LEDGER_HOME='https://ledger.jpresseau.com/', LEDGER_FROM='https://jpresseau.github.io';
 function ledgerMovedHtml(){
 if(!LEDGER_HOME) return '';
@@ -10,7 +10,7 @@ if(!here||here===home||here!==LEDGER_FROM) return '';
 return '<div class="sheet nofold movedbar" role="status" style="border-left:4px solid var(--amber);margin-bottom:12px"><b>The Ledger has its own address now: <a href="'+esc(LEDGER_HOME)+'">'+esc(LEDGER_HOME.replace(/^https:\/\//,'').replace(/\/$/,''))+'</a></b>'
 +'<div class="mut" style="font-size:12.5px;margin-top:4px">Its own address keeps the book away from the other apps on this site. To move it: <b>Data → Backup → Download backup (JSON)</b> here, then open the new address and use <b>Restore from backup</b> there. Your Gmail link, Betsy and everything in the book go with it; on a phone, add the new address to your home screen.</div></div>';
 }
-const APP_BUILD="7fa111f";
+const APP_BUILD="46283dc";
 function appBuild(){ return APP_BUILD; }
 const SEED = JSON.parse(document.getElementById('pfseed').textContent);
 const LS_KEY = 'pfLedger_v1';
@@ -4471,6 +4471,7 @@ if(menusOpen()||_navOpen||document.getElementById('tmenu')||document.getElementB
 const el=document.getElementById('tabbar')||document.getElementById('nav'); if(!el) return;
 try{ el.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true})); }catch(e){}
 }
+document.addEventListener('touchstart',function(){},{passive:true});
 const Views={};
 function dashPace(mo,now){
 now=now||new Date();
